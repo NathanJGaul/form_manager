@@ -21,17 +21,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const currentInstance: FormInstance = instance || {
-    id: crypto.randomUUID(),
-    templateId: template.id,
-    templateName: template.name,
-    data: formData,
-    progress: 0,
-    completed: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    lastSaved: new Date()
-  };
+  const currentInstance: FormInstance = instance || 
+    storageManager.getOrCreateInstance(template.id, template.name);
 
   const visibleSections = getVisibleSections(template.sections, formData);
   const progress = calculateProgress(template.sections, formData);
@@ -111,6 +102,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       updatedAt: new Date()
     };
     
+    // Save the completed instance (this overwrites the draft)
     storageManager.saveInstance(submissionInstance);
     
     // Create submission record
@@ -147,7 +139,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               type="text"
               value={value || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder}
+              placeholder={field.placeholder || `Enter ${field.label}`}
               className={baseInputClasses}
             />
             {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -164,7 +156,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             <textarea
               value={value || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder}
+              placeholder={field.placeholder || `Enter ${field.label}`}
               rows={4}
               className={baseInputClasses}
             />
@@ -262,7 +254,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               type="number"
               value={value || ''}
               onChange={(e) => handleFieldChange(field.id, e.target.value ? Number(e.target.value) : '')}
-              placeholder={field.placeholder}
+              placeholder={field.placeholder || `Enter ${field.label}`}
               min={field.validation?.min}
               max={field.validation?.max}
               className={baseInputClasses}

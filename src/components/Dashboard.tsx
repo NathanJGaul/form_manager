@@ -54,8 +54,10 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleCreateInstance = (template: FormTemplate) => {
+    // Get or create instance for this template (reuses existing draft)
+    const instance = storageManager.getOrCreateInstance(template.id, template.name);
     setSelectedTemplate(template);
-    setSelectedInstance(null);
+    setSelectedInstance(instance);
     setCurrentView('form');
   };
 

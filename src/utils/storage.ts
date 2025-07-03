@@ -71,6 +71,36 @@ class StorageManager {
     localStorage.setItem(this.INSTANCES_KEY, JSON.stringify(instances));
   }
 
+  // Find existing draft instance for a template (incomplete instance)
+  findDraftInstance(templateId: string): FormInstance | null {
+    const instances = this.getInstances();
+    return instances.find(i => i.templateId === templateId && !i.completed) || null;
+  }
+
+  // Get or create instance for a template (reuses existing draft)
+  getOrCreateInstance(templateId: string, templateName: string): FormInstance {
+    const existingDraft = this.findDraftInstance(templateId);
+    
+    if (existingDraft) {
+      return existingDraft;
+    }
+    
+    // Create new instance if no draft exists
+    const newInstance: FormInstance = {
+      id: crypto.randomUUID(),
+      templateId,
+      templateName,
+      data: {},
+      progress: 0,
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSaved: new Date()
+    };
+    
+    return newInstance;
+  }
+
   // Submission methods
   getSubmissions(): FormSubmission[] {
     const stored = localStorage.getItem(this.SUBMISSIONS_KEY);
