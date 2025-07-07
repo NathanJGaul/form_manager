@@ -8,7 +8,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const singleHtmlPath = join(__dirname, 'standalone-form-manager.html');
+const singleHtmlPath = join(__dirname, '../dist/standalone-form-manager.html');
 
 console.log('🧪 Testing Single HTML File Implementation...\n');
 

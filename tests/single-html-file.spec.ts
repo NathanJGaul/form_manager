@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 
 test.describe('Single HTML File Implementation', () => {
-  const singleHtmlPath = path.join(process.cwd(), 'standalone-form-manager.html');
+  const singleHtmlPath = path.join(process.cwd(), 'dist/standalone-form-manager.html');
   
   test.beforeEach(async ({ page }) => {
     // Load the single HTML file directly
