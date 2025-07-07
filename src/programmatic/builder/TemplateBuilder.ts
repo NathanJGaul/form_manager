@@ -562,6 +562,25 @@ export class FieldBuilder {
   }
 
   /**
+   * Set field layout
+   */
+  layout(layout: 'vertical' | 'horizontal'): FieldBuilder {
+    this.field.layout = layout;
+    return this;
+  }
+
+  /**
+   * Set field grouping configuration
+   */
+  grouping(enabled: boolean, groupKey?: string): FieldBuilder {
+    this.field.grouping = {
+      enabled,
+      groupKey
+    };
+    return this;
+  }
+
+  /**
    * Return to parent builder
    */
   end(): TemplateBuilder {

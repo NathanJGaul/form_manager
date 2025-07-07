@@ -5,6 +5,7 @@ import { JCC2UserQuestionnaire } from "../programmatic/examples/JCC2UserQuestion
 import { WorkingComprehensiveTemplate } from "../programmatic/examples/WorkingComprehensiveTemplate";
 import { DefaultValueExample } from "../programmatic/examples/DefaultValueExample";
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
+import { HorizontalGroupingDemo } from "../../templates/horizontal_grouping_demo";
 import { TemplateBuilder } from "../programmatic/builder/TemplateBuilder";
 import * as ProgrammaticModules from "../programmatic";
 import { FormTemplate } from "../types/form";
@@ -81,6 +82,9 @@ export const ProgrammaticImportModal: React.FC<
               placeholder: field.placeholder,
               required: field.required || false,
               options: field.options,
+              multiple: field.multiple,
+              layout: field.layout,
+              grouping: field.grouping,
               validation: field.validation,
               conditional: field.conditional,
               defaultValue: field.defaultValue,
@@ -140,6 +144,9 @@ export const ProgrammaticImportModal: React.FC<
           break;
         case "defaultValues":
           programmaticTemplate = DefaultValueExample.create();
+          break;
+        case "horizontalGrouping":
+          programmaticTemplate = HorizontalGroupingDemo.create();
           break;
         default:
           throw new Error("Unknown example template");
@@ -467,6 +474,21 @@ export const ProgrammaticImportModal: React.FC<
                     <button
                       onClick={() => handleExampleImport("defaultValues")}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Import Template
+                    </button>
+                  </div>
+
+                  <div className="border rounded-lg p-4 hover:border-blue-300 transition-colors">
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      Horizontal Layout & Grouping Demo
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Advanced survey showcasing horizontal layouts and matrix-style grouped fields
+                    </p>
+                    <button
+                      onClick={() => handleExampleImport("horizontalGrouping")}
+                      className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                     >
                       Import Template
                     </button>

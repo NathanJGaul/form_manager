@@ -21,7 +21,7 @@ const effectivenessScale = [
   'Slightly Effective', 'Moderately Effective', 'Completely Effective', 'Not Applicable'
 ];
 
-const experienceLevels = ['< 1 Year', '1-3 Years', '3-5 Years', '> 5 Years', 'NA'];
+const experienceLevels = { options: ['< 1 Year', '1-3 Years', '3-5 Years', '> 5 Years', 'NA'], default: 'NA' };
 
 const frequencyOfUse = ['Never', 'Daily', 'Weekly', 'Monthly'];
 const classificationOptions = ['NIPR', 'SIPR', 'JWICS'];
@@ -32,6 +32,15 @@ const agreementScale = [
 ];
 
 const usabilityScale = [ '1', '2', '3', '4', '5', '6' ];
+
+/**
+ * Helper function to convert strings to an id
+ * @param str 
+ * @returns str converted to id
+ */
+function toId(str: string) {
+  return str.toLowerCase().replace(/ /g, '_')
+}
 
 /**
  * Programmatic template for the JCC2 User Questionnaire PDF.
@@ -47,8 +56,8 @@ export class JCC2UserQuestionnaire {
 
     // Page 1: User and Role Information
     builder.section('User Information')
-      .field('text', 'Event').id('event').end()
-      .field('date', 'Date').id('date').end()
+      .field('text', 'Event').id('event').required().end()
+      .field('date', 'Date').id('date').required().end()
       .field('text', 'Rank/Name').id('rank_name').required().end()
       .field('text', 'Unit').id('unit').end()
       .field('email', 'Email').id('email').required().end()
@@ -58,26 +67,26 @@ export class JCC2UserQuestionnaire {
       .field('radio', 'Status of Current Role').id('current_role_status').required().options(['Active Duty', 'Guard/Reserve', 'DoD Civilian', 'Contractor']).end()
       .field('radio', 'Current Cyber Operator').id('is_cyber_operator').required().options(yesNo).end()
       .field('text', 'Cyber Operations Division/Team').id('cyber_ops_division_team').required().conditional('is_cyber_operator', 'equals', ['Yes']).end()
-      .field('radio', 'Echelon You Work Within').id('echelon').required().options(['Strategic', 'Operational', 'Tactical']).end()
-      .field('checkbox', 'Duties You Perform').id('duties').multiple().options(['Offensive Cyber Operations', 'Defensive Cyber Operations', 'Mission Planning', 'Internal Defense Measures', 'Ticket Creation', 'Other(s)']).end()
+      .field('checkbox', 'Echelon You Work Within').id('echelon').multiple().required().options(['Strategic', 'Operational', 'Tactical']).end()
+      .field('checkbox', 'Duties You Perform').id('duties').multiple().required().options(['Offensive Cyber Operations', 'Defensive Cyber Operations', 'Mission Planning', 'Internal Defense Measures', 'Ticket Creation', 'Other(s)']).end()
       .field('text', 'Other Duties').id('other_duties').required().conditional('duties', 'contains', ['Other(s)']).end();
 
     // Page 1-2: Experience Grids
     builder.section('Operational Experience');
     operationalExperienceTopics.forEach(topic => {
-      builder.field('radio', topic).id(`exp_${topic.toLowerCase().replace(/ /g, '_')}`).options(experienceLevels).required().end();
+      builder.field('radio', topic).id(`exp_${toId(topic)}`).options(experienceLevels.options).defaultValue(experienceLevels.default).required().end();
     });
 
     builder.section('Specific JCC2 Application Experience');
     specificJcc2AppExperience.forEach(app => {
-      builder.field('radio', app).id(`exp_app_${app.toLowerCase().replace(/ /g, '_')}`).options(experienceLevels).required().end();
+      builder.field('radio', app).id(`exp_app_${toId(app)}`).options(experienceLevels.options).defaultValue(experienceLevels.default).required().end();
     });
 
     // Page 2: JCC2 App Usage Grid
     builder.section('JCC2 Application Usage');
     allJcc2Apps.forEach(app => {
-        const appId = `usage_${app.toLowerCase().replace(/ /g, '_')}`;
-        builder.field('radio', `${app} - Frequency of Use`).id(`${appId}_frequency`).options(frequencyOfUse).required().end()
+        const appId = `usage_${toId(app)}`;
+        builder.field('radio', `${app} - Frequency of Use`).id(`${appId}_frequency`).options(frequencyOfUse).defaultValue(frequencyOfUse[0]).required().end()
                .field('checkbox', `${app} - Classification`).id(`${appId}_classification`).multiple().options(classificationOptions).end()
                .field('radio', `${app} - Training Received`).id(`${appId}_training_received`).options(yesNo).required().end()
                .field('text', 'Specify Training Type').id(`${appId}_training_type`).required().conditional(`${appId}_training_received`, 'equals', ['Yes']).end()

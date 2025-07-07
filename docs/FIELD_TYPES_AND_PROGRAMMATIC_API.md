@@ -157,13 +157,17 @@ Single-selection dropdown menu.
 
 ### 10. Radio Buttons (`radio`)
 
-Single-selection radio button group.
+Single-selection radio button group with support for horizontal layout and grouping.
 
 **Properties:**
 - `options` (required): Array of available options
 - `defaultValue` (optional): Pre-selected option
+- `layout` (optional): Display layout - 'vertical' (default) or 'horizontal'
+- `grouping` (optional): Grouping configuration for related fields
 
-**Example:**
+**Examples:**
+
+Basic radio buttons:
 ```typescript
 .field('radio', 'Experience Level')
   .options(['Beginner', 'Intermediate', 'Advanced'])
@@ -172,20 +176,69 @@ Single-selection radio button group.
   .end()
 ```
 
+Horizontal layout:
+```typescript
+.field('radio', 'Priority Level')
+  .options(['Low', 'Medium', 'High', 'Critical'])
+  .layout('horizontal')
+  .required()
+  .end()
+```
+
+Grouped radio buttons (for matrix-style forms):
+```typescript
+.field('radio', 'Product Quality')
+  .options(['Poor', 'Fair', 'Good', 'Excellent'])
+  .layout('horizontal')
+  .grouping(true, 'satisfaction_ratings')
+  .end()
+.field('radio', 'Customer Service')
+  .options(['Poor', 'Fair', 'Good', 'Excellent'])
+  .layout('horizontal')
+  .grouping(true, 'satisfaction_ratings')
+  .end()
+```
+
 ### 11. Checkboxes (`checkbox`)
 
-Multi-selection checkbox group.
+Multi-selection checkbox group with support for horizontal layout and grouping.
 
 **Properties:**
 - `options` (required): Array of available options
 - `multiple` (automatic): Always true for checkboxes
 - `defaultValue` (optional): Array of pre-selected options
+- `layout` (optional): Display layout - 'vertical' (default) or 'horizontal'
+- `grouping` (optional): Grouping configuration for related fields
 
-**Example:**
+**Examples:**
+
+Basic checkboxes:
 ```typescript
 .field('checkbox', 'Skills')
   .options(['JavaScript', 'TypeScript', 'React', 'Node.js'])
   .defaultValue(['JavaScript', 'TypeScript'])
+  .end()
+```
+
+Horizontal layout:
+```typescript
+.field('checkbox', 'Interests')
+  .options(['Technology', 'Sports', 'Music', 'Travel', 'Reading'])
+  .layout('horizontal')
+  .end()
+```
+
+Grouped checkboxes:
+```typescript
+.field('checkbox', 'Morning Activities')
+  .options(['Exercise', 'Coffee', 'News', 'Email'])
+  .layout('horizontal')
+  .grouping(true, 'daily_activities')
+  .end()
+.field('checkbox', 'Evening Activities')
+  .options(['Exercise', 'Coffee', 'News', 'Email'])
+  .layout('horizontal')
+  .grouping(true, 'daily_activities')
   .end()
 ```
 
@@ -348,6 +401,10 @@ Returned by `.field()` method for configuring individual fields.
 // Conditional logic
 .conditional(dependsOn: string, operator: string, values: string[]) // Add conditional logic
 
+// Layout and Grouping (for radio and checkbox fields)
+.layout(layout: 'vertical' | 'horizontal') // Set field layout
+.grouping(enabled: boolean, groupKey?: string) // Configure field grouping
+
 // Navigation
 .end()                                // Return to SectionBuilder
 .field(type: FieldType, label: string) // Add another field to same section
@@ -394,6 +451,215 @@ Create dynamic sections with loops:
   builder.field('textarea', 'Additional Information')
     .end();
 })
+```
+
+## Horizontal Layout and Grouping
+
+### Overview
+
+The Form Manager supports advanced layout options for radio buttons and checkboxes, including horizontal layouts and intelligent grouping of related fields. These features help optimize form space usage and create more intuitive user interfaces.
+
+### Horizontal Layout
+
+By default, radio buttons and checkboxes are displayed vertically (stacked). The horizontal layout option displays options side-by-side, which is ideal for:
+
+- Short option lists (2-5 items)
+- Rating scales
+- Yes/No questions
+- Priority levels
+- Forms with limited vertical space
+
+#### Usage
+
+```typescript
+// Horizontal radio buttons
+.field('radio', 'Satisfaction Level')
+  .options(['Poor', 'Fair', 'Good', 'Excellent'])
+  .layout('horizontal')
+  .end()
+
+// Horizontal checkboxes
+.field('checkbox', 'Preferred Contact Methods')
+  .options(['Email', 'Phone', 'SMS', 'Mail'])
+  .layout('horizontal')
+  .end()
+```
+
+### Field Grouping
+
+Field grouping allows you to visually group related fields that share the same options. When multiple fields have:
+- The same group key
+- Identical options
+- Horizontal layout
+
+They are rendered in a matrix format with shared column headers, creating a compact and intuitive interface.
+
+#### Grouping Benefits
+
+1. **Space Efficiency**: Reduces repetitive option labels
+2. **Visual Clarity**: Related questions are clearly grouped together
+3. **User Experience**: Easier to compare and answer related questions
+4. **Consistency**: Ensures consistent option presentation
+
+#### Matrix Rendering
+
+When grouped fields meet the criteria, they are rendered as:
+
+```
+                Poor    Fair    Good    Excellent
+Product Quality  ○       ○       ●       ○
+Customer Service ○       ●       ○       ○
+Delivery Speed   ○       ○       ○       ●
+```
+
+#### Usage Examples
+
+**Simple Grouping:**
+```typescript
+.field('radio', 'Product Quality')
+  .options(['Poor', 'Fair', 'Good', 'Excellent'])
+  .layout('horizontal')
+  .grouping(true, 'service_ratings')
+  .end()
+.field('radio', 'Customer Service')
+  .options(['Poor', 'Fair', 'Good', 'Excellent'])
+  .layout('horizontal')
+  .grouping(true, 'service_ratings')
+  .end()
+```
+
+**Checkbox Grouping:**
+```typescript
+.field('checkbox', 'Morning Preferences')
+  .options(['Coffee', 'Exercise', 'News', 'Music'])
+  .layout('horizontal')
+  .grouping(true, 'daily_preferences')
+  .end()
+.field('checkbox', 'Evening Preferences')
+  .options(['Coffee', 'Exercise', 'News', 'Music'])
+  .layout('horizontal')
+  .grouping(true, 'daily_preferences')
+  .end()
+```
+
+**Complex Survey Rating:**
+```typescript
+const ratingOptions = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree'];
+
+.section('Service Evaluation')
+  .field('radio', 'Staff was helpful')
+    .options(ratingOptions)
+    .layout('horizontal')
+    .grouping(true, 'service_evaluation')
+    .required()
+    .end()
+  .field('radio', 'Response time was adequate')
+    .options(ratingOptions)
+    .layout('horizontal')
+    .grouping(true, 'service_evaluation')
+    .required()
+    .end()
+  .field('radio', 'Problem was resolved effectively')
+    .options(ratingOptions)
+    .layout('horizontal')
+    .grouping(true, 'service_evaluation')
+    .required()
+    .end()
+```
+
+### Best Practices
+
+#### When to Use Horizontal Layout
+
+✅ **Good use cases:**
+- Rating scales (1-5, Poor-Excellent)
+- Binary choices (Yes/No, True/False)
+- Priority levels (Low/Medium/High)
+- Short option lists (2-5 items)
+- Demographic questions with few options
+
+❌ **Avoid for:**
+- Long option lists (6+ items)
+- Options with lengthy text
+- Mobile-first designs (consider responsive behavior)
+- Complex multi-line options
+
+#### When to Use Grouping
+
+✅ **Ideal scenarios:**
+- Survey rating matrices
+- Evaluation forms with consistent rating scales
+- Preference questionnaires with repeated categories
+- Assessment forms with standardized criteria
+
+❌ **Not recommended for:**
+- Fields with different option sets
+- Unrelated questions
+- Fields requiring different validation rules
+- Mixed field types in the same group
+
+#### Responsive Considerations
+
+Horizontal layouts automatically wrap on smaller screens, but consider:
+
+```typescript
+// For mobile-responsive forms, test horizontal layouts
+.field('radio', 'Experience Rating')
+  .options(['Poor', 'Fair', 'Good', 'Excellent'])
+  .layout('horizontal') // Will wrap on small screens
+  .end()
+```
+
+### Form Builder Integration
+
+The visual form builder supports these features through:
+
+1. **Layout Selector**: Choose vertical or horizontal layout for radio/checkbox fields
+2. **Grouping Controls**: Enable grouping and set group keys
+3. **Live Preview**: See the grouped layout in real-time
+4. **Validation**: Warnings for incompatible grouping configurations
+
+#### UI Controls
+
+- **Layout Dropdown**: Select "Vertical" or "Horizontal"
+- **Enable Grouping Checkbox**: Toggle grouping functionality
+- **Group Key Input**: Set the grouping identifier
+- **Helper Text**: Guidance on grouping requirements
+
+### Technical Implementation
+
+#### Type Definitions
+
+```typescript
+interface FormField {
+  // ... existing properties
+  layout?: 'vertical' | 'horizontal';
+  grouping?: {
+    enabled: boolean;
+    groupKey?: string;
+  };
+}
+```
+
+#### Grouping Logic
+
+The renderer automatically:
+1. Groups fields by `groupKey`
+2. Validates identical options and horizontal layout
+3. Renders matrix-style interface for compatible groups
+4. Falls back to individual field rendering for incompatible groups
+
+#### CSS Classes
+
+```css
+/* Horizontal layout */
+.flex.flex-wrap.gap-4
+
+/* Grouped field container */
+.border.border-gray-200.rounded-lg.p-4.bg-gray-50
+
+/* Matrix layout */
+.flex.flex-wrap.gap-6
 ```
 
 ## Template Configuration
@@ -473,12 +739,12 @@ const contactForm = new TemplateBuilder()
   .build();
 ```
 
-### Advanced Survey with Conditional Logic
+### Advanced Survey with Conditional Logic and Horizontal Layouts
 
 ```typescript
 const survey = new TemplateBuilder()
   .create('Customer Satisfaction Survey')
-  .description('Advanced survey with conditional branching')
+  .description('Advanced survey with conditional branching, horizontal layouts, and grouping')
   .autoSave(30000) // Auto-save every 30 seconds
   .showProgress()
   
@@ -486,11 +752,32 @@ const survey = new TemplateBuilder()
     .field('radio', 'Customer Type')
       .id('customer_type')
       .options(['New Customer', 'Existing Customer', 'Former Customer'])
+      .layout('horizontal')
       .required()
       .end()
     .field('select', 'How did you hear about us?')
       .conditional('customer_type', 'equals', ['New Customer'])
       .options(['Search Engine', 'Social Media', 'Friend Referral', 'Advertisement'])
+      .end()
+      
+  .section('Service Evaluation Matrix')
+    .field('radio', 'Product Quality')
+      .options(['Poor', 'Fair', 'Good', 'Excellent'])
+      .layout('horizontal')
+      .grouping(true, 'service_ratings')
+      .required()
+      .end()
+    .field('radio', 'Customer Support')
+      .options(['Poor', 'Fair', 'Good', 'Excellent'])
+      .layout('horizontal')
+      .grouping(true, 'service_ratings')
+      .required()
+      .end()
+    .field('radio', 'Delivery Speed')
+      .options(['Poor', 'Fair', 'Good', 'Excellent'])
+      .layout('horizontal')
+      .grouping(true, 'service_ratings')
+      .required()
       .end()
       
   .section('Experience Rating')
@@ -501,6 +788,7 @@ const survey = new TemplateBuilder()
       .end()
     .field('checkbox', 'What did you like?')
       .options(['Product Quality', 'Customer Service', 'Pricing', 'Delivery Speed'])
+      .layout('horizontal')
       .multiple()
       .end()
     .field('textarea', 'Additional Comments')

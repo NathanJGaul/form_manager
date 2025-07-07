@@ -321,6 +321,73 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               </div>
             )}
 
+            {(field.type === "radio" || field.type === "checkbox") && (
+              <div className="space-y-4">
+                {/* Layout Control */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Layout
+                  </label>
+                  <select
+                    value={field.layout || "vertical"}
+                    onChange={(e) =>
+                      updateField(sectionId, field.id, {
+                        layout: e.target.value as "vertical" | "horizontal",
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="vertical">Vertical</option>
+                    <option value="horizontal">Horizontal</option>
+                  </select>
+                </div>
+
+                {/* Grouping Control */}
+                <div>
+                  <label className="flex items-center space-x-2 mb-2">
+                    <input
+                      type="checkbox"
+                      checked={field.grouping?.enabled || false}
+                      onChange={(e) =>
+                        updateField(sectionId, field.id, {
+                          grouping: {
+                            enabled: e.target.checked,
+                            groupKey: field.grouping?.groupKey || "",
+                          },
+                        })
+                      }
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Enable grouping</span>
+                  </label>
+                  {field.grouping?.enabled && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Group Key
+                      </label>
+                      <input
+                        type="text"
+                        value={field.grouping?.groupKey || ""}
+                        onChange={(e) =>
+                          updateField(sectionId, field.id, {
+                            grouping: {
+                              enabled: true,
+                              groupKey: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="e.g., preferences, ratings"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Fields with the same group key will be grouped together if they have identical options and horizontal layout.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="flex items-center space-x-2">
                 <input

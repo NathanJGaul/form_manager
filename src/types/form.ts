@@ -6,6 +6,11 @@ export interface FormField {
   required: boolean;
   options?: string[] | { value: string; label: string }[];
   multiple?: boolean;
+  layout?: 'vertical' | 'horizontal';
+  grouping?: {
+    enabled: boolean;
+    groupKey?: string;
+  };
   validation?: {
     min?: number;
     max?: number;

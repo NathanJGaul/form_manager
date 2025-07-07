@@ -180,6 +180,8 @@ export class TDLConverter {
       required: guiField.required,
       options: guiField.options,
       multiple: guiField.multiple,
+      layout: guiField.layout,
+      grouping: guiField.grouping,
       validation: guiField.validation,
       conditional: guiField.conditional,
       defaultValue: guiField.defaultValue
@@ -278,6 +280,8 @@ export class TDLConverter {
       required: programmaticField.required || false,
       options: programmaticField.options,
       multiple: programmaticField.multiple,
+      layout: programmaticField.layout,
+      grouping: programmaticField.grouping,
       validation: programmaticField.validation,
       conditional: programmaticField.conditional,
       defaultValue: programmaticField.defaultValue
@@ -293,7 +297,8 @@ export class TDLConverter {
     // Most types are the same, just add 'range' for programmatic
     if (guiType === 'text' || guiType === 'textarea' || guiType === 'select' || 
         guiType === 'radio' || guiType === 'checkbox' || guiType === 'number' || 
-        guiType === 'date' || guiType === 'file') {
+        guiType === 'date' || guiType === 'file' || guiType === 'email' || 
+        guiType === 'tel') {
       return guiType;
     }
     
@@ -314,7 +319,8 @@ export class TDLConverter {
     if (programmaticType === 'text' || programmaticType === 'textarea' || 
         programmaticType === 'select' || programmaticType === 'radio' || 
         programmaticType === 'checkbox' || programmaticType === 'number' || 
-        programmaticType === 'date' || programmaticType === 'file') {
+        programmaticType === 'date' || programmaticType === 'file' ||
+        programmaticType === 'email' || programmaticType === 'tel') {
       return programmaticType;
     }
     

@@ -171,6 +171,109 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   };
 
+  const groupFields = (fields: any[]) => {
+    const grouped: { [key: string]: any[] } = {};
+    const ungrouped: any[] = [];
+
+    fields.forEach(field => {
+      if (field.grouping?.enabled && field.grouping?.groupKey) {
+        const groupKey = field.grouping.groupKey;
+        if (!grouped[groupKey]) {
+          grouped[groupKey] = [];
+        }
+        grouped[groupKey].push(field);
+      } else {
+        ungrouped.push(field);
+      }
+    });
+
+    return { grouped, ungrouped };
+  };
+
+  const renderGroupedFields = (groupKey: string, fields: any[]) => {
+    if (fields.length === 0) return null;
+
+    // Check if all fields in group have the same options for horizontal grouping
+    const firstField = fields[0];
+    const allHaveSameOptions = fields.every(field => 
+      field.options && firstField.options &&
+      JSON.stringify(field.options) === JSON.stringify(firstField.options) &&
+      field.layout === 'horizontal'
+    );
+
+    if (allHaveSameOptions && (firstField.type === 'radio' || firstField.type === 'checkbox')) {
+      // Render as horizontal grouped fields with shared options
+      return (
+        <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">
+            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)} Options
+          </h4>
+          <div className="flex flex-wrap gap-6">
+            {firstField.options?.map((option: string) => (
+              <div key={option} className="flex flex-col space-y-2">
+                <span className="text-sm font-medium text-gray-600">{option}</span>
+                <div className="flex flex-col space-y-1">
+                  {fields.map(field => {
+                    const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
+                    const error = errors[field.id];
+                    
+                    return (
+                      <label key={field.id} className="flex items-center space-x-2 cursor-pointer text-sm">
+                        <input
+                          type={field.type}
+                          name={field.type === 'radio' ? field.id : undefined}
+                          value={option}
+                          checked={field.type === 'radio' 
+                            ? value === option 
+                            : Array.isArray(value) && value.includes(option)
+                          }
+                          onChange={(e) => {
+                            if (field.type === 'radio') {
+                              handleFieldChange(field.id, e.target.value);
+                            } else {
+                              const currentValues = Array.isArray(value) ? value : [];
+                              if (e.target.checked) {
+                                handleFieldChange(field.id, [...currentValues, option]);
+                              } else {
+                                handleFieldChange(field.id, currentValues.filter((v) => v !== option));
+                              }
+                            }
+                          }}
+                          className="text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">{field.label}</span>
+                        {field.required && <span className="text-red-500">*</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+          {fields.some(field => errors[field.id]) && (
+            <div className="text-red-500 text-sm space-y-1">
+              {fields.map(field => errors[field.id] && (
+                <p key={field.id}>{field.label}: {errors[field.id]}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      // Render fields individually but within a group container
+      return (
+        <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">
+            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)}
+          </h4>
+          <div className="space-y-4">
+            {fields.map(renderField)}
+          </div>
+        </div>
+      );
+    }
+  };
+
   const renderField = (field: any) => {
     const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
     const error = errors[field.id];
@@ -282,7 +385,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <div className="space-y-2">
+            <div className={field.layout === 'horizontal' ? "flex flex-wrap gap-4" : "space-y-2"}>
               {field.options?.map((option: string) => (
                 <label
                   key={option}
@@ -312,7 +415,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <div className="space-y-2">
+            <div className={field.layout === 'horizontal' ? "flex flex-wrap gap-4" : "space-y-2"}>
               {field.options?.map((option: string) => (
                 <label
                   key={option}
@@ -476,6 +579,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <div className="space-y-8">
           {visibleSections.map((section) => {
             const visibleFields = getVisibleFields(section.fields, formData);
+            const { grouped, ungrouped } = groupFields(visibleFields);
 
             return (
               <div key={section.id} className="border rounded-lg p-6">
@@ -483,7 +587,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   {section.title}
                 </h2>
                 <div className="space-y-6">
-                  {visibleFields.map(renderField)}
+                  {/* Render ungrouped fields */}
+                  {ungrouped.map(renderField)}
+                  
+                  {/* Render grouped fields */}
+                  {Object.entries(grouped).map(([groupKey, fields]) =>
+                    renderGroupedFields(groupKey, fields)
+                  )}
                 </div>
               </div>
             );
