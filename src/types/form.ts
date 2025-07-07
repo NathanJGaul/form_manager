@@ -18,6 +18,7 @@ export interface FormField {
     values: string[];
     operator: 'equals' | 'contains' | 'not_equals';
   };
+  defaultValue?: any;
 }
 
 export interface FormSection {

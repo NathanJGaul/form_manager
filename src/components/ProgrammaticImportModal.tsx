@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import * as Icons from "lucide-react";
 import { TDLConverter } from "../programmatic/tdl/converter";
+import { JCC2UserQuestionnaire } from "../programmatic/examples/JCC2UserQuestionnaire";
 import { WorkingComprehensiveTemplate } from "../programmatic/examples/WorkingComprehensiveTemplate";
+import { DefaultValueExample } from "../programmatic/examples/DefaultValueExample";
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
+import { TemplateBuilder } from "../programmatic/builder/TemplateBuilder";
+import * as ProgrammaticModules from "../programmatic";
 import { FormTemplate } from "../types/form";
 
 interface ProgrammaticImportModalProps {
@@ -79,6 +83,7 @@ export const ProgrammaticImportModal: React.FC<
               options: field.options,
               validation: field.validation,
               conditional: field.conditional,
+              defaultValue: field.defaultValue,
             })),
           })),
           createdAt: new Date(),
@@ -115,6 +120,9 @@ export const ProgrammaticImportModal: React.FC<
       let programmaticTemplate;
 
       switch (exampleName) {
+        case "jcc2":
+          programmaticTemplate = JCC2UserQuestionnaire.create();
+          break;
         case "comprehensive":
           programmaticTemplate = WorkingComprehensiveTemplate.create();
           break;
@@ -129,6 +137,9 @@ export const ProgrammaticImportModal: React.FC<
           break;
         case "registration":
           programmaticTemplate = CommonTemplates.createRegistrationForm();
+          break;
+        case "defaultValues":
+          programmaticTemplate = DefaultValueExample.create();
           break;
         default:
           throw new Error("Unknown example template");
@@ -150,12 +161,16 @@ export const ProgrammaticImportModal: React.FC<
 
   const handleCodeImport = () => {
     try {
-      // This is a simplified version - in practice you'd want more sophisticated parsing
-      const templateFunction = new Function("return " + codeInput)();
-      const programmaticTemplate =
-        typeof templateFunction === "function"
-          ? templateFunction()
-          : templateFunction;
+      // Parse and resolve imports
+      const { cleanCode, modules } = parseAndResolveImports(codeInput);
+      
+      // Create parameter names and values for the function
+      const paramNames = Object.keys(modules);
+      const paramValues = Object.values(modules);
+      
+      // Create a function that provides all imported modules in scope
+      const templateFunction = new Function(...paramNames, "return " + cleanCode);
+      const programmaticTemplate = templateFunction(...paramValues);
 
       const result = convertProgrammaticTemplate(programmaticTemplate);
       setConversionResult(result);
@@ -169,6 +184,58 @@ export const ProgrammaticImportModal: React.FC<
         ],
       });
     }
+  };
+
+  const parseAndResolveImports = (code: string): { cleanCode: string; modules: Record<string, any> } => {
+    const modules: Record<string, any> = {};
+    
+    // Always provide TemplateBuilder as default
+    modules.TemplateBuilder = TemplateBuilder;
+    
+    // Remove import statements and collect imported modules
+    const cleanCode = code.replace(/^import\s+.*?from\s+['"]([^'"]+)['"];?\s*$/gm, (match, modulePath) => {
+      // Only handle project imports (starting with @src or relative paths within programmatic)
+      if (modulePath.startsWith('@src/programmatic') || modulePath.startsWith('../programmatic') || modulePath.startsWith('./')) {
+        try {
+          // Extract import specifiers
+          const importMatch = match.match(/^import\s+(.+?)\s+from/);
+          if (importMatch) {
+            const importSpec = importMatch[1].trim();
+            
+            // Handle different import types
+            if (importSpec.startsWith('{') && importSpec.endsWith('}')) {
+              // Named imports: { TemplateBuilder, SectionBuilder }
+              const namedImports = importSpec.slice(1, -1).split(',').map(s => s.trim());
+              namedImports.forEach(importName => {
+                const cleanName = importName.replace(/\s+as\s+\w+/, '').trim();
+                if (ProgrammaticModules[cleanName as keyof typeof ProgrammaticModules]) {
+                  modules[cleanName] = ProgrammaticModules[cleanName as keyof typeof ProgrammaticModules];
+                }
+              });
+            } else if (importSpec.includes('* as ')) {
+              // Namespace import: * as Programmatic
+              const aliasMatch = importSpec.match(/\*\s+as\s+(\w+)/);
+              if (aliasMatch) {
+                modules[aliasMatch[1]] = ProgrammaticModules;
+              }
+            } else {
+              // Default import: TemplateBuilder
+              const defaultName = importSpec.trim();
+              if (ProgrammaticModules[defaultName as keyof typeof ProgrammaticModules]) {
+                modules[defaultName] = ProgrammaticModules[defaultName as keyof typeof ProgrammaticModules];
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to resolve import:', modulePath, e);
+        }
+      }
+      
+      // Remove the import statement
+      return '';
+    });
+    
+    return { cleanCode: cleanCode.trim(), modules };
   };
 
   const handleImport = () => {
@@ -248,6 +315,20 @@ export const ProgrammaticImportModal: React.FC<
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="border rounded-lg p-4 hover:border-blue-300 transition-colors">
                     <h3 className="font-medium text-gray-900 mb-2">
+                      JCC2 User Questionnaire
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Programmatic template for the JCC2 User Questionnaire PDF.
+                    </p>
+                    <button
+                      onClick={() => handleExampleImport("jcc2")}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Import Template
+                    </button>
+                  </div>
+                  <div className="border rounded-lg p-4 hover:border-blue-300 transition-colors">
+                    <h3 className="font-medium text-gray-900 mb-2">
                       Comprehensive Event Registration
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
@@ -301,6 +382,21 @@ export const ProgrammaticImportModal: React.FC<
                     </p>
                     <button
                       onClick={() => handleExampleImport("survey")}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Import Template
+                    </button>
+                  </div>
+
+                  <div className="border rounded-lg p-4 hover:border-blue-300 transition-colors">
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      Default Values Demo
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Template demonstrating default value functionality across different field types
+                    </p>
+                    <button
+                      onClick={() => handleExampleImport("defaultValues")}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
                       Import Template

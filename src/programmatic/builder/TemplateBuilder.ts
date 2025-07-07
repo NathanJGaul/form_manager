@@ -546,6 +546,14 @@ export class FieldBuilder {
   }
 
   /**
+   * Set field default value
+   */
+  defaultValue(value: any): FieldBuilder {
+    this.field.defaultValue = value;
+    return this;
+  }
+
+  /**
    * Set conditional logic
    */
   conditional(dependsOn: string, operator: 'equals' | 'contains' | 'not_equals', values: string[]): FieldBuilder {

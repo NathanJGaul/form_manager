@@ -1,5 +1,4 @@
-import { TemplateBuilder } from '../builder/TemplateBuilder';
-import { ProgrammaticTemplate } from '../types';
+import { TemplateBuilder, ProgrammaticTemplate } from "../src/programmatic";
 
 // Helper data for repetitive sections
 const operationalExperienceTopics = [
@@ -41,26 +40,26 @@ export class JCC2UserQuestionnaire {
   static create(): ProgrammaticTemplate {
     const builder = new TemplateBuilder()
       .create('JCC2 User Questionnaire')
-      .description('A programmatic version of the JCC2 User Questionnaire PDF, designed for user feedback on JCC2 applications.')
-      .author('Gemini')
+      .description('A programmatic version of the JCC2 User Questionnaire, designed for user feedback on JCC2 applications.')
+      .author('Nathan Gaul (nathan.gaul.2@us.af.mil)')
       .version('1.0.0')
       .tags('questionnaire', 'jcc2', 'feedback', 'military');
 
     // Page 1: User and Role Information
     builder.section('User Information')
-      .field('text', 'Event').id('event').defaultValue('JCC2 User Questionnaire').end()
-      .field('date', 'Date').id('date').defaultValue(new Date().toISOString().split('T')[0]).end()
+      .field('text', 'Event').id('event').end()
+      .field('date', 'Date').id('date').end()
       .field('text', 'Rank/Name').id('rank_name').required().end()
       .field('text', 'Unit').id('unit').end()
       .field('email', 'Email').id('email').required().end()
       .field('tel', 'Phone').id('phone').end();
 
     builder.section('Role and Echelon')
-      .field('radio', 'Status of Current Role').id('current_role_status').required().options(['Active Duty', 'Guard/Reserve', 'DoD Civilian', 'Contractor']).defaultValue('Active Duty').end()
-      .field('radio', 'Current Cyber Operator').id('is_cyber_operator').required().options(yesNo).defaultValue('No').end()
+      .field('radio', 'Status of Current Role').id('current_role_status').required().options(['Active Duty', 'Guard/Reserve', 'DoD Civilian', 'Contractor']).end()
+      .field('radio', 'Current Cyber Operator').id('is_cyber_operator').required().options(yesNo).end()
       .field('text', 'Cyber Operations Division/Team').id('cyber_ops_division_team').required().conditional('is_cyber_operator', 'equals', ['Yes']).end()
-      .field('radio', 'Echelon You Work Within').id('echelon').required().options(['Strategic', 'Operational', 'Tactical']).defaultValue('Operational').end()
-      .field('checkbox', 'Duties You Perform').id('duties').multiple().options(['Offensive Cyber Operations', 'Defensive Cyber Operations', 'Mission Planning', 'Internal Defense Measures', 'Ticket Creation', 'Other(s)']).defaultValue(['Defensive Cyber Operations']).end()
+      .field('radio', 'Echelon You Work Within').id('echelon').required().options(['Strategic', 'Operational', 'Tactical']).end()
+      .field('checkbox', 'Duties You Perform').id('duties').multiple().options(['Offensive Cyber Operations', 'Defensive Cyber Operations', 'Mission Planning', 'Internal Defense Measures', 'Ticket Creation', 'Other(s)']).end()
       .field('text', 'Other Duties').id('other_duties').required().conditional('duties', 'contains', ['Other(s)']).end();
 
     // Page 1-2: Experience Grids

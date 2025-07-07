@@ -181,7 +181,8 @@ export class TDLConverter {
       options: guiField.options,
       multiple: guiField.multiple,
       validation: guiField.validation,
-      conditional: guiField.conditional
+      conditional: guiField.conditional,
+      defaultValue: guiField.defaultValue
     };
 
     return programmaticField;
@@ -278,7 +279,8 @@ export class TDLConverter {
       options: programmaticField.options,
       multiple: programmaticField.multiple,
       validation: programmaticField.validation,
-      conditional: programmaticField.conditional
+      conditional: programmaticField.conditional,
+      defaultValue: programmaticField.defaultValue
     };
 
     return guiField;

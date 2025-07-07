@@ -138,6 +138,7 @@ export interface ProgrammaticField {
   // Additional programmatic properties
   variables?: Record<string, any>;
   dynamic?: boolean;
+  defaultValue?: any;
 }
 
 export interface ProgrammaticSection {

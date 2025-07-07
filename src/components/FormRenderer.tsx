@@ -24,9 +24,25 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   onSubmit,
   onExit,
 }) => {
-  const [formData, setFormData] = useState<Record<string, any>>(
-    instance?.data || {}
-  );
+  // Initialize form data with default values if no instance data exists
+  const initializeFormData = () => {
+    if (instance?.data && Object.keys(instance.data).length > 0) {
+      return instance.data;
+    }
+    
+    const defaultData: Record<string, any> = {};
+    template.sections.forEach(section => {
+      section.fields.forEach(field => {
+        if (field.defaultValue !== undefined) {
+          defaultData[field.id] = field.defaultValue;
+        }
+      });
+    });
+    
+    return defaultData;
+  };
+
+  const [formData, setFormData] = useState<Record<string, any>>(initializeFormData());
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -156,7 +172,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const renderField = (field: any) => {
-    const value = formData[field.id];
+    const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
     const error = errors[field.id];
 
     const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${

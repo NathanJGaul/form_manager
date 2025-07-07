@@ -182,6 +182,85 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               </div>
             ) : null}
 
+            {/* Default Value Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Default Value
+              </label>
+              {field.type === "checkbox" ? (
+                <div>
+                  <textarea
+                    value={Array.isArray(field.defaultValue) ? field.defaultValue.join('\n') : ''}
+                    onChange={(e) =>
+                      updateField(sectionId, field.id, {
+                        defaultValue: e.target.value
+                          .split('\n')
+                          .filter(v => v.trim())
+                      })
+                    }
+                    placeholder="Enter default selections (one per line)"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter values that should be pre-selected from your options
+                  </p>
+                </div>
+              ) : field.type === "radio" || field.type === "select" ? (
+                <select
+                  value={field.defaultValue || ""}
+                  onChange={(e) =>
+                    updateField(sectionId, field.id, {
+                      defaultValue: e.target.value || undefined,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">No default value</option>
+                  {field.options?.map((option: string) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              ) : field.type === "date" ? (
+                <input
+                  type="date"
+                  value={field.defaultValue || ""}
+                  onChange={(e) =>
+                    updateField(sectionId, field.id, {
+                      defaultValue: e.target.value || undefined,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : field.type === "number" ? (
+                <input
+                  type="number"
+                  value={field.defaultValue || ""}
+                  onChange={(e) =>
+                    updateField(sectionId, field.id, {
+                      defaultValue: e.target.value ? Number(e.target.value) : undefined,
+                    })
+                  }
+                  placeholder="Enter default number"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={field.defaultValue || ""}
+                  onChange={(e) =>
+                    updateField(sectionId, field.id, {
+                      defaultValue: e.target.value || undefined,
+                    })
+                  }
+                  placeholder="Enter default value"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
+            </div>
+
             {(field.type === "select" ||
               field.type === "radio" ||
               field.type === "checkbox") && (
