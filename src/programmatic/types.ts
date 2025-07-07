@@ -122,7 +122,7 @@ export interface ControlFlowConfig {
 // Extended field and section types with control flow
 export interface ProgrammaticField {
   id: string;
-  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'range';
+  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'email' | 'tel' | 'range';
   label: string;
   placeholder?: string;
   required?: boolean;

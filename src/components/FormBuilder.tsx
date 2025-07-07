@@ -173,6 +173,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="text">Text Input</option>
+                  <option value="email">Email Input</option>
+                  <option value="tel">Telephone Input</option>
                   <option value="textarea">Text Area</option>
                   <option value="select">Select Dropdown</option>
                   <option value="radio">Radio Buttons</option>

@@ -198,6 +198,42 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
+      case "email":
+        return (
+          <div key={field.id} className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <input
+              type="email"
+              value={value || ""}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              placeholder={field.placeholder || `Enter ${field.label}`}
+              className={baseInputClasses}
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+          </div>
+        );
+
+      case "tel":
+        return (
+          <div key={field.id} className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <input
+              type="tel"
+              value={value || ""}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              placeholder={field.placeholder || `Enter ${field.label}`}
+              className={baseInputClasses}
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+          </div>
+        );
+
       case "textarea":
         return (
           <div key={field.id} className="space-y-2">
