@@ -125,6 +125,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const handleImportTemplate = (importedTemplate: FormTemplate) => {
+    // Debug: Log imported template to check field properties
+    console.log('Importing template:', importedTemplate);
+    console.log('Sample field in FormBuilder:', importedTemplate.sections[1]?.fields[0]);
+    
     setName(importedTemplate.name);
     setDescription(importedTemplate.description);
     setSections(importedTemplate.sections);

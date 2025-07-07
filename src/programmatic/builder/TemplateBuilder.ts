@@ -565,6 +565,7 @@ export class FieldBuilder {
    * Set field layout
    */
   layout(layout: 'vertical' | 'horizontal'): FieldBuilder {
+    console.log(`Setting layout to ${layout} for field ${this.field.id || this.field.label}`);
     this.field.layout = layout;
     return this;
   }
@@ -573,6 +574,7 @@ export class FieldBuilder {
    * Set field grouping configuration
    */
   grouping(enabled: boolean, groupKey?: string): FieldBuilder {
+    console.log(`Setting grouping to ${enabled} with key ${groupKey} for field ${this.field.id || this.field.label}`);
     this.field.grouping = {
       enabled,
       groupKey

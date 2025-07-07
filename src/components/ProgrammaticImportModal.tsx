@@ -67,6 +67,9 @@ export const ProgrammaticImportModal: React.FC<
       const conversionResult = converter.convertToGUI(programmaticTemplate);
 
       if (conversionResult.success && conversionResult.result) {
+        // Debug: Log the conversion result to check layout and grouping properties
+        console.log('Conversion result:', conversionResult.result);
+        
         // Transform to FormTemplate format
         const formTemplate: FormTemplate = {
           id: crypto.randomUUID(),
@@ -93,6 +96,10 @@ export const ProgrammaticImportModal: React.FC<
           createdAt: new Date(),
           updatedAt: new Date(),
         };
+
+        // Debug: Log the final form template to check if properties are preserved
+        console.log('Final form template:', formTemplate);
+        console.log('Sample field properties:', formTemplate.sections[1]?.fields[0]);
 
         return {
           success: true,
