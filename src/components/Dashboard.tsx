@@ -3,20 +3,7 @@ import { FormTemplate, FormInstance } from '../types/form';
 import { storageManager } from '../utils/storage';
 import { FormBuilder } from './FormBuilder';
 import { FormRenderer } from './FormRenderer';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  Play, 
-  Download,
-  FileText,
-  Calendar,
-  Users,
-  BarChart3,
-  Settings
-} from 'lucide-react';
+import * as Icons from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
@@ -179,14 +166,14 @@ export const Dashboard: React.FC = () => {
                 onClick={handleExportAll}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
-                <Download className="w-4 h-4" />
+                <Icons.Download className="w-4 h-4" />
                 <span>Export All</span>
               </button>
               <button
                 onClick={handleCreateTemplate}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <Icons.Plus className="w-4 h-4" />
                 <span>New Template</span>
               </button>
             </div>
@@ -203,7 +190,7 @@ export const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-600">Templates</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalTemplates}</p>
               </div>
-              <FileText className="w-8 h-8 text-blue-600" />
+              <Icons.FileText className="w-8 h-8 text-blue-600" />
             </div>
           </div>
           
@@ -213,7 +200,7 @@ export const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-600">Total Forms</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalInstances}</p>
               </div>
-              <BarChart3 className="w-8 h-8 text-teal-600" />
+              <Icons.BarChart3 className="w-8 h-8 text-teal-600" />
             </div>
           </div>
           
@@ -223,7 +210,7 @@ export const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-600">Completed</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.completedForms}</p>
               </div>
-              <Users className="w-8 h-8 text-green-600" />
+              <Icons.Users className="w-8 h-8 text-green-600" />
             </div>
           </div>
           
@@ -233,7 +220,7 @@ export const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.inProgressForms}</p>
               </div>
-              <Calendar className="w-8 h-8 text-orange-600" />
+              <Icons.Calendar className="w-8 h-8 text-orange-600" />
             </div>
           </div>
         </div>
@@ -242,7 +229,7 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Icons.Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search templates and forms..."
@@ -254,7 +241,7 @@ export const Dashboard: React.FC = () => {
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-gray-500" />
+                <Icons.Filter className="w-4 h-4 text-gray-500" />
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as any)}
@@ -275,13 +262,13 @@ export const Dashboard: React.FC = () => {
           
           {filteredTemplates.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <Icons.FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">No templates found</p>
               <button
                 onClick={handleCreateTemplate}
                 className="mt-4 flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors mx-auto"
               >
-                <Plus className="w-4 h-4" />
+                <Icons.Plus className="w-4 h-4" />
                 <span>Create Your First Template</span>
               </button>
             </div>
@@ -306,14 +293,14 @@ export const Dashboard: React.FC = () => {
                         onClick={() => handleCreateInstance(template)}
                         className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
                       >
-                        <Play className="w-3 h-3" />
+                        <Icons.Play className="w-3 h-3" />
                         <span>Start</span>
                       </button>
                       <button
                         onClick={() => handleEditTemplate(template)}
                         className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                       >
-                        <Edit className="w-3 h-3" />
+                        <Icons.Edit className="w-3 h-3" />
                         <span>Edit</span>
                       </button>
                     </div>
@@ -323,13 +310,13 @@ export const Dashboard: React.FC = () => {
                         onClick={() => handleExportTemplate(template.id)}
                         className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
                       >
-                        <Download className="w-4 h-4" />
+                        <Icons.Download className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteTemplate(template.id)}
                         className="p-1 text-red-500 hover:text-red-700 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Icons.Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -345,7 +332,7 @@ export const Dashboard: React.FC = () => {
           
           {filteredInstances.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <Icons.BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">No form instances found</p>
             </div>
           ) : (
@@ -405,13 +392,13 @@ export const Dashboard: React.FC = () => {
                             onClick={() => handleEditInstance(instance)}
                             className="text-blue-600 hover:text-blue-900 transition-colors"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Icons.Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteInstance(instance.id)}
                             className="text-red-600 hover:text-red-900 transition-colors"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Icons.Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

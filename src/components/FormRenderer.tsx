@@ -1,8 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FormTemplate, FormInstance } from '../types/form';
-import { storageManager } from '../utils/storage';
-import { getVisibleSections, getVisibleFields, calculateProgress, validateField } from '../utils/formLogic';
-import { Save, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from "react";
+import { FormTemplate, FormInstance } from "../types/form";
+import { storageManager } from "../utils/storage";
+import {
+  getVisibleSections,
+  getVisibleFields,
+  calculateProgress,
+  validateField,
+} from "../utils/formLogic";
+import * as Icons from "lucide-react";
 
 interface FormRendererProps {
   template: FormTemplate;
@@ -15,36 +20,40 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   template,
   instance,
   onSave,
-  onSubmit
+  onSubmit,
 }) => {
-  const [formData, setFormData] = useState<Record<string, any>>(instance?.data || {});
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [formData, setFormData] = useState<Record<string, any>>(
+    instance?.data || {}
+  );
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const currentInstance: FormInstance = instance || 
-    storageManager.getOrCreateInstance(template.id, template.name);
+  const currentInstance: FormInstance =
+    instance || storageManager.getOrCreateInstance(template.id, template.name);
 
   const visibleSections = getVisibleSections(template.sections, formData);
   const progress = calculateProgress(template.sections, formData);
 
   const saveForm = useCallback(async () => {
-    setSaveStatus('saving');
+    setSaveStatus("saving");
     try {
       const updatedInstance: FormInstance = {
         ...currentInstance,
         data: formData,
         progress,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
+
       storageManager.saveInstance(updatedInstance);
       onSave?.(updatedInstance);
-      setSaveStatus('saved');
-      
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      setSaveStatus("saved");
+
+      setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (error) {
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 2000);
     }
   }, [formData, progress, currentInstance, onSave]);
 
@@ -60,14 +69,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formData, saveForm]);
 
   const handleFieldChange = (fieldId: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [fieldId]: value
+      [fieldId]: value,
     }));
-    
+
     // Clear error when field is updated
     if (errors[fieldId]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[fieldId];
         return newErrors;
@@ -78,33 +87,33 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const handleSubmit = () => {
     // Validate all visible fields
     const newErrors: Record<string, string> = {};
-    
-    visibleSections.forEach(section => {
+
+    visibleSections.forEach((section) => {
       const visibleFields = getVisibleFields(section.fields, formData);
-      visibleFields.forEach(field => {
+      visibleFields.forEach((field) => {
         const error = validateField(field, formData[field.id]);
         if (error) {
           newErrors[field.id] = error;
         }
       });
     });
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     const submissionInstance: FormInstance = {
       ...currentInstance,
       data: formData,
       progress: 100,
       completed: true,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     // Save the completed instance (this overwrites the draft)
     storageManager.saveInstance(submissionInstance);
-    
+
     // Create submission record
     const submission = {
       id: crypto.randomUUID(),
@@ -112,9 +121,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       templateId: template.id,
       templateName: template.name,
       data: formData,
-      submittedAt: new Date()
+      submittedAt: new Date(),
     };
-    
+
     storageManager.saveSubmission(submission);
     onSubmit?.(submissionInstance);
   };
@@ -122,13 +131,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const renderField = (field: any) => {
     const value = formData[field.id];
     const error = errors[field.id];
-    
+
     const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-      error ? 'border-red-500' : 'border-gray-300'
+      error ? "border-red-500" : "border-gray-300"
     }`;
 
     switch (field.type) {
-      case 'text':
+      case "text":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -137,7 +146,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <input
               type="text"
-              value={value || ''}
+              value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder || `Enter ${field.label}`}
               className={baseInputClasses}
@@ -146,7 +155,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
-      case 'textarea':
+      case "textarea":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -154,7 +163,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <textarea
-              value={value || ''}
+              value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder || `Enter ${field.label}`}
               rows={4}
@@ -164,7 +173,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
-      case 'select':
+      case "select":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -172,7 +181,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <select
-              value={value || ''}
+              value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               className={baseInputClasses}
             >
@@ -187,7 +196,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
-      case 'radio':
+      case "radio":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -196,12 +205,17 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <div className="space-y-2">
               {field.options?.map((option: string) => (
-                <label key={option} className="flex items-center space-x-2 cursor-pointer">
+                <label
+                  key={option}
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
                   <input
                     type="radio"
                     value={option}
                     checked={value === option}
-                    onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                    onChange={(e) =>
+                      handleFieldChange(field.id, e.target.value)
+                    }
                     className="text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700">{option}</span>
@@ -212,7 +226,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
-      case 'checkbox':
+      case "checkbox":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -221,7 +235,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <div className="space-y-2">
               {field.options?.map((option: string) => (
-                <label key={option} className="flex items-center space-x-2 cursor-pointer">
+                <label
+                  key={option}
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
                   <input
                     type="checkbox"
                     checked={Array.isArray(value) && value.includes(option)}
@@ -230,7 +247,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                       if (e.target.checked) {
                         handleFieldChange(field.id, [...currentValues, option]);
                       } else {
-                        handleFieldChange(field.id, currentValues.filter(v => v !== option));
+                        handleFieldChange(
+                          field.id,
+                          currentValues.filter((v) => v !== option)
+                        );
                       }
                     }}
                     className="text-blue-600 focus:ring-blue-500"
@@ -243,7 +263,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
-      case 'number':
+      case "number":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -252,8 +272,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <input
               type="number"
-              value={value || ''}
-              onChange={(e) => handleFieldChange(field.id, e.target.value ? Number(e.target.value) : '')}
+              value={value || ""}
+              onChange={(e) =>
+                handleFieldChange(
+                  field.id,
+                  e.target.value ? Number(e.target.value) : ""
+                )
+              }
               placeholder={field.placeholder || `Enter ${field.label}`}
               min={field.validation?.min}
               max={field.validation?.max}
@@ -263,7 +288,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
-      case 'date':
+      case "date":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -272,7 +297,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <input
               type="date"
-              value={value || ''}
+              value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               className={baseInputClasses}
             />
@@ -280,7 +305,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         );
 
-      case 'file':
+      case "file":
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -299,7 +324,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                       name: file.name,
                       size: file.size,
                       type: file.type,
-                      data: e.target?.result
+                      data: e.target?.result,
                     });
                   };
                   reader.readAsDataURL(file);
@@ -328,34 +353,32 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              {saveStatus === 'saving' && (
+              {saveStatus === "saving" && (
                 <div className="flex items-center space-x-2 text-blue-600">
-                  <Save className="w-4 h-4 animate-spin" />
+                  <Icons.Save className="w-4 h-4 animate-spin" />
                   <span className="text-sm">Saving...</span>
                 </div>
               )}
-              {saveStatus === 'saved' && (
+              {saveStatus === "saved" && (
                 <div className="flex items-center space-x-2 text-green-600">
-                  <CheckCircle className="w-4 h-4" />
+                  <Icons.CheckCircle className="w-4 h-4" />
                   <span className="text-sm">Saved</span>
                 </div>
               )}
-              {saveStatus === 'error' && (
+              {saveStatus === "error" && (
                 <div className="flex items-center space-x-2 text-red-600">
-                  <AlertCircle className="w-4 h-4" />
+                  <Icons.AlertCircle className="w-4 h-4" />
                   <span className="text-sm">Error saving</span>
                 </div>
               )}
             </div>
-            <div className="text-sm text-gray-600">
-              Progress: {progress}%
-            </div>
+            <div className="text-sm text-gray-600">Progress: {progress}%</div>
           </div>
         </div>
 
         <div className="mb-6">
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
@@ -365,7 +388,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <div className="space-y-8">
           {visibleSections.map((section) => {
             const visibleFields = getVisibleFields(section.fields, formData);
-            
+
             return (
               <div key={section.id} className="border rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -382,7 +405,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <div className="mt-8 flex justify-end space-x-4">
           <button
             onClick={saveForm}
-            disabled={saveStatus === 'saving'}
+            disabled={saveStatus === "saving"}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
             Save Draft

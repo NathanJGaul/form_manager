@@ -1,14 +1,16 @@
 export interface FormField {
   id: string;
-  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file';
+  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'email' | 'tel' | 'url' | 'time' | 'range';
   label: string;
   placeholder?: string;
   required: boolean;
-  options?: string[];
+  options?: string[] | { value: string; label: string }[];
   multiple?: boolean;
   validation?: {
     min?: number;
     max?: number;
+    minLength?: number;
+    maxLength?: number;
     pattern?: string;
   };
   conditional?: {
