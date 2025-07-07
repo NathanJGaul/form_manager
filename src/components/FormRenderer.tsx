@@ -202,61 +202,84 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     );
 
     if (allHaveSameOptions && (firstField.type === 'radio' || firstField.type === 'checkbox')) {
-      // Render as horizontal grouped fields with shared options
+      // Render as a table/matrix with field names on left axis and options on top axis
       return (
         <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)} Options
+            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ')}
           </h4>
-          <div className="flex flex-wrap gap-6">
-            {firstField.options?.map((option: string) => (
-              <div key={option} className="flex flex-col space-y-2">
-                <span className="text-sm font-medium text-gray-600">{option}</span>
-                <div className="flex flex-col space-y-1">
-                  {fields.map(field => {
-                    const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
-                    const error = errors[field.id];
-                    
-                    return (
-                      <label key={field.id} className="flex items-center space-x-2 cursor-pointer text-sm">
-                        <input
-                          type={field.type}
-                          name={field.type === 'radio' ? field.id : undefined}
-                          value={option}
-                          checked={field.type === 'radio' 
-                            ? value === option 
-                            : Array.isArray(value) && value.includes(option)
-                          }
-                          onChange={(e) => {
-                            if (field.type === 'radio') {
-                              handleFieldChange(field.id, e.target.value);
-                            } else {
-                              const currentValues = Array.isArray(value) ? value : [];
-                              if (e.target.checked) {
-                                handleFieldChange(field.id, [...currentValues, option]);
-                              } else {
-                                handleFieldChange(field.id, currentValues.filter((v) => v !== option));
+          
+          {/* Table layout for matrix-style grouped fields */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              {/* Header row with options */}
+              <thead>
+                <tr>
+                  <th className="text-left py-2 pr-4 text-sm font-medium text-gray-700 min-w-0">
+                    Question
+                  </th>
+                  {firstField.options?.map((option: string) => (
+                    <th key={option} className="text-center py-2 px-2 text-sm font-medium text-gray-700 min-w-0">
+                      <div className="whitespace-nowrap">{option}</div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              
+              {/* Body rows with field names and input controls */}
+              <tbody className="divide-y divide-gray-100">
+                {fields.map(field => {
+                  const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
+                  const error = errors[field.id];
+                  
+                  return (
+                    <tr key={field.id} className="hover:bg-gray-25">
+                      {/* Field name/label column */}
+                      <td className="py-3 pr-4 text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <span>{field.label}</span>
+                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                        </div>
+                        {error && (
+                          <div className="text-red-500 text-xs mt-1">{error}</div>
+                        )}
+                      </td>
+                      
+                      {/* Option columns with input controls */}
+                      {firstField.options?.map((option: string) => (
+                        <td key={option} className="py-3 px-2 text-center">
+                          <div className="flex justify-center">
+                            <input
+                              type={field.type}
+                              name={field.type === 'radio' ? field.id : undefined}
+                              value={option}
+                              checked={field.type === 'radio' 
+                                ? value === option 
+                                : Array.isArray(value) && value.includes(option)
                               }
-                            }
-                          }}
-                          className="text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-gray-700">{field.label}</span>
-                        {field.required && <span className="text-red-500">*</span>}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+                              onChange={(e) => {
+                                if (field.type === 'radio') {
+                                  handleFieldChange(field.id, e.target.value);
+                                } else {
+                                  const currentValues = Array.isArray(value) ? value : [];
+                                  if (e.target.checked) {
+                                    handleFieldChange(field.id, [...currentValues, option]);
+                                  } else {
+                                    handleFieldChange(field.id, currentValues.filter((v) => v !== option));
+                                  }
+                                }
+                              }}
+                              className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
+                            />
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          {fields.some(field => errors[field.id]) && (
-            <div className="text-red-500 text-sm space-y-1">
-              {fields.map(field => errors[field.id] && (
-                <p key={field.id}>{field.label}: {errors[field.id]}</p>
-              ))}
-            </div>
-          )}
         </div>
       );
     } else {
