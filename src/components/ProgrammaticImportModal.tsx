@@ -164,13 +164,8 @@ export const ProgrammaticImportModal: React.FC<
       // Parse and resolve imports
       const { cleanCode, modules } = parseAndResolveImports(codeInput);
       
-      // Create parameter names and values for the function
-      const paramNames = Object.keys(modules);
-      const paramValues = Object.values(modules);
-      
-      // Create a function that provides all imported modules in scope
-      const templateFunction = new Function(...paramNames, "return " + cleanCode);
-      const programmaticTemplate = templateFunction(...paramValues);
+      // Try to parse as a class export first
+      const programmaticTemplate = parseTemplateFromCode(cleanCode, modules);
 
       const result = convertProgrammaticTemplate(programmaticTemplate);
       setConversionResult(result);
@@ -189,13 +184,14 @@ export const ProgrammaticImportModal: React.FC<
   const parseAndResolveImports = (code: string): { cleanCode: string; modules: Record<string, any> } => {
     const modules: Record<string, any> = {};
     
-    // Always provide TemplateBuilder as default
+    // Always provide TemplateBuilder and ProgrammaticTemplate as defaults
     modules.TemplateBuilder = TemplateBuilder;
+    modules.ProgrammaticTemplate = ProgrammaticModules.ProgrammaticTemplate;
     
     // Remove import statements and collect imported modules
-    const cleanCode = code.replace(/^import\s+.*?from\s+['"]([^'"]+)['"];?\s*$/gm, (match, modulePath) => {
-      // Only handle project imports (starting with @src or relative paths within programmatic)
-      if (modulePath.startsWith('@src/programmatic') || modulePath.startsWith('../programmatic') || modulePath.startsWith('./')) {
+    let cleanCode = code.replace(/^import\s+.*?from\s+['"]([^'"]+)['"];?\s*$/gm, (match, modulePath) => {
+      // Handle all programmatic imports
+      if (modulePath.includes('programmatic') || modulePath.startsWith('./') || modulePath.startsWith('../')) {
         try {
           // Extract import specifiers
           const importMatch = match.match(/^import\s+(.+?)\s+from/);
@@ -204,7 +200,7 @@ export const ProgrammaticImportModal: React.FC<
             
             // Handle different import types
             if (importSpec.startsWith('{') && importSpec.endsWith('}')) {
-              // Named imports: { TemplateBuilder, SectionBuilder }
+              // Named imports: { TemplateBuilder, ProgrammaticTemplate }
               const namedImports = importSpec.slice(1, -1).split(',').map(s => s.trim());
               namedImports.forEach(importName => {
                 const cleanName = importName.replace(/\s+as\s+\w+/, '').trim();
@@ -235,7 +231,80 @@ export const ProgrammaticImportModal: React.FC<
       return '';
     });
     
+    // Remove TypeScript type annotations
+    cleanCode = removeTypeScriptAnnotations(cleanCode);
+    
     return { cleanCode: cleanCode.trim(), modules };
+  };
+
+  const removeTypeScriptAnnotations = (code: string): string => {
+    // Remove type annotations from function parameters and return types
+    let cleanCode = code
+      // Remove return type annotations like `: ProgrammaticTemplate`
+      .replace(/\)\s*:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*\s*\{/g, ') {')
+      // Remove parameter type annotations like `(param: Type)`
+      .replace(/\(\s*(\w+)\s*:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*\s*\)/g, '($1)')
+      // Remove variable type annotations like `const var: Type =`
+      .replace(/:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*(?=\s*[=;])/g, '')
+      // Remove interface/type definitions
+      .replace(/^(export\s+)?(interface|type)\s+\w+.*$/gm, '')
+      // Remove generic type parameters like `<T>`
+      .replace(/<[A-Za-z_][A-Za-z0-9_,\s]*>/g, '');
+    
+    return cleanCode;
+  };
+
+  const parseTemplateFromCode = (cleanCode: string, modules: Record<string, any>): any => {
+    // Check if this is a class export with a create method
+    const classExportMatch = cleanCode.match(/export\s+class\s+(\w+)/);
+    
+    if (classExportMatch) {
+      const className = classExportMatch[1];
+      
+      // Remove the export keyword and convert to class declaration
+      const classCode = cleanCode.replace(/export\s+class\s+/, 'class ');
+      
+      // Create parameter names and values for the function
+      const paramNames = Object.keys(modules);
+      const paramValues = Object.values(modules);
+      
+      // Execute the class definition and call the create method
+      const classFunction = new Function(...paramNames, classCode + `; return ${className}.create();`);
+      return classFunction(...paramValues);
+    }
+    
+    // Check if this is a direct template builder call
+    const builderMatch = cleanCode.match(/(new\s+)?TemplateBuilder\s*\(\)/m);
+    if (builderMatch) {
+      // Create parameter names and values for the function
+      const paramNames = Object.keys(modules);
+      const paramValues = Object.values(modules);
+      
+      // Execute as a template builder expression
+      const templateFunction = new Function(...paramNames, "return " + cleanCode);
+      return templateFunction(...paramValues);
+    }
+    
+    // Check if this is a function that returns a template
+    const functionMatch = cleanCode.match(/function\s+(\w+)\s*\([^)]*\)\s*\{[\s\S]*?\}/);
+    if (functionMatch) {
+      const functionName = functionMatch[1];
+      
+      // Create parameter names and values for the function
+      const paramNames = Object.keys(modules);
+      const paramValues = Object.values(modules);
+      
+      // Execute the function and call it
+      const functionCall = new Function(...paramNames, cleanCode + `; return ${functionName}();`);
+      return functionCall(...paramValues);
+    }
+    
+    // Fallback: try to execute as a direct expression
+    const paramNames = Object.keys(modules);
+    const paramValues = Object.values(modules);
+    
+    const templateFunction = new Function(...paramNames, "return " + cleanCode);
+    return templateFunction(...paramValues);
   };
 
   const handleImport = () => {
@@ -421,13 +490,13 @@ export const ProgrammaticImportModal: React.FC<
                     </span>
                     <input
                       type="file"
-                      accept=".js,.ts,.json"
+                      accept=".js,.ts,.json,.tsx,.jsx"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
                   </label>
                   <p className="text-sm text-gray-500 mt-2">
-                    Supports .js, .ts, and .json files
+                    Supports .js, .ts, .tsx, .jsx, and .json files
                   </p>
                 </div>
 
@@ -467,11 +536,32 @@ export const ProgrammaticImportModal: React.FC<
                 </p>
 
                 <div className="space-y-4">
+                  <div className="text-sm text-gray-600 mb-2">
+                    <p className="mb-2">Supported formats:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Class export with static create() method (like JCC2UserQuestionnaire)</li>
+                      <li>Direct TemplateBuilder expressions</li>
+                      <li>Function that returns a template</li>
+                    </ul>
+                  </div>
                   <textarea
                     value={codeInput}
                     onChange={(e) => setCodeInput(e.target.value)}
-                    placeholder="// Paste your TemplateBuilder code here
-// Example:
+                    placeholder="// Paste your template code here
+// Example 1 - Class export:
+// export class MyTemplate {
+//   static create(): ProgrammaticTemplate {
+//     return new TemplateBuilder()
+//       .create('My Template')
+//       .section('Basic Info')
+//         .field('text', 'Name')
+//           .required()
+//           .end()
+//       .build();
+//   }
+// }
+//
+// Example 2 - Direct builder:
 // new TemplateBuilder()
 //   .create('My Template')
 //   .section('Basic Info')
@@ -479,7 +569,7 @@ export const ProgrammaticImportModal: React.FC<
 //       .required()
 //       .end()
 //   .build()"
-                    className="w-full h-64 px-3 py-2 border border-gray-300 rounded-md font-mono text-sm"
+                    className="w-full h-80 px-3 py-2 border border-gray-300 rounded-md font-mono text-sm"
                   />
 
                   <button
