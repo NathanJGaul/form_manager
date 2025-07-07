@@ -115,7 +115,7 @@ export class JCC2UserQuestionnaire {
     });
     builder.field('radio', 'Overall Effectiveness rating for MOS 1.1.2').id('mos_1_1_2_overall').options(effectivenessScale).required().end();
 
-    """    // Page 7: MOP 1.1.3
+    // Page 7: MOP 1.1.3
     builder.section('MOP 1.1.3: Identify the cause of an operational status change (MADSS)')
         .field('radio', 'MADDS has the capability to notice a change in operational change in cyber asset status.').id('mop_1_1_3_q1').options(effectivenessScale).required().end()
         .field('radio', 'MADDS has the capability to identify the cause of the operational change in cyber asset status.').id('mop_1_1_3_q2').options(effectivenessScale).required().end()
@@ -386,7 +386,7 @@ export class JCC2UserQuestionnaire {
         .if('eval_external_integ == "Yes"')
             .then(b => b.field('textarea', 'If yes, please describe the problems, the specific data sources involved, and the operational impact:').id('eval_external_integ_details').required().end())
         .endif()
-        .field('radio', 'Do you experience issues with JCC2's compatibility with legacy software packages used in your operations?').id('eval_legacy_compat').options(yesNo).end()
+        .field('radio', 'Do you experience issues with JCC2\'s compatibility with legacy software packages used in your operations?').id('eval_legacy_compat').options(yesNo).end()
         .if('eval_legacy_compat == "Yes"')
             .then(b => b.field('textarea', 'If yes, please describe the problems, the specific legacy systems involved, and the operational impact:').id('eval_legacy_compat_details').required().end())
         .endif()
@@ -415,11 +415,9 @@ export class JCC2UserQuestionnaire {
         .if('eval_improvements == "Yes"')
             .then(b => b.field('textarea', 'If you answered "Yes" to question b, please describe the desired changes or improvements in detail:').id('eval_improvements_details').required().end())
         .endif()
-        .field('textarea', 'Critical Issues. Please list any critical issues you feel must be resolved to significantly increase JCC2's effectiveness for your operations:').id('critical_issues').end()
+        .field('textarea', 'Critical Issues. Please list any critical issues you feel must be resolved to significantly increase JCC2\'s effectiveness for your operations:').id('critical_issues').end()
         .field('textarea', 'Shout Outs. Please list any features you encountered that greatly improved the speed, quality, or effectiveness of your duties.').id('shout_outs').end()
         .field('textarea', 'Final Thoughts. Are there any additional items you would like to address that have not been documented yet?').id('final_thoughts').end();
-""
-
 
     return builder.build();
   }
