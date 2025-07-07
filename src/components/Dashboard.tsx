@@ -148,6 +148,7 @@ export const Dashboard: React.FC = () => {
         instance={selectedInstance || undefined}
         onSave={handleSaveInstance}
         onSubmit={handleSubmitInstance}
+        onExit={() => setCurrentView('dashboard')}
       />
     );
   }

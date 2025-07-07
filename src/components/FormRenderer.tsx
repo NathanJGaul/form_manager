@@ -14,6 +14,7 @@ interface FormRendererProps {
   instance?: FormInstance;
   onSave?: (instance: FormInstance) => void;
   onSubmit?: (instance: FormInstance) => void;
+  onExit?: () => void;
 }
 
 export const FormRenderer: React.FC<FormRendererProps> = ({
@@ -21,6 +22,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   instance,
   onSave,
   onSubmit,
+  onExit,
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>(
     instance?.data || {}
@@ -29,6 +31,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const currentInstance: FormInstance =
     instance || storageManager.getOrCreateInstance(template.id, template.name);
@@ -49,9 +52,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       storageManager.saveInstance(updatedInstance);
       onSave?.(updatedInstance);
       setSaveStatus("saved");
+      setHasUnsavedChanges(false);
 
       setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch (error) {
+    } catch {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
     }
@@ -73,6 +77,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       ...prev,
       [fieldId]: value,
     }));
+    setHasUnsavedChanges(true);
 
     // Clear error when field is updated
     if (errors[fieldId]) {
@@ -126,6 +131,28 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     storageManager.saveSubmission(submission);
     onSubmit?.(submissionInstance);
+  };
+
+  const handleExit = async () => {
+    if (hasUnsavedChanges && saveStatus !== "saved") {
+      const shouldSave = window.confirm(
+        "You have unsaved changes. Would you like to save them before exiting?"
+      );
+      
+      if (shouldSave) {
+        await saveForm();
+        onExit?.();
+      } else {
+        const shouldDiscard = window.confirm(
+          "Are you sure you want to discard your changes and exit?"
+        );
+        if (shouldDiscard) {
+          onExit?.();
+        }
+      }
+    } else {
+      onExit?.();
+    }
   };
 
   const renderField = (field: any) => {
@@ -373,6 +400,15 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               )}
             </div>
             <div className="text-sm text-gray-600">Progress: {progress}%</div>
+            {onExit && (
+              <button
+                onClick={handleExit}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                <Icons.ArrowLeft className="w-4 h-4" />
+                <span>Exit</span>
+              </button>
+            )}
           </div>
         </div>
 
