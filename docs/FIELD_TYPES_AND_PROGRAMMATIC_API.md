@@ -119,6 +119,8 @@ Telephone number input field.
 
 URL input field.
 
+**Note:** This field type is available programmatically but not yet in the Form Builder UI.
+
 **Example:**
 ```typescript
 .field('url', 'Website')
@@ -130,6 +132,8 @@ URL input field.
 ### 8. Time Input (`time`)
 
 Time picker field.
+
+**Note:** This field type is available programmatically but not yet in the Form Builder UI.
 
 **Example:**
 ```typescript
@@ -246,6 +250,8 @@ Grouped checkboxes:
 
 Numeric range slider input.
 
+**Note:** This field type is available programmatically but not yet in the Form Builder UI.
+
 **Properties:**
 - `min` (required): Minimum value
 - `max` (required): Maximum value
@@ -262,10 +268,10 @@ Numeric range slider input.
 
 ### 13. File Upload (`file`)
 
-File upload input.
+File upload input. The `FormRenderer` currently defaults to `accept="image/*"`.
 
 **Properties:**
-- `accept` (optional): MIME types or file extensions
+- `accept` (optional): MIME types or file extensions (programmatic only)
 - `multiple` (optional): Allow multiple file selection
 
 **Example:**
