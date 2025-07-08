@@ -198,9 +198,8 @@ export const ProgrammaticImportModal: React.FC<
   const parseAndResolveImports = (code: string): { cleanCode: string; modules: Record<string, any> } => {
     const modules: Record<string, any> = {};
     
-    // Always provide TemplateBuilder and ProgrammaticTemplate as defaults
+    // Always provide TemplateBuilder as default
     modules.TemplateBuilder = TemplateBuilder;
-    modules.ProgrammaticTemplate = ProgrammaticModules.ProgrammaticTemplate;
     
     // Remove import statements and collect imported modules
     let cleanCode = code.replace(/^import\s+.*?from\s+['"]([^'"]+)['"];?\s*$/gm, (match, modulePath) => {
@@ -214,7 +213,7 @@ export const ProgrammaticImportModal: React.FC<
             
             // Handle different import types
             if (importSpec.startsWith('{') && importSpec.endsWith('}')) {
-              // Named imports: { TemplateBuilder, ProgrammaticTemplate }
+              // Named imports: { TemplateBuilder }
               const namedImports = importSpec.slice(1, -1).split(',').map(s => s.trim());
               namedImports.forEach(importName => {
                 const cleanName = importName.replace(/\s+as\s+\w+/, '').trim();

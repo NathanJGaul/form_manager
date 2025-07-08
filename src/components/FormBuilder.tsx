@@ -1,6 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { FormTemplate, FormSection, FormField } from "../types/form";
 import { storageManager } from "../utils/storage";
+import { exportTemplateToPdf, downloadPdf } from "../utils/pdfExport";
 import * as Icons from "lucide-react";
 import { ProgrammaticImportModal } from "./ProgrammaticImportModal";
 
@@ -133,6 +134,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     setDescription(importedTemplate.description);
     setSections(importedTemplate.sections);
     setShowImportModal(false);
+  };
+
+  const handleExportToPdf = async () => {
+    if (!name.trim()) {
+      alert("Please enter a form name before exporting");
+      return;
+    }
+
+    const formTemplate: FormTemplate = {
+      id: template?.id || crypto.randomUUID(),
+      name: name.trim(),
+      description: description.trim(),
+      sections,
+      createdAt: template?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+
+    try {
+      const result = await exportTemplateToPdf(formTemplate);
+      if (result.success && result.pdfBytes) {
+        downloadPdf(result.pdfBytes, `${formTemplate.name}_form.pdf`);
+      } else {
+        alert(`Failed to export PDF: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Error exporting PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const getAllFields = () => {
@@ -622,20 +650,30 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </div>
         </div>
 
-        <div className="p-6 border-t bg-gray-50 flex justify-end space-x-4">
+        <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
           <button
-            onClick={onCancel}
-            className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            onClick={handleExportToPdf}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
           >
-            Cancel
+            <Icons.FileText className="w-4 h-4" />
+            <span>Export PDF</span>
           </button>
-          <button
-            onClick={handleSave}
-            className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            <Icons.Save className="w-4 h-4" />
-            <span>Save Template</span>
-          </button>
+          
+          <div className="flex space-x-4">
+            <button
+              onClick={onCancel}
+              className="px-6 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <Icons.Save className="w-4 h-4" />
+              <span>Save Template</span>
+            </button>
+          </div>
         </div>
       </div>
 

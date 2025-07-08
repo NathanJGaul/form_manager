@@ -3,6 +3,7 @@ import { FormTemplate, FormInstance } from '../types/form';
 import { storageManager } from '../utils/storage';
 import { FormBuilder } from './FormBuilder';
 import { FormRenderer } from './FormRenderer';
+import { exportTemplateToPdf, downloadPdf } from '../utils/pdfExport';
 import * as Icons from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -93,6 +94,19 @@ export const Dashboard: React.FC = () => {
     a.download = `${template?.name || 'form'}_export.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportTemplateToPdf = async (template: FormTemplate) => {
+    try {
+      const result = await exportTemplateToPdf(template);
+      if (result.success && result.pdfBytes) {
+        downloadPdf(result.pdfBytes, `${template.name}_form.pdf`);
+      } else {
+        alert(`Failed to export PDF: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Error exporting PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const handleExportAll = () => {
@@ -310,8 +324,16 @@ export const Dashboard: React.FC = () => {
                       <button
                         onClick={() => handleExportTemplate(template.id)}
                         className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                        title="Export as CSV"
                       >
                         <Icons.Download className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleExportTemplateToPdf(template)}
+                        className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                        title="Export as PDF"
+                      >
+                        <Icons.FileText className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteTemplate(template.id)}

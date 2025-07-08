@@ -86,9 +86,9 @@ export class JCC2UserQuestionnaireV2 {
     builder.section('JCC2 Application Usage');
     allJcc2Apps.forEach(app => {
         const appId = `usage_${toId(app)}`;
-        builder.field('radio', `${app} - Frequency`).id(`${appId}_frequency`).options(frequencyOfUse).defaultValue(frequencyOfUse[0]).layout('horizontal').grouping(true, `usage_group_${toId(app)}`).required().end()
-               .field('checkbox', `${app} - Classification`).id(`${appId}_classification`).multiple().options(classificationOptions).layout('horizontal').grouping(true, `usage_group_${toId(app)}`).end()
-               .field('radio', `${app} - Training`).id(`${appId}_training_received`).options(yesNo).layout('horizontal').grouping(true, `usage_group_${toId(app)}`).required().end()
+        builder.field('radio', `${app} - Frequency`).id(`${appId}_frequency`).options(frequencyOfUse).defaultValue(frequencyOfUse[0]).layout('horizontal').grouping(true, `usage_frequency_group`).required().end()
+               .field('checkbox', `${app} - Classification`).id(`${appId}_classification`).multiple().options(classificationOptions).layout('horizontal').grouping(true, `usage_classification_group`).end()
+               .field('radio', `${app} - Training`).id(`${appId}_training_received`).options(yesNo).defaultValue('No').layout('horizontal').grouping(true, `usage_training_group`).required().end()
                .field('text', 'Specify Training Type').id(`${appId}_training_type`).required().conditional(`${appId}_training_received`, 'equals', ['Yes']).end()
     });
 
