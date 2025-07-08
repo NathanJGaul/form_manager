@@ -630,6 +630,97 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       </button>
                     </div>
 
+                    {/* Section Conditional Logic */}
+                    {(() => {
+                      const allFields = getAllFields();
+                      const availableFields = allFields.filter((f) => f.sectionId !== section.id);
+                      
+                      return availableFields.length > 0 ? (
+                        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <h4 className="text-sm font-medium text-blue-900 mb-3">
+                            Section Conditional Logic
+                          </h4>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-sm font-medium text-blue-800 mb-1">
+                                Show this section when:
+                              </label>
+                              <select
+                                value={section.conditional?.dependsOn || ""}
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    updateSection(section.id, {
+                                      conditional: {
+                                        dependsOn: e.target.value,
+                                        values: [],
+                                        operator: "equals",
+                                      },
+                                    });
+                                  } else {
+                                    updateSection(section.id, {
+                                      conditional: undefined,
+                                    });
+                                  }
+                                }}
+                                className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                              >
+                                <option value="">Always show</option>
+                                {availableFields.map((f) => (
+                                  <option key={f.field.id} value={f.field.id}>
+                                    {f.field.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {section.conditional && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <select
+                                  value={section.conditional.operator}
+                                  onChange={(e) =>
+                                    updateSection(section.id, {
+                                      conditional: {
+                                        dependsOn: section.conditional?.dependsOn || "",
+                                        values: section.conditional?.values || [],
+                                        operator: e.target.value as
+                                          | "equals"
+                                          | "contains"
+                                          | "not_equals",
+                                      },
+                                    })
+                                  }
+                                  className="px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                >
+                                  <option value="equals">equals</option>
+                                  <option value="contains">contains</option>
+                                  <option value="not_equals">does not equal</option>
+                                </select>
+
+                                <input
+                                  type="text"
+                                  placeholder="Value(s) - comma separated"
+                                  value={section.conditional.values.join(", ")}
+                                  onChange={(e) =>
+                                    updateSection(section.id, {
+                                      conditional: {
+                                        dependsOn: section.conditional?.dependsOn || "",
+                                        operator: section.conditional?.operator || "equals",
+                                        values: e.target.value
+                                          .split(",")
+                                          .map((v) => v.trim())
+                                          .filter((v) => v),
+                                      },
+                                    })
+                                  }
+                                  className="px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
                     <div className="space-y-4">
                       {section.fields.map((field) =>
                         renderFieldEditor(section.id, field)

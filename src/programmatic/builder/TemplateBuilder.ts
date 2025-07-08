@@ -416,6 +416,14 @@ export class SectionBuilder {
   constructor(private parent: TemplateBuilder, private section: ProgrammaticSection) {}
 
   /**
+   * Set section ID
+   */
+  id(id: string): SectionBuilder {
+    this.section.id = id;
+    return this;
+  }
+
+  /**
    * Add field to this section
    */
   field(type: ProgrammaticField['type'], label: string): FieldBuilder {

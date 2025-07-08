@@ -6,6 +6,7 @@ import { WorkingComprehensiveTemplate } from "../programmatic/examples/WorkingCo
 import { DefaultValueExample } from "../programmatic/examples/DefaultValueExample";
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
 import { HorizontalGroupingDemo } from "../../templates/horizontal_grouping_demo";
+import { SectionConditionalsTestTemplate } from "../../templates/section_conditionals_test";
 import { TemplateBuilder } from "../programmatic/builder/TemplateBuilder";
 import * as ProgrammaticModules from "../programmatic";
 import { FormTemplate } from "../types/form";
@@ -154,6 +155,9 @@ export const ProgrammaticImportModal: React.FC<
           break;
         case "horizontalGrouping":
           programmaticTemplate = HorizontalGroupingDemo.create();
+          break;
+        case "sectionConditionals":
+          programmaticTemplate = SectionConditionalsTestTemplate.create();
           break;
         default:
           throw new Error("Unknown example template");
@@ -495,6 +499,21 @@ export const ProgrammaticImportModal: React.FC<
                     <button
                       onClick={() => handleExampleImport("horizontalGrouping")}
                       className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      Import Template
+                    </button>
+                  </div>
+
+                  <div className="border rounded-lg p-4 hover:border-purple-300 transition-colors">
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      Section-Level Conditionals Demo
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Advanced form demonstrating section-level conditional logic where entire sections show/hide based on field responses
+                    </p>
+                    <button
+                      onClick={() => handleExampleImport("sectionConditionals")}
+                      className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
                     >
                       Import Template
                     </button>
