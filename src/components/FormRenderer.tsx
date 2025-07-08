@@ -204,25 +204,32 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (allHaveSameOptions && (firstField.type === 'radio' || firstField.type === 'checkbox')) {
       // Render as a table/matrix with field names on left axis and options on top axis
       return (
-        <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
+        <div key={groupKey} className="space-y-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
+          <h4 className="text-sm font-semibold text-gray-800 mb-2">
             {groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ')}
           </h4>
           
           {/* Table layout for matrix-style grouped fields */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+            <table className="w-full text-sm">
               {/* Header row with options */}
-              <thead>
+              <thead className="bg-gray-100">
                 <tr>
-                  <th className="text-left py-2 pr-4 text-sm font-medium text-gray-700 min-w-0">
+                  <th className="text-left py-2 pr-2 text-sm font-medium text-gray-700 border-r border-gray-200" style={{ width: '35%' }}>
                     Question
                   </th>
-                  {firstField.options?.map((option: string) => (
-                    <th key={option} className="text-center py-2 px-2 text-sm font-medium text-gray-700 min-w-0">
-                      <div className="whitespace-nowrap">{option}</div>
+                  {firstField.options?.map((option: string, index: number) => {
+                    const optionCount = firstField.options!.length;
+                    const availableWidth = 65; // 100% - 35% for question column
+                    const columnWidth = `${availableWidth / optionCount}%`;
+                    return (
+                    <th key={option} className="text-center py-2 px-1 text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0" style={{ width: columnWidth }}>
+                      <div className="leading-tight break-words hyphens-auto text-center px-1">
+                        {option}
+                      </div>
                     </th>
-                  ))}
+                    );
+                  })}
                 </tr>
               </thead>
               
@@ -235,20 +242,24 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   return (
                     <tr key={field.id} className="hover:bg-gray-25">
                       {/* Field name/label column */}
-                      <td className="py-3 pr-4 text-sm text-gray-900">
-                        <div className="flex items-center">
-                          <span>{field.label}</span>
-                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                      <td className="py-2 pr-2 text-sm text-gray-900 align-top border-r border-gray-200">
+                        <div className="flex flex-col">
+                          <div className="flex items-start">
+                            <span className="leading-tight break-words hyphens-auto">
+                              {field.label}
+                            </span>
+                            {field.required && <span className="text-red-500 ml-1 flex-shrink-0">*</span>}
+                          </div>
+                          {error && (
+                            <div className="text-red-500 text-xs mt-1">{error}</div>
+                          )}
                         </div>
-                        {error && (
-                          <div className="text-red-500 text-xs mt-1">{error}</div>
-                        )}
                       </td>
                       
                       {/* Option columns with input controls */}
                       {firstField.options?.map((option: string) => (
-                        <td key={option} className="py-3 px-2 text-center">
-                          <div className="flex justify-center">
+                        <td key={option} className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0">
+                          <div className="flex justify-center items-center h-8">
                             <input
                               type={field.type}
                               name={field.type === 'radio' ? field.id : undefined}
@@ -269,7 +280,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                                   }
                                 }
                               }}
-                              className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
+                              className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-4 w-4"
                             />
                           </div>
                         </td>
