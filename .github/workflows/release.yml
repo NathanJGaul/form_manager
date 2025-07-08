@@ -1,0 +1,74 @@
+name: Release Build
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  release-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build single file package
+      run: npm run build:single
+      
+    - name: Get release info
+      id: release_info
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          echo "name=Manual Release ${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+        else
+          echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "name=${{ github.event.release.name }}" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create release package
+      run: |
+        mkdir -p release
+        cp dist/index.html release/form-manager-${{ steps.release_info.outputs.tag }}.html
+        cp README.md release/
+        echo "# Form Manager - Single File Release" > release/RELEASE_NOTES.md
+        echo "" >> release/RELEASE_NOTES.md
+        echo "Version: ${{ steps.release_info.outputs.tag }}" >> release/RELEASE_NOTES.md
+        echo "Built: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> release/RELEASE_NOTES.md
+        echo "File size: $(du -h dist/index.html | cut -f1)" >> release/RELEASE_NOTES.md
+        echo "" >> release/RELEASE_NOTES.md
+        echo "This is a single HTML file containing the complete Form Manager application." >> release/RELEASE_NOTES.md
+        echo "Simply download and open in any modern web browser to use." >> release/RELEASE_NOTES.md
+        
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-package-${{ steps.release_info.outputs.tag }}
+        path: release/
+        retention-days: 90
+        
+    - name: Upload to release (if triggered by release)
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./release/form-manager-${{ steps.release_info.outputs.tag }}.html
+        asset_name: form-manager-${{ steps.release_info.outputs.tag }}.html
+        asset_content_type: text/html
