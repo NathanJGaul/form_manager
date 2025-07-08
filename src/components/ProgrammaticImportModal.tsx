@@ -64,7 +64,7 @@ export const ProgrammaticImportModal: React.FC<
     programmaticTemplate: any
   ): ConversionResult => {
     try {
-      const conversionResult = converter.convertToGUI(programmaticTemplate);
+      const conversionResult = converter.convertToGUI(programmaticTemplate, { preserveIds: true });
 
       if (conversionResult.success && conversionResult.result) {
         // Debug: Log the conversion result to check layout and grouping properties
