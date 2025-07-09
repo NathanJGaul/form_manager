@@ -1,5 +1,6 @@
 import { TemplateBuilder } from '../builder/TemplateBuilder';
 import { ProgrammaticTemplate } from '../types';
+import { JCC2UserQuestionnaireV2 } from '../../../templates/jcc2_questionnaire_v2';
 
 /**
  * Library of common template patterns and pre-built templates
@@ -193,10 +194,17 @@ export class CommonTemplates {
   }
 
   /**
+   * Create JCC2 User Questionnaire V2 template
+   */
+  static createJCC2QuestionnaireV2(): ProgrammaticTemplate {
+    return JCC2UserQuestionnaireV2.create();
+  }
+
+  /**
    * Get list of available templates
    */
   static listTemplates(): string[] {
-    return ['contact', 'survey', 'registration'];
+    return ['contact', 'survey', 'registration', 'jcc2-questionnaire'];
   }
 
   /**
@@ -210,6 +218,9 @@ export class CommonTemplates {
         return this.createSurveyTemplate();
       case 'registration':
         return this.createRegistrationForm();
+      case 'jcc2-questionnaire':
+      case 'jcc2':
+        return this.createJCC2QuestionnaireV2();
       default:
         throw new Error(`Template '${name}' not found`);
     }

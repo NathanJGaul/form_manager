@@ -1,12 +1,70 @@
 import { FormTemplate, FormInstance, FormSubmission, FormField } from '../types/form';
+import { CommonTemplates } from '../programmatic/library/CommonTemplates';
+import { TDLConverter } from '../programmatic/tdl/converter';
 
 class StorageManager {
   private readonly TEMPLATES_KEY = 'form_templates';
   private readonly INSTANCES_KEY = 'form_instances';
   private readonly SUBMISSIONS_KEY = 'form_submissions';
+  private readonly DEFAULT_TEMPLATES_LOADED_KEY = 'default_templates_loaded';
 
   // Template methods
   getTemplates(): FormTemplate[] {
+    // Load default templates on first run
+    this.loadDefaultTemplatesIfNeeded();
+    
+    const stored = localStorage.getItem(this.TEMPLATES_KEY);
+    if (!stored) return [];
+    
+    const templates = JSON.parse(stored);
+    return templates.map((t: any) => ({
+      ...t,
+      createdAt: new Date(t.createdAt),
+      updatedAt: new Date(t.updatedAt)
+    }));
+  }
+
+  private loadDefaultTemplatesIfNeeded(): void {
+    const defaultsLoaded = localStorage.getItem(this.DEFAULT_TEMPLATES_LOADED_KEY);
+    if (defaultsLoaded) return;
+
+    // Load default templates from CommonTemplates
+    const defaultTemplateNames = ['contact', 'survey', 'registration', 'jcc2-questionnaire'];
+    const existingTemplates = this.getTemplatesRaw();
+    const converter = new TDLConverter();
+    
+    defaultTemplateNames.forEach(templateName => {
+      try {
+        const programmaticTemplate = CommonTemplates.getTemplate(templateName);
+        const conversionResult = converter.convertToGUI(programmaticTemplate);
+        
+        if (conversionResult.success && conversionResult.result) {
+          const formTemplate = conversionResult.result as FormTemplate;
+          
+          // Check if template with this name already exists
+          const exists = existingTemplates.some(t => t.name === formTemplate.name);
+          if (!exists) {
+            // Mark as default template
+            formTemplate.id = `default-${templateName}`;
+            formTemplate.createdAt = new Date();
+            formTemplate.updatedAt = new Date();
+            
+            existingTemplates.push(formTemplate);
+          }
+        } else {
+          console.warn(`Failed to convert template: ${templateName}`, conversionResult.errors);
+        }
+      } catch (error) {
+        console.warn(`Failed to load default template: ${templateName}`, error);
+      }
+    });
+
+    // Save updated templates and mark defaults as loaded
+    localStorage.setItem(this.TEMPLATES_KEY, JSON.stringify(existingTemplates));
+    localStorage.setItem(this.DEFAULT_TEMPLATES_LOADED_KEY, 'true');
+  }
+
+  private getTemplatesRaw(): FormTemplate[] {
     const stored = localStorage.getItem(this.TEMPLATES_KEY);
     if (!stored) return [];
     
@@ -33,6 +91,14 @@ class StorageManager {
 
   deleteTemplate(templateId: string): void {
     const templates = this.getTemplates().filter(t => t.id !== templateId);
+    localStorage.setItem(this.TEMPLATES_KEY, JSON.stringify(templates));
+  }
+
+  // Method to reset default templates (for testing)
+  resetDefaultTemplates(): void {
+    localStorage.removeItem(this.DEFAULT_TEMPLATES_LOADED_KEY);
+    // Remove default templates
+    const templates = this.getTemplatesRaw().filter(t => !t.id.startsWith('default-'));
     localStorage.setItem(this.TEMPLATES_KEY, JSON.stringify(templates));
   }
 
