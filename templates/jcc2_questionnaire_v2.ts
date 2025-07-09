@@ -1,4 +1,4 @@
-import { TemplateBuilder, ProgrammaticTemplate } from "../src/programmatic";
+import { TemplateBuilder, ProgrammaticTemplate } from "../src/programmatic/index";
 
 // Helper data for repetitive sections
 const operationalExperienceTopics = [

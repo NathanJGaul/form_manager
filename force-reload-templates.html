@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Force Reload Templates</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 15px; margin: 5px; font-size: 16px; }
+        .step { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Force Reload Default Templates</h1>
+    
+    <div class="step">
+        <h3>Step 1: Clear Template Loading Flag</h3>
+        <button onclick="clearFlag()">Clear Templates Flag</button>
+        <span id="flag-status"></span>
+    </div>
+    
+    <div class="step">
+        <h3>Step 2: Open Main App</h3>
+        <button onclick="openApp()">Open App (New Tab)</button>
+        <p>This will trigger the template loading process.</p>
+    </div>
+    
+    <div class="step">
+        <h3>Step 3: Check Storage</h3>
+        <button onclick="checkStorage()">Check Storage</button>
+        <pre id="storage-output"></pre>
+    </div>
+
+    <script>
+        function clearFlag() {
+            localStorage.removeItem('default_templates_loaded');
+            document.getElementById('flag-status').textContent = '✅ Flag cleared';
+        }
+
+        function openApp() {
+            window.open('http://localhost:5176/', '_blank');
+        }
+
+        function checkStorage() {
+            const templates = localStorage.getItem('form_templates');
+            const flag = localStorage.getItem('default_templates_loaded');
+            
+            let output = `Flag: ${flag || 'NOT SET'}\n`;
+            
+            if (templates) {
+                try {
+                    const parsed = JSON.parse(templates);
+                    output += `Templates count: ${parsed.length}\n`;
+                    output += `Templates:\n`;
+                    parsed.forEach((template, index) => {
+                        output += `  ${index + 1}. ${template.name}\n`;
+                    });
+                } catch (e) {
+                    output += `Error parsing templates: ${e.message}\n`;
+                }
+            } else {
+                output += `No templates in storage\n`;
+            }
+            
+            document.getElementById('storage-output').textContent = output;
+        }
+
+        // Auto-check storage on load
+        checkStorage();
+    </script>
+</body>
+</html>

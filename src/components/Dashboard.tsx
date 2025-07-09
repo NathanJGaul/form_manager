@@ -125,6 +125,13 @@ export const Dashboard: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleRefreshTemplates = () => {
+    // Reset the default templates flag to force reload
+    storageManager.resetDefaultTemplates();
+    // Reload the data which will trigger default template loading
+    loadData();
+  };
+
   const filteredTemplates = templates.filter(template => 
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     template.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -273,7 +280,17 @@ export const Dashboard: React.FC = () => {
 
         {/* Templates Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Form Templates</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Form Templates</h2>
+            <button
+              onClick={handleRefreshTemplates}
+              className="flex items-center space-x-2 px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+              title="Refresh templates"
+            >
+              <Icons.RefreshCw className="w-4 h-4" />
+              <span className="text-sm">Refresh</span>
+            </button>
+          </div>
           
           {filteredTemplates.length === 0 ? (
             <div className="bg-white rounded-lg shadow-md p-8 text-center">

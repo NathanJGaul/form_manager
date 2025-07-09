@@ -28,6 +28,8 @@ class StorageManager {
     const defaultsLoaded = localStorage.getItem(this.DEFAULT_TEMPLATES_LOADED_KEY);
     if (defaultsLoaded) return;
 
+    console.log('🔄 Loading default templates...');
+    
     // Load default templates from CommonTemplates
     const defaultTemplateNames = ['contact', 'survey', 'registration', 'jcc2-questionnaire'];
     const existingTemplates = this.getTemplatesRaw();
@@ -50,6 +52,9 @@ class StorageManager {
             formTemplate.updatedAt = new Date();
             
             existingTemplates.push(formTemplate);
+            console.log(`✅ Added default template: ${formTemplate.name}`);
+          } else {
+            console.log(`⚠️  Template already exists: ${formTemplate.name}`);
           }
         } else {
           console.warn(`Failed to convert template: ${templateName}`, conversionResult.errors);
@@ -62,6 +67,7 @@ class StorageManager {
     // Save updated templates and mark defaults as loaded
     localStorage.setItem(this.TEMPLATES_KEY, JSON.stringify(existingTemplates));
     localStorage.setItem(this.DEFAULT_TEMPLATES_LOADED_KEY, 'true');
+    console.log(`✅ Default templates loaded. Total templates: ${existingTemplates.length}`);
   }
 
   private getTemplatesRaw(): FormTemplate[] {
