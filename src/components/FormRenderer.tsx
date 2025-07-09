@@ -326,6 +326,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <input
               type="text"
+              name={field.id}
               value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder || `Enter ${field.label}`}
@@ -344,6 +345,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <input
               type="email"
+              name={field.id}
               value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder || `Enter ${field.label}`}
@@ -362,6 +364,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <input
               type="tel"
+              name={field.id}
               value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder || `Enter ${field.label}`}
@@ -379,6 +382,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <textarea
+              name={field.id}
               value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               placeholder={field.placeholder || `Enter ${field.label}`}
@@ -397,6 +401,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             <select
+              name={field.id}
               value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               className={baseInputClasses}
@@ -427,6 +432,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 >
                   <input
                     type="radio"
+                    name={field.id}
                     value={option}
                     checked={value === option}
                     onChange={(e) =>
@@ -457,6 +463,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 >
                   <input
                     type="checkbox"
+                    name={field.id}
+                    value={option}
                     checked={Array.isArray(value) && value.includes(option)}
                     onChange={(e) => {
                       const currentValues = Array.isArray(value) ? value : [];
@@ -513,6 +521,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             </label>
             <input
               type="date"
+              name={field.id}
               value={value || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               className={baseInputClasses}

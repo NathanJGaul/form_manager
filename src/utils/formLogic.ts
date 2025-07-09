@@ -51,26 +51,41 @@ export const calculateProgress = (
   const visibleSections = getVisibleSections(sections, formData);
   if (visibleSections.length === 0) return 0;
   
-  let totalFields = 0;
-  let completedFields = 0;
+  let totalRequiredFields = 0;
+  let completedRequiredFields = 0;
   
   visibleSections.forEach(section => {
     const visibleFields = getVisibleFields(section.fields, formData);
-    totalFields += visibleFields.length;
     
     visibleFields.forEach(field => {
-      const value = formData[field.id];
-      if (value !== undefined && value !== null && value !== '') {
-        if (field.type === 'checkbox' && Array.isArray(value)) {
-          if (value.length > 0) completedFields++;
-        } else {
-          completedFields++;
+      // Only count required fields for progress calculation
+      if (field.required) {
+        totalRequiredFields++;
+        const value = formData[field.id];
+        
+        // Check if field has a value, default value, or is considered complete
+        const hasValue = value !== undefined && value !== null && value !== '';
+        const hasDefaultValue = field.defaultValue !== undefined && field.defaultValue !== null && field.defaultValue !== '';
+        
+        // For fields with default values, consider them complete if they have the default value or any value
+        const isComplete = hasValue || (hasDefaultValue && (value === field.defaultValue || value === undefined));
+        
+        if (isComplete) {
+          if (field.type === 'checkbox' && Array.isArray(value)) {
+            if (value.length > 0) {
+              completedRequiredFields++;
+            } else if (hasDefaultValue && Array.isArray(field.defaultValue) && field.defaultValue.length > 0) {
+              completedRequiredFields++;
+            }
+          } else {
+            completedRequiredFields++;
+          }
         }
       }
     });
   });
   
-  return totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+  return totalRequiredFields > 0 ? Math.round((completedRequiredFields / totalRequiredFields) * 100) : 100;
 };
 
 export const validateField = (field: FormField, value: any): string | null => {
