@@ -65,12 +65,14 @@ export const ProgrammaticImportModal: React.FC<
     programmaticTemplate: any
   ): ConversionResult => {
     try {
-      const conversionResult = converter.convertToGUI(programmaticTemplate, { preserveIds: true });
+      const conversionResult = converter.convertToGUI(programmaticTemplate, {
+        preserveIds: true,
+      });
 
       if (conversionResult.success && conversionResult.result) {
         // Debug: Log the conversion result to check layout and grouping properties
-        console.log('Conversion result:', conversionResult.result);
-        
+        // console.log('Conversion result:', conversionResult.result);
+
         // Transform to FormTemplate format
         const formTemplate: FormTemplate = {
           id: crypto.randomUUID(),
@@ -99,8 +101,8 @@ export const ProgrammaticImportModal: React.FC<
         };
 
         // Debug: Log the final form template to check if properties are preserved
-        console.log('Final form template:', formTemplate);
-        console.log('Sample field properties:', formTemplate.sections[1]?.fields[0]);
+        // console.log('Final form template:', formTemplate);
+        // console.log('Sample field properties:', formTemplate.sections[1]?.fields[0]);
 
         return {
           success: true,
@@ -181,7 +183,7 @@ export const ProgrammaticImportModal: React.FC<
     try {
       // Parse and resolve imports
       const { cleanCode, modules } = parseAndResolveImports(codeInput);
-      
+
       // Try to parse as a class export first
       const programmaticTemplate = parseTemplateFromCode(cleanCode, modules);
 
@@ -199,58 +201,86 @@ export const ProgrammaticImportModal: React.FC<
     }
   };
 
-  const parseAndResolveImports = (code: string): { cleanCode: string; modules: Record<string, any> } => {
+  const parseAndResolveImports = (
+    code: string
+  ): { cleanCode: string; modules: Record<string, any> } => {
     const modules: Record<string, any> = {};
-    
+
     // Always provide TemplateBuilder as default
     modules.TemplateBuilder = TemplateBuilder;
-    
+
     // Remove import statements and collect imported modules
-    let cleanCode = code.replace(/^import\s+.*?from\s+['"]([^'"]+)['"];?\s*$/gm, (match, modulePath) => {
-      // Handle all programmatic imports
-      if (modulePath.includes('programmatic') || modulePath.startsWith('./') || modulePath.startsWith('../')) {
-        try {
-          // Extract import specifiers
-          const importMatch = match.match(/^import\s+(.+?)\s+from/);
-          if (importMatch) {
-            const importSpec = importMatch[1].trim();
-            
-            // Handle different import types
-            if (importSpec.startsWith('{') && importSpec.endsWith('}')) {
-              // Named imports: { TemplateBuilder }
-              const namedImports = importSpec.slice(1, -1).split(',').map(s => s.trim());
-              namedImports.forEach(importName => {
-                const cleanName = importName.replace(/\s+as\s+\w+/, '').trim();
-                if (ProgrammaticModules[cleanName as keyof typeof ProgrammaticModules]) {
-                  modules[cleanName] = ProgrammaticModules[cleanName as keyof typeof ProgrammaticModules];
+    let cleanCode = code.replace(
+      /^import\s+.*?from\s+['"]([^'"]+)['"];?\s*$/gm,
+      (match, modulePath) => {
+        // Handle all programmatic imports
+        if (
+          modulePath.includes("programmatic") ||
+          modulePath.startsWith("./") ||
+          modulePath.startsWith("../")
+        ) {
+          try {
+            // Extract import specifiers
+            const importMatch = match.match(/^import\s+(.+?)\s+from/);
+            if (importMatch) {
+              const importSpec = importMatch[1].trim();
+
+              // Handle different import types
+              if (importSpec.startsWith("{") && importSpec.endsWith("}")) {
+                // Named imports: { TemplateBuilder }
+                const namedImports = importSpec
+                  .slice(1, -1)
+                  .split(",")
+                  .map((s) => s.trim());
+                namedImports.forEach((importName) => {
+                  const cleanName = importName
+                    .replace(/\s+as\s+\w+/, "")
+                    .trim();
+                  if (
+                    ProgrammaticModules[
+                      cleanName as keyof typeof ProgrammaticModules
+                    ]
+                  ) {
+                    modules[cleanName] =
+                      ProgrammaticModules[
+                        cleanName as keyof typeof ProgrammaticModules
+                      ];
+                  }
+                });
+              } else if (importSpec.includes("* as ")) {
+                // Namespace import: * as Programmatic
+                const aliasMatch = importSpec.match(/\*\s+as\s+(\w+)/);
+                if (aliasMatch) {
+                  modules[aliasMatch[1]] = ProgrammaticModules;
                 }
-              });
-            } else if (importSpec.includes('* as ')) {
-              // Namespace import: * as Programmatic
-              const aliasMatch = importSpec.match(/\*\s+as\s+(\w+)/);
-              if (aliasMatch) {
-                modules[aliasMatch[1]] = ProgrammaticModules;
-              }
-            } else {
-              // Default import: TemplateBuilder
-              const defaultName = importSpec.trim();
-              if (ProgrammaticModules[defaultName as keyof typeof ProgrammaticModules]) {
-                modules[defaultName] = ProgrammaticModules[defaultName as keyof typeof ProgrammaticModules];
+              } else {
+                // Default import: TemplateBuilder
+                const defaultName = importSpec.trim();
+                if (
+                  ProgrammaticModules[
+                    defaultName as keyof typeof ProgrammaticModules
+                  ]
+                ) {
+                  modules[defaultName] =
+                    ProgrammaticModules[
+                      defaultName as keyof typeof ProgrammaticModules
+                    ];
+                }
               }
             }
+          } catch (e) {
+            console.warn("Failed to resolve import:", modulePath, e);
           }
-        } catch (e) {
-          console.warn('Failed to resolve import:', modulePath, e);
         }
+
+        // Remove the import statement
+        return "";
       }
-      
-      // Remove the import statement
-      return '';
-    });
-    
+    );
+
     // Remove TypeScript type annotations
     cleanCode = removeTypeScriptAnnotations(cleanCode);
-    
+
     return { cleanCode: cleanCode.trim(), modules };
   };
 
@@ -258,70 +288,186 @@ export const ProgrammaticImportModal: React.FC<
     // Remove type annotations from function parameters and return types
     let cleanCode = code
       // Remove return type annotations like `: ProgrammaticTemplate`
-      .replace(/\)\s*:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*\s*\{/g, ') {')
+      .replace(/\)\s*:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*\s*\{/g, ") {")
       // Remove parameter type annotations like `(param: Type)`
-      .replace(/\(\s*(\w+)\s*:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*\s*\)/g, '($1)')
+      .replace(
+        /\(\s*(\w+)\s*:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*\s*\)/g,
+        "($1)"
+      )
       // Remove variable type annotations like `const var: Type =`
-      .replace(/:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*(?=\s*[=;])/g, '')
+      .replace(/:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*(?=\s*[=;])/g, "")
       // Remove interface/type definitions
-      .replace(/^(export\s+)?(interface|type)\s+\w+.*$/gm, '')
+      .replace(/^(export\s+)?(interface|type)\s+\w+.*$/gm, "")
       // Remove generic type parameters like `<T>`
-      .replace(/<[A-Za-z_][A-Za-z0-9_,\s]*>/g, '');
-    
+      .replace(/<[A-Za-z_][A-Za-z0-9_,\s]*>/g, "");
+
     return cleanCode;
   };
 
-  const parseTemplateFromCode = (cleanCode: string, modules: Record<string, any>): any => {
+  const parseTemplateFromCode = (
+    cleanCode: string,
+    modules: Record<string, any>
+  ): any => {
+    // Helper function to find problematic code sections
+    const findSyntaxError = (code: string, error: Error): string => {
+      const lines = code.split("\n");
+      const errorMessage = error.message;
+
+      // More sophisticated syntax analysis
+      const analyzeCodeStructure = (code: string): string[] => {
+        const issues: string[] = [];
+        const lines = code.split("\n");
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          const lineNum = i + 1;
+
+          // Skip empty lines and comments
+          if (!line || line.startsWith("//") || line.startsWith("/*")) continue;
+
+          // Check for obvious syntax errors (not valid multi-line constructs)
+          if (line.includes('"""')) {
+            issues.push(
+              `Line ${lineNum}: Triple quotes (""") are not valid JavaScript syntax - "${line}"`
+            );
+          }
+
+          if (line === '""') {
+            issues.push(
+              `Line ${lineNum}: Empty double quotes on their own line - "${line}"`
+            );
+          }
+
+          // Check for unmatched quotes within a single line (not across lines)
+          const singleQuoteMatches = (line.match(/'/g) || []).length;
+          const doubleQuoteMatches = (line.match(/"/g) || []).length;
+          const backtickMatches = (line.match(/`/g) || []).length;
+
+          // Only flag if quotes are unmatched within the same line and line appears complete
+          if (line.endsWith(";") || line.endsWith(",") || line.endsWith(")")) {
+            if (singleQuoteMatches % 2 !== 0 && !line.includes('"')) {
+              issues.push(
+                `Line ${lineNum}: Unmatched single quotes - "${line}"`
+              );
+            }
+            if (doubleQuoteMatches % 2 !== 0 && !line.includes("'")) {
+              issues.push(
+                `Line ${lineNum}: Unmatched double quotes - "${line}"`
+              );
+            }
+            if (backtickMatches % 2 !== 0) {
+              issues.push(`Line ${lineNum}: Unmatched backticks - "${line}"`);
+            }
+          }
+        }
+
+        return issues;
+      };
+
+      const structuralIssues = analyzeCodeStructure(code);
+      if (structuralIssues.length > 0) {
+        return structuralIssues[0]; // Return the first issue found
+      }
+
+      // If no obvious structural issues, parse the JavaScript error message for more details
+      if (errorMessage.includes("Unexpected token")) {
+        const tokenMatch = errorMessage.match(/Unexpected token '?(.+?)'?/);
+        if (tokenMatch) {
+          return `Unexpected token "${tokenMatch[1]}" found. ${errorMessage}`;
+        }
+      }
+
+      return `JavaScript parsing error: ${errorMessage}`;
+    };
+
     // Check if this is a class export with a create method
     const classExportMatch = cleanCode.match(/export\s+class\s+(\w+)/);
-    
+
     if (classExportMatch) {
       const className = classExportMatch[1];
-      
+
       // Remove the export keyword and convert to class declaration
-      const classCode = cleanCode.replace(/export\s+class\s+/, 'class ');
-      
+      const classCode = cleanCode.replace(/export\s+class\s+/, "class ");
+
       // Create parameter names and values for the function
       const paramNames = Object.keys(modules);
       const paramValues = Object.values(modules);
-      
-      // Execute the class definition and call the create method
-      const classFunction = new Function(...paramNames, classCode + `; return ${className}.create();`);
-      return classFunction(...paramValues);
+
+      try {
+        // Execute the class definition and call the create method
+        const classFunction = new Function(
+          ...paramNames,
+          classCode + `; return ${className}.create();`
+        );
+        return classFunction(...paramValues);
+      } catch (error) {
+        const syntaxError = findSyntaxError(classCode, error as Error);
+        throw new Error(`Failed to parse class "${className}": ${syntaxError}`);
+      }
     }
-    
+
     // Check if this is a direct template builder call
     const builderMatch = cleanCode.match(/(new\s+)?TemplateBuilder\s*\(\)/m);
     if (builderMatch) {
       // Create parameter names and values for the function
       const paramNames = Object.keys(modules);
       const paramValues = Object.values(modules);
-      
-      // Execute as a template builder expression
-      const templateFunction = new Function(...paramNames, "return " + cleanCode);
-      return templateFunction(...paramValues);
+
+      try {
+        // Execute as a template builder expression
+        const templateFunction = new Function(
+          ...paramNames,
+          "return " + cleanCode
+        );
+        return templateFunction(...paramValues);
+      } catch (error) {
+        const syntaxError = findSyntaxError(cleanCode, error as Error);
+        throw new Error(
+          `Failed to parse TemplateBuilder expression: ${syntaxError}`
+        );
+      }
     }
-    
+
     // Check if this is a function that returns a template
-    const functionMatch = cleanCode.match(/function\s+(\w+)\s*\([^)]*\)\s*\{[\s\S]*?\}/);
+    const functionMatch = cleanCode.match(
+      /function\s+(\w+)\s*\([^)]*\)\s*\{[\s\S]*?\}/
+    );
     if (functionMatch) {
       const functionName = functionMatch[1];
-      
+
       // Create parameter names and values for the function
       const paramNames = Object.keys(modules);
       const paramValues = Object.values(modules);
-      
-      // Execute the function and call it
-      const functionCall = new Function(...paramNames, cleanCode + `; return ${functionName}();`);
-      return functionCall(...paramValues);
+
+      try {
+        // Execute the function and call it
+        const functionCall = new Function(
+          ...paramNames,
+          cleanCode + `; return ${functionName}();`
+        );
+        return functionCall(...paramValues);
+      } catch (error) {
+        const syntaxError = findSyntaxError(cleanCode, error as Error);
+        throw new Error(
+          `Failed to parse function "${functionName}": ${syntaxError}`
+        );
+      }
     }
-    
+
     // Fallback: try to execute as a direct expression
     const paramNames = Object.keys(modules);
     const paramValues = Object.values(modules);
-    
-    const templateFunction = new Function(...paramNames, "return " + cleanCode);
-    return templateFunction(...paramValues);
+
+    try {
+      const templateFunction = new Function(
+        ...paramNames,
+        "return " + cleanCode
+      );
+      return templateFunction(...paramValues);
+    } catch (error) {
+      const syntaxError = findSyntaxError(cleanCode, error as Error);
+      throw new Error(`Failed to parse code as expression: ${syntaxError}`);
+    }
   };
 
   const handleImport = () => {
@@ -479,7 +625,8 @@ export const ProgrammaticImportModal: React.FC<
                       Default Values Demo
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Template demonstrating default value functionality across different field types
+                      Template demonstrating default value functionality across
+                      different field types
                     </p>
                     <button
                       onClick={() => handleExampleImport("defaultValues")}
@@ -494,7 +641,8 @@ export const ProgrammaticImportModal: React.FC<
                       Horizontal Layout & Grouping Demo
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Advanced survey showcasing horizontal layouts and matrix-style grouped fields
+                      Advanced survey showcasing horizontal layouts and
+                      matrix-style grouped fields
                     </p>
                     <button
                       onClick={() => handleExampleImport("horizontalGrouping")}
@@ -509,7 +657,9 @@ export const ProgrammaticImportModal: React.FC<
                       Section-Level Conditionals Demo
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Advanced form demonstrating section-level conditional logic where entire sections show/hide based on field responses
+                      Advanced form demonstrating section-level conditional
+                      logic where entire sections show/hide based on field
+                      responses
                     </p>
                     <button
                       onClick={() => handleExampleImport("sectionConditionals")}
@@ -586,7 +736,10 @@ export const ProgrammaticImportModal: React.FC<
                   <div className="text-sm text-gray-600 mb-2">
                     <p className="mb-2">Supported formats:</p>
                     <ul className="list-disc list-inside space-y-1">
-                      <li>Class export with static create() method (like JCC2UserQuestionnaire)</li>
+                      <li>
+                        Class export with static create() method (like
+                        JCC2UserQuestionnaire)
+                      </li>
                       <li>Direct TemplateBuilder expressions</li>
                       <li>Function that returns a template</li>
                     </ul>

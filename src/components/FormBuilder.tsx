@@ -19,23 +19,29 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const [name, setName] = useState(template?.name || "");
   const [description, setDescription] = useState(template?.description || "");
   const [sections, setSections] = useState<FormSection[]>(
-    template?.sections?.map(section => ({
+    template?.sections?.map((section) => ({
       ...section,
-      fields: section.fields.map(field => ({
+      fields: section.fields.map((field) => ({
         ...field,
         // Initialize text fields from existing options if they don't exist
-        optionsText: (field as any).optionsText || field.options?.join('\n') || '',
-        defaultValueText: (field as any).defaultValueText || 
-          (Array.isArray(field.defaultValue) ? field.defaultValue.join('\n') : '')
-      }))
+        optionsText:
+          (field as any).optionsText || field.options?.join("\n") || "",
+        defaultValueText:
+          (field as any).defaultValueText ||
+          (Array.isArray(field.defaultValue)
+            ? field.defaultValue.join("\n")
+            : ""),
+      })),
     })) || []
   );
   const [showImportModal, setShowImportModal] = useState(false);
 
   // Helper function to handle textarea key events properly
-  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleTextareaKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
     // For Enter key, just stop event bubbling but allow default behavior
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.stopPropagation();
       // Don't prevent default - let the textarea handle the newline naturally
     }
@@ -66,8 +72,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       type: "text",
       label: "New Field",
       required: false,
-      optionsText: '',
-      defaultValueText: ''
+      optionsText: "",
+      defaultValueText: "",
     } as any;
 
     setSections(
@@ -127,9 +133,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   const handleImportTemplate = (importedTemplate: FormTemplate) => {
     // Debug: Log imported template to check field properties
-    console.log('Importing template:', importedTemplate);
-    console.log('Sample field in FormBuilder:', importedTemplate.sections[1]?.fields[0]);
-    
+    // console.log('Importing template:', importedTemplate);
+    // console.log('Sample field in FormBuilder:', importedTemplate.sections[1]?.fields[0]);
+
     setName(importedTemplate.name);
     setDescription(importedTemplate.description);
     setSections(importedTemplate.sections);
@@ -159,7 +165,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         alert(`Failed to export PDF: ${result.error}`);
       }
     } catch (error) {
-      alert(`Error exporting PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Error exporting PDF: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
@@ -244,26 +254,30 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               {field.type === "checkbox" ? (
                 <div>
                   <textarea
-                    value={(field as any).defaultValueText || (Array.isArray(field.defaultValue) ? field.defaultValue.join('\n') : '')}
+                    value={
+                      (field as any).defaultValueText ||
+                      (Array.isArray(field.defaultValue)
+                        ? field.defaultValue.join("\n")
+                        : "")
+                    }
                     onChange={(e) => {
                       const text = e.target.value;
                       updateField(sectionId, field.id, {
                         defaultValueText: text,
-                        defaultValue: text
-                          .split('\n')
-                          .filter(v => v.trim())
+                        defaultValue: text.split("\n").filter((v) => v.trim()),
                       });
                     }}
                     onKeyDown={handleTextareaKeyDown}
                     placeholder="Type a default value and press Enter for next line:&#10;Option A&#10;Option C"
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ resize: 'vertical' }}
+                    style={{ resize: "vertical" }}
                     autoComplete="off"
                     spellCheck="false"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Press Enter to create new lines. Each non-empty line becomes a default selection.
+                    Press Enter to create new lines. Each non-empty line becomes
+                    a default selection.
                   </p>
                 </div>
               ) : field.type === "radio" || field.type === "select" ? (
@@ -300,7 +314,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   value={field.defaultValue || ""}
                   onChange={(e) =>
                     updateField(sectionId, field.id, {
-                      defaultValue: e.target.value ? Number(e.target.value) : undefined,
+                      defaultValue: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
                     })
                   }
                   placeholder="Enter default number"
@@ -329,26 +345,29 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   Options (one per line)
                 </label>
                 <textarea
-                  value={(field as any).optionsText || field.options?.join("\n") || ""}
+                  value={
+                    (field as any).optionsText ||
+                    field.options?.join("\n") ||
+                    ""
+                  }
                   onChange={(e) => {
                     const text = e.target.value;
                     updateField(sectionId, field.id, {
                       optionsText: text,
-                      options: text
-                        .split("\n")
-                        .filter((opt) => opt.trim()),
+                      options: text.split("\n").filter((opt) => opt.trim()),
                     });
                   }}
                   onKeyDown={handleTextareaKeyDown}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Type an option and press Enter for the next line:&#10;Option 1&#10;Option 2&#10;Option 3"
-                  style={{ resize: 'vertical' }}
+                  style={{ resize: "vertical" }}
                   autoComplete="off"
                   spellCheck="false"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Press Enter to create a new line. Each non-empty line becomes an option.
+                  Press Enter to create a new line. Each non-empty line becomes
+                  an option.
                 </p>
               </div>
             )}
@@ -390,7 +409,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       }
                       className="text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-700">Enable grouping</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Enable grouping
+                    </span>
                   </label>
                   {field.grouping?.enabled && (
                     <div>
@@ -412,7 +433,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Fields with the same group key will be grouped together if they have identical options and horizontal layout.
+                        Fields with the same group key will be grouped together
+                        if they have identical options and horizontal layout.
                       </p>
                     </div>
                   )}
@@ -633,8 +655,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {/* Section Conditional Logic */}
                     {(() => {
                       const allFields = getAllFields();
-                      const availableFields = allFields.filter((f) => f.sectionId !== section.id);
-                      
+                      const availableFields = allFields.filter(
+                        (f) => f.sectionId !== section.id
+                      );
+
                       return availableFields.length > 0 ? (
                         <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                           <h4 className="text-sm font-medium text-blue-900 mb-3">
@@ -680,8 +704,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                   onChange={(e) =>
                                     updateSection(section.id, {
                                       conditional: {
-                                        dependsOn: section.conditional?.dependsOn || "",
-                                        values: section.conditional?.values || [],
+                                        dependsOn:
+                                          section.conditional?.dependsOn || "",
+                                        values:
+                                          section.conditional?.values || [],
                                         operator: e.target.value as
                                           | "equals"
                                           | "contains"
@@ -693,7 +719,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                 >
                                   <option value="equals">equals</option>
                                   <option value="contains">contains</option>
-                                  <option value="not_equals">does not equal</option>
+                                  <option value="not_equals">
+                                    does not equal
+                                  </option>
                                 </select>
 
                                 <input
@@ -703,8 +731,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                                   onChange={(e) =>
                                     updateSection(section.id, {
                                       conditional: {
-                                        dependsOn: section.conditional?.dependsOn || "",
-                                        operator: section.conditional?.operator || "equals",
+                                        dependsOn:
+                                          section.conditional?.dependsOn || "",
+                                        operator:
+                                          section.conditional?.operator ||
+                                          "equals",
                                         values: e.target.value
                                           .split(",")
                                           .map((v) => v.trim())
@@ -749,7 +780,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <Icons.FileText className="w-4 h-4" />
             <span>Export PDF</span>
           </button>
-          
+
           <div className="flex space-x-4">
             <button
               onClick={onCancel}
