@@ -212,6 +212,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       field.layout === 'horizontal'
     );
 
+    // Check if all fields are text/input types with horizontal layout
+    const allHorizontalTextFields = fields.every(field => 
+      ['text', 'email', 'tel', 'number', 'date'].includes(field.type) &&
+      field.layout === 'horizontal'
+    );
+
     if (allHaveSameOptions && (firstField.type === 'radio' || firstField.type === 'checkbox')) {
       // Render as a table/matrix with field names on left axis and options on top axis
       return (
@@ -304,12 +310,50 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         </div>
       );
+    } else if (allHorizontalTextFields) {
+      // Render text fields in horizontal layout
+      return (
+        <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">
+            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ')}
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {fields.map((field) => {
+              const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
+              const error = errors[field.id];
+              const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                error ? "border-red-500" : "border-gray-300"
+              }`;
+
+              return (
+                <div key={field.id} className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                  <input
+                    type={field.type}
+                    name={field.id}
+                    value={value || ""}
+                    onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                    placeholder={field.placeholder || `Enter ${field.label}`}
+                    min={field.type === 'number' ? field.validation?.min : undefined}
+                    max={field.type === 'number' ? field.validation?.max : undefined}
+                    className={baseInputClasses}
+                  />
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
     } else {
       // Render fields individually but within a group container
       return (
         <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)}
+            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ')}
           </h4>
           <div className="space-y-4">
             {fields.map(renderField)}
@@ -330,58 +374,64 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     switch (field.type) {
       case "text":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <input
-              type="text"
-              name={field.id}
-              value={value || ""}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder || `Enter ${field.label}`}
-              className={baseInputClasses}
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <input
+                type="text"
+                name={field.id}
+                value={value || ""}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                placeholder={field.placeholder || `Enter ${field.label}`}
+                className={baseInputClasses}
+              />
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            </div>
           </div>
         );
 
       case "email":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <input
-              type="email"
-              name={field.id}
-              value={value || ""}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder || `Enter ${field.label}`}
-              className={baseInputClasses}
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <input
+                type="email"
+                name={field.id}
+                value={value || ""}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                placeholder={field.placeholder || `Enter ${field.label}`}
+                className={baseInputClasses}
+              />
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            </div>
           </div>
         );
 
       case "tel":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <input
-              type="tel"
-              name={field.id}
-              value={value || ""}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder || `Enter ${field.label}`}
-              className={baseInputClasses}
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <input
+                type="tel"
+                name={field.id}
+                value={value || ""}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                placeholder={field.placeholder || `Enter ${field.label}`}
+                className={baseInputClasses}
+              />
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            </div>
           </div>
         );
 
@@ -500,44 +550,48 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "number":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <input
-              type="number"
-              value={value || ""}
-              onChange={(e) =>
-                handleFieldChange(
-                  field.id,
-                  e.target.value ? Number(e.target.value) : ""
-                )
-              }
-              placeholder={field.placeholder || `Enter ${field.label}`}
-              min={field.validation?.min}
-              max={field.validation?.max}
-              className={baseInputClasses}
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <input
+                type="number"
+                value={value || ""}
+                onChange={(e) =>
+                  handleFieldChange(
+                    field.id,
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
+                placeholder={field.placeholder || `Enter ${field.label}`}
+                min={field.validation?.min}
+                max={field.validation?.max}
+                className={baseInputClasses}
+              />
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            </div>
           </div>
         );
 
       case "date":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <input
-              type="date"
-              name={field.id}
-              value={value || ""}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              className={baseInputClasses}
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <input
+                type="date"
+                name={field.id}
+                value={value || ""}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                className={baseInputClasses}
+              />
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            </div>
           </div>
         );
 
