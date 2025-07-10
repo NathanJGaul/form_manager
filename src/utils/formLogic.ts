@@ -119,3 +119,117 @@ export const validateField = (field: FormField, value: any): string | null => {
   
   return null;
 };
+
+/**
+ * Get all conditional fields from a template that should be explicitly tracked
+ */
+export const getAllConditionalFields = (sections: FormSection[]): FormField[] => {
+  const conditionalFields: FormField[] = [];
+  
+  sections.forEach(section => {
+    // Add fields with conditional logic
+    section.fields.forEach(field => {
+      if (field.conditional) {
+        conditionalFields.push(field);
+      }
+    });
+  });
+  
+  return conditionalFields;
+};
+
+/**
+ * Get all conditional sections from a template that should be explicitly tracked
+ */
+export const getAllConditionalSections = (sections: FormSection[]): FormSection[] => {
+  return sections.filter(section => section.conditional);
+};
+
+/**
+ * Update form data to explicitly set null values for conditional fields that aren't visible
+ */
+export const updateConditionalFieldsAsNull = (
+  sections: FormSection[],
+  formData: Record<string, any>
+): Record<string, any> => {
+  const updatedData = { ...formData };
+  const visibleSections = getVisibleSections(sections, formData);
+  const visibleSectionIds = new Set(visibleSections.map(s => s.id));
+  
+  // Process all sections to handle conditional fields
+  sections.forEach(section => {
+    const isSectionVisible = visibleSectionIds.has(section.id);
+    
+    if (!isSectionVisible && section.conditional) {
+      // If entire section is hidden, null all its fields
+      section.fields.forEach(field => {
+        updatedData[field.id] = null;
+      });
+    } else if (isSectionVisible) {
+      // Section is visible, check individual conditional fields
+      const visibleFields = getVisibleFields(section.fields, formData);
+      const visibleFieldIds = new Set(visibleFields.map(f => f.id));
+      
+      section.fields.forEach(field => {
+        if (field.conditional && !visibleFieldIds.has(field.id)) {
+          // Field has conditional logic but is not visible
+          updatedData[field.id] = null;
+        }
+      });
+    }
+  });
+  
+  return updatedData;
+};
+
+/**
+ * Get statistics about conditional field handling
+ */
+export const getConditionalFieldStats = (
+  sections: FormSection[],
+  formData: Record<string, any>
+): {
+  totalConditionalFields: number;
+  visibleConditionalFields: number;
+  nulledConditionalFields: number;
+  conditionalSections: number;
+  visibleConditionalSections: number;
+  nulledConditionalSections: number;
+} => {
+  const allConditionalFields = getAllConditionalFields(sections);
+  const allConditionalSections = getAllConditionalSections(sections);
+  
+  const visibleSections = getVisibleSections(sections, formData);
+  const visibleSectionIds = new Set(visibleSections.map(s => s.id));
+  
+  let visibleConditionalFields = 0;
+  let nulledConditionalFields = 0;
+  
+  // Count visible/nulled conditional fields
+  allConditionalFields.forEach(field => {
+    const fieldSection = sections.find(s => s.fields.some(f => f.id === field.id));
+    if (fieldSection && visibleSectionIds.has(fieldSection.id)) {
+      const visibleFields = getVisibleFields(fieldSection.fields, formData);
+      if (visibleFields.some(f => f.id === field.id)) {
+        visibleConditionalFields++;
+      } else {
+        nulledConditionalFields++;
+      }
+    } else {
+      nulledConditionalFields++;
+    }
+  });
+  
+  const visibleConditionalSections = allConditionalSections.filter(section => 
+    visibleSectionIds.has(section.id)
+  ).length;
+  
+  return {
+    totalConditionalFields: allConditionalFields.length,
+    visibleConditionalFields,
+    nulledConditionalFields,
+    conditionalSections: allConditionalSections.length,
+    visibleConditionalSections,
+    nulledConditionalSections: allConditionalSections.length - visibleConditionalSections
+  };
+};

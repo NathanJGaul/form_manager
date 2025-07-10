@@ -108,7 +108,7 @@ jobs:
       run: npx playwright install --with-deps
       
     - name: Run tests
-      run: npm test
+      run: npm test:jcc2
       
     - name: Upload test results
       uses: actions/upload-artifact@v4

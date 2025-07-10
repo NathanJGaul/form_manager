@@ -6,6 +6,7 @@ import {
   getVisibleFields,
   calculateProgress,
   validateField,
+  updateConditionalFieldsAsNull,
 } from "../utils/formLogic";
 import * as Icons from "lucide-react";
 
@@ -58,9 +59,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const saveForm = useCallback(async () => {
     setSaveStatus("saving");
     try {
+      // Apply conditional field nullification before saving
+      const nullifiedFormData = updateConditionalFieldsAsNull(template.sections, formData);
+      
       const updatedInstance: FormInstance = {
         ...currentInstance,
-        data: formData,
+        data: nullifiedFormData,
         progress,
         updatedAt: new Date(),
       };
@@ -75,7 +79,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
     }
-  }, [formData, progress, currentInstance, onSave]);
+  }, [formData, progress, currentInstance, onSave, template.sections]);
 
   // Auto-save functionality
   useEffect(() => {
@@ -89,10 +93,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   }, [formData, saveForm]);
 
   const handleFieldChange = (fieldId: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [fieldId]: value,
-    }));
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [fieldId]: value,
+      };
+      // Apply conditional field nullification when form data changes
+      return updateConditionalFieldsAsNull(template.sections, updated);
+    });
     setHasUnsavedChanges(true);
 
     // Clear error when field is updated
@@ -124,9 +132,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       return;
     }
 
+    // Apply conditional field nullification before submission
+    const nullifiedFormData = updateConditionalFieldsAsNull(template.sections, formData);
+    
     const submissionInstance: FormInstance = {
       ...currentInstance,
-      data: formData,
+      data: nullifiedFormData,
       progress: 100,
       completed: true,
       updatedAt: new Date(),
@@ -141,7 +152,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       formInstanceId: submissionInstance.id,
       templateId: template.id,
       templateName: template.name,
-      data: formData,
+      data: nullifiedFormData,
       submittedAt: new Date(),
     };
 

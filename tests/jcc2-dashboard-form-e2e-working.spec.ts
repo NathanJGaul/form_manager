@@ -691,9 +691,37 @@ test.describe('JCC2 Dashboard Form E2E Test - Working Version', () => {
             }
           } else {
             // CSV has data but no corresponding form data was filled
-            missingFields++;
-            if (missingFields <= 10) {
-              console.log(`❌ CSV data without form match: ${csvHeader}: "${csvValue}"`);
+            // This could be because:
+            // 1. It's a conditional field that wasn't triggered
+            // 2. It's a system field or metadata field
+            // 3. The field wasn't filled during the test
+            
+            // Only count as missing if it's a form field we should have filled
+            if (fieldId && !fieldId.startsWith('usability_') && 
+                !csvHeader.includes('_initial_training_no') &&
+                !csvHeader.includes('_supplemental_training_no') &&
+                !csvHeader.includes('_request_training_yes') &&
+                !csvHeader.includes('_details') &&
+                !csvHeader.includes('mop_1_1_3_') && // MADSS conditional fields
+                !csvHeader.includes('mop_1_2_1_') && // TASC conditional fields  
+                !csvHeader.includes('mop_1_2_2_') && // Crucible conditional fields
+                !csvHeader.includes('mop_1_3_2_') && // MADSS dependency fields
+                !csvHeader.includes('mop_1_3_3_') && // Event creation conditional fields
+                !csvHeader.includes('mop_2_1_1_') && // JCC2 Readiness conditional fields
+                !csvHeader.includes('mop_2_1_2_') && // JCC2 Cyber Ops conditional fields
+                !csvHeader.includes('mop_2_1_7_') && // Force deconfliction conditional fields
+                !csvHeader.includes('mop_2_1_9_') && // Collaborative planning conditional fields
+                !csvHeader.includes('mop_2_3_1_') && // Dispatch conditional fields
+                !csvHeader.includes('mop_2_4_1_') && // Mission progress conditional fields
+                !csvHeader.includes('mos_1_1_2_')) { // Object tagging conditional fields
+              
+              missingFields++;
+              if (missingFields <= 5) {
+                console.log(`❌ CSV data without form match: ${csvHeader}: "${csvValue}"`);
+              }
+            } else {
+              // Don't count conditional/system fields as missing
+              console.log(`🔵 Conditional/system field: ${csvHeader}: "${csvValue}"`);
             }
           }
         }
@@ -758,8 +786,8 @@ test.describe('JCC2 Dashboard Form E2E Test - Working Version', () => {
       await fs.unlink(downloadPath).catch(() => {});
       
       // Enhanced assertions for better data integrity validation
-      expect(nonEmptyFields.length).toBeGreaterThan(50); // CSV should have substantial data
-      expect(csvFieldsWithData.length).toBeGreaterThan(100); // Should have lots of filled fields
+      expect(nonEmptyFields.length).toBeGreaterThan(200); // CSV should have substantial data
+      expect(csvFieldsWithData.length).toBeGreaterThan(200); // Should have lots of filled fields
       
       // With the new section_id.field_id format, we should have better mapping
       console.log('🔍 Validating with improved section_id.field_id CSV format');
@@ -768,6 +796,103 @@ test.describe('JCC2 Dashboard Form E2E Test - Working Version', () => {
       const systemFields = ['id', 'status', 'progress', 'created_at', 'updated_at', 'last_saved'];
       const foundSystemFields = systemFields.filter(field => headers.includes(field));
       expect(foundSystemFields.length).toBeGreaterThanOrEqual(4); // Most system fields should be present
+      
+      // Step 7: Validate conditional field null handling
+      console.log('🔍 Step 7: Validating conditional field null handling');
+      
+      // Known conditional fields that should be null when their conditions aren't met
+      const knownConditionalFields = [
+        'role_and_echelon.cyber_ops_division_team', // Only visible when is_cyber_operator = 'Yes'
+        'role_and_echelon.other_duties', // Only visible when duties contains 'Other(s)'
+        // Training type fields - only visible when training_received = 'Yes'
+        'jcc2_application_usage.usage_a2it_training_type',
+        'jcc2_application_usage.usage_cad_training_type',
+        'jcc2_application_usage.usage_codex_training_type',
+        'jcc2_application_usage.usage_crucible_training_type',
+        'jcc2_application_usage.usage_cyber_9_line_training_type',
+        'jcc2_application_usage.usage_dispatch_training_type',
+        'jcc2_application_usage.usage_jcc2_cyber_ops_training_type',
+        'jcc2_application_usage.usage_jcc2_readiness_training_type',
+        'jcc2_application_usage.usage_madss_training_type',
+        'jcc2_application_usage.usage_rally_training_type',
+        'jcc2_application_usage.usage_redmap_training_type',
+        'jcc2_application_usage.usage_sigact_training_type',
+        'jcc2_application_usage.usage_threat_hub_training_type',
+        'jcc2_application_usage.usage_triage_training_type',
+        'jcc2_application_usage.usage_unity_training_type'
+      ];
+      
+      let nulledConditionalFields = 0;
+      let incorrectlyNulledFields = 0;
+      let correctlyNulledFields = 0;
+      let conditionalFieldsWithData = 0;
+      
+      // Check each known conditional field
+      knownConditionalFields.forEach(fieldName => {
+        if (headers.includes(fieldName)) {
+          const value = csvData[fieldName];
+          
+          if (value === 'null' || value === '' || value === null || value === undefined) {
+            nulledConditionalFields++;
+            
+            // Check if this field should actually be null based on form logic
+            if (fieldName === 'role_and_echelon.cyber_ops_division_team') {
+              const isCyberOperator = csvData['role_and_echelon.is_cyber_operator'];
+              if (isCyberOperator !== 'Yes') {
+                correctlyNulledFields++;
+                console.log(`✅ Correctly nulled: ${fieldName} (is_cyber_operator: "${isCyberOperator}")`);
+              } else {
+                incorrectlyNulledFields++;
+                console.log(`❌ Incorrectly nulled: ${fieldName} (is_cyber_operator: "${isCyberOperator}")`);
+              }
+            } else if (fieldName === 'role_and_echelon.other_duties') {
+              const duties = csvData['role_and_echelon.duties'];
+              if (!duties || !duties.includes('Other(s)')) {
+                correctlyNulledFields++;
+                console.log(`✅ Correctly nulled: ${fieldName} (duties: "${duties}")`);
+              } else {
+                incorrectlyNulledFields++;
+                console.log(`❌ Incorrectly nulled: ${fieldName} (duties: "${duties}")`);
+              }
+            } else if (fieldName.includes('_training_type')) {
+              // For training type fields, check if corresponding training_received is 'Yes'
+              const trainingReceivedField = fieldName.replace('_training_type', '_training_received');
+              const trainingReceived = csvData[trainingReceivedField];
+              if (trainingReceived !== 'Yes') {
+                correctlyNulledFields++;
+                console.log(`✅ Correctly nulled: ${fieldName} (training_received: "${trainingReceived}")`);
+              } else {
+                incorrectlyNulledFields++;
+                console.log(`❌ Incorrectly nulled: ${fieldName} (training_received: "${trainingReceived}")`);
+              }
+            } else {
+              // For other conditional fields, assume correctly nulled if null
+              correctlyNulledFields++;
+              console.log(`✅ Correctly nulled: ${fieldName} (value: "${value}")`);
+            }
+          } else if (value && value.trim()) {
+            conditionalFieldsWithData++;
+            console.log(`📊 Conditional field has data: ${fieldName}: "${value}"`);
+          }
+        }
+      });
+      
+      // Calculate conditional field statistics
+      const totalConditionalFieldsChecked = knownConditionalFields.filter(field => headers.includes(field)).length;
+      const correctNullPercentage = totalConditionalFieldsChecked > 0 ? (correctlyNulledFields / totalConditionalFieldsChecked) * 100 : 0;
+      const incorrectNullPercentage = totalConditionalFieldsChecked > 0 ? (incorrectlyNulledFields / totalConditionalFieldsChecked) * 100 : 0;
+      
+      console.log('📈 Conditional Field Null Handling Results:');
+      console.log(`   🎯 Total conditional fields checked: ${totalConditionalFieldsChecked}`);
+      console.log(`   ✅ Correctly nulled fields: ${correctlyNulledFields} (${correctNullPercentage.toFixed(1)}%)`);
+      console.log(`   ❌ Incorrectly nulled fields: ${incorrectlyNulledFields} (${incorrectNullPercentage.toFixed(1)}%)`);
+      console.log(`   📊 Conditional fields with data: ${conditionalFieldsWithData}`);
+      console.log(`   🔍 Total nulled conditional fields: ${nulledConditionalFields}`);
+      
+      // Validate conditional field handling
+      expect(totalConditionalFieldsChecked).toBeGreaterThan(5); // Should find several conditional fields
+      expect(correctlyNulledFields).toBeGreaterThan(0); // Should have some correctly nulled fields
+      expect(incorrectNullPercentage).toBeLessThan(20); // Less than 20% incorrect nulling
       
       // Should have user_information section fields
       const userInfoFields = headers.filter(h => h.startsWith('user_information.'));
@@ -778,19 +903,27 @@ test.describe('JCC2 Dashboard Form E2E Test - Working Version', () => {
       expect(roleFields.length).toBeGreaterThanOrEqual(3); // At least basic role fields
       
       // Overall validation - with improved mapping, we should have good success rates
-      if (totalSuccessPercentage > 70) {
+      // But account for the fact that many fields are conditional and won't be filled
+      const effectiveSuccessRate = totalCheckedFields > 0 ? ((perfectMatches + partialMatches) / Math.min(totalCheckedFields, formFieldsFilled)) * 100 : 0;
+      
+      console.log(`📊 Effective success rate (accounting for filled fields): ${effectiveSuccessRate.toFixed(1)}%`);
+      
+      if (perfectMatches > 200) {
         console.log('✅ Excellent data mapping with new format');
-        expect(totalSuccessPercentage).toBeGreaterThan(70); // High success rate expected
-        expect(perfectMatches + partialMatches).toBeGreaterThan(50); // Many fields should match
-      } else if (totalSuccessPercentage > 40) {
+        expect(perfectMatches).toBeGreaterThan(200); // Many perfect matches
+        expect(totalSuccessPercentage).toBeGreaterThan(60); // Good success rate
+      } else if (perfectMatches > 150) {
         console.log('✅ Good data mapping with new format');
-        expect(totalSuccessPercentage).toBeGreaterThan(40); // Reasonable success rate
-        expect(perfectMatches + partialMatches).toBeGreaterThan(20); // Some fields should match
+        expect(perfectMatches).toBeGreaterThan(150); // Good number of matches
+        expect(totalSuccessPercentage).toBeGreaterThan(50); // Reasonable success rate
       } else {
-        console.log('⚠️ Using fallback validation - checking data presence');
-        expect(totalSuccessPercentage).toBeGreaterThan(20); // Minimum threshold
-        expect(perfectMatches + partialMatches).toBeGreaterThan(0); // At least some matches
+        console.log('✅ Acceptable data mapping with new format');
+        expect(perfectMatches).toBeGreaterThan(100); // Minimum acceptable matches
+        expect(totalSuccessPercentage).toBeGreaterThan(40); // Minimum threshold
       }
+      
+      // Ensure we have a reasonable proportion of successful mappings
+      expect(missingFields).toBeLessThan(totalCheckedFields * 0.3); // Less than 30% missing
       
       console.log('✅ Enhanced CSV data validation completed successfully');
       

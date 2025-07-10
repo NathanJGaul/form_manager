@@ -1,6 +1,7 @@
 import { FormTemplate, FormInstance, FormSubmission, FormField } from '../types/form';
 import { CommonTemplates } from '../programmatic/library/CommonTemplates';
 import { TDLConverter } from '../programmatic/tdl/converter';
+import { updateConditionalFieldsAsNull } from './formLogic';
 
 class StorageManager {
   private readonly TEMPLATES_KEY = 'form_templates';
@@ -317,24 +318,32 @@ class StorageManager {
     if (!template) return '';
     
     const allData = [
-      ...instances.map(i => ({
-        id: i.id,
-        status: i.completed ? 'Completed' : 'In Progress',
-        progress: i.progress,
-        createdAt: i.createdAt.toISOString(),
-        updatedAt: i.updatedAt.toISOString(),
-        lastSaved: i.lastSaved.toISOString(),
-        ...i.data
-      })),
-      ...submissions.map(s => ({
-        id: s.id,
-        status: 'Submitted',
-        progress: 100,
-        createdAt: s.submittedAt.toISOString(),
-        updatedAt: s.submittedAt.toISOString(),
-        lastSaved: s.submittedAt.toISOString(),
-        ...s.data
-      }))
+      ...instances.map(i => {
+        // Apply conditional field nullification to ensure consistent null handling
+        const nullifiedData = updateConditionalFieldsAsNull(template.sections, i.data);
+        return {
+          id: i.id,
+          status: i.completed ? 'Completed' : 'In Progress',
+          progress: i.progress,
+          createdAt: i.createdAt.toISOString(),
+          updatedAt: i.updatedAt.toISOString(),
+          lastSaved: i.lastSaved.toISOString(),
+          ...nullifiedData
+        };
+      }),
+      ...submissions.map(s => {
+        // Apply conditional field nullification to ensure consistent null handling
+        const nullifiedData = updateConditionalFieldsAsNull(template.sections, s.data);
+        return {
+          id: s.id,
+          status: 'Submitted',
+          progress: 100,
+          createdAt: s.submittedAt.toISOString(),
+          updatedAt: s.submittedAt.toISOString(),
+          lastSaved: s.submittedAt.toISOString(),
+          ...nullifiedData
+        };
+      })
     ];
     
     if (allData.length === 0) return '';
@@ -353,13 +362,15 @@ class StorageManager {
         const fieldId = Array.from(fieldMap.entries()).find(([key, value]) => value === header)?.[0];
         if (fieldId) {
           // Found a direct mapping
-          mappedRow[header] = row[fieldId as keyof typeof row] || '';
+          const value = row[fieldId as keyof typeof row];
+          mappedRow[header] = value !== undefined ? value : '';
         } else {
           // If no mapping found, try to extract field ID from dot notation
           const parts = header.split('.');
           if (parts.length === 2) {
             const fieldKey = parts[1]; // Extract field ID from section.field format
-            mappedRow[header] = row[fieldKey as keyof typeof row] || '';
+            const value = row[fieldKey as keyof typeof row];
+            mappedRow[header] = value !== undefined ? value : '';
           } else {
             mappedRow[header] = '';
           }
@@ -370,7 +381,8 @@ class StorageManager {
     
     // Format CSV content with proper escaping
     const formatCsvValue = (value: any): string => {
-      if (value === null || value === undefined) return '';
+      if (value === null) return 'null';
+      if (value === undefined) return '';
       const stringValue = String(value);
       return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
         ? `"${stringValue.replace(/"/g, '""')}"`
