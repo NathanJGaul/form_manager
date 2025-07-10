@@ -38,7 +38,9 @@ class StorageManager {
     defaultTemplateNames.forEach(templateName => {
       try {
         const programmaticTemplate = CommonTemplates.getTemplate(templateName);
-        const conversionResult = converter.convertToGUI(programmaticTemplate);
+        const conversionResult = converter.convertToGUI(programmaticTemplate, {
+          preserveIds: true
+        });
         
         if (conversionResult.success && conversionResult.result) {
           const formTemplate = conversionResult.result as FormTemplate;
@@ -220,10 +222,8 @@ class StorageManager {
     
     // Form fields with dot notation
     template.sections.forEach(section => {
-      const sectionName = this.sanitizeLabel(section.title);
       section.fields.forEach(field => {
-        const fieldLabel = this.sanitizeLabel(field.label);
-        const dotNotationHeader = `${sectionName}.${fieldLabel}`;
+        const dotNotationHeader = `${section.id}.${field.id}`;
         headers.push(dotNotationHeader);
         fieldMap.set(field.id, dotNotationHeader);
       });
@@ -262,11 +262,8 @@ class StorageManager {
       
       // Find corresponding field for dot notation headers
       const field = Array.from(fieldLookup.values()).find(f => {
-        const sectionName = this.sanitizeLabel(
-          template.sections.find(s => s.fields.some(sf => sf.id === f.id))?.title || ''
-        );
-        const fieldLabel = this.sanitizeLabel(f.label);
-        return header === `${sectionName}.${fieldLabel}`;
+        const section = template.sections.find(s => s.fields.some(sf => sf.id === f.id));
+        return section && header === `${section.id}.${f.id}`;
       });
       
       if (!field) {
@@ -352,9 +349,21 @@ class StorageManager {
     const mappedData = allData.map(row => {
       const mappedRow: Record<string, any> = {};
       headers.forEach(header => {
-        // Find original key that maps to this header
-        const originalKey = Array.from(fieldMap.entries()).find(([key, value]) => value === header)?.[0];
-        mappedRow[header] = originalKey ? row[originalKey as keyof typeof row] : '';
+        // Find the original field key that maps to this header
+        const fieldId = Array.from(fieldMap.entries()).find(([key, value]) => value === header)?.[0];
+        if (fieldId) {
+          // Found a direct mapping
+          mappedRow[header] = row[fieldId as keyof typeof row] || '';
+        } else {
+          // If no mapping found, try to extract field ID from dot notation
+          const parts = header.split('.');
+          if (parts.length === 2) {
+            const fieldKey = parts[1]; // Extract field ID from section.field format
+            mappedRow[header] = row[fieldKey as keyof typeof row] || '';
+          } else {
+            mappedRow[header] = '';
+          }
+        }
       });
       return mappedRow;
     });
