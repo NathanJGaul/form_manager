@@ -219,12 +219,13 @@ export class JCC2UserQuestionnaireV2 {
         .field("radio", `${app} - Frequency`)
         .id(`${appId}_frequency`)
         .options(frequencyOfUse)
-        .defaultValue(frequencyOfUse[0])
+        // .defaultValue(frequencyOfUse[0])
         .layout("horizontal")
         .grouping(true, `usage_frequency_group`)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end()
+
         .field("checkbox", `${app} - Classification`)
         .id(`${appId}_classification`)
         .multiple()
@@ -234,16 +235,18 @@ export class JCC2UserQuestionnaireV2 {
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end()
+
         .field("radio", `${app} - Training`)
         .id(`${appId}_training_received`)
         .options(yesNo)
-        .defaultValue("No")
+        // .defaultValue("No")
         .layout("horizontal")
         .grouping(true, `usage_training_group`)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end()
-        .field("text", "Specify Training Type")
+
+        .field("text", `Specify ${app} Training Type`)
         .id(`${appId}_training_type`)
         .required()
         .conditional(`${appId}_training_received`, "equals", ["Yes"])
@@ -265,7 +268,7 @@ export class JCC2UserQuestionnaireV2 {
         .options(effectivenessScale.options)
         .layout("horizontal")
         .grouping(true, "intelligence_data_provided")
-        .defaultValue(effectivenessScale.default)
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -278,17 +281,18 @@ export class JCC2UserQuestionnaireV2 {
         .options(effectivenessScale.options)
         .layout("horizontal")
         .grouping(true, "intelligence_data_completion_of_role")
-        .defaultValue(effectivenessScale.default)
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
     });
     builder
-      .field("radio", `Overall Effectiveness Rating`)
+      .field("radio", `Overall JCC2 Effectiveness Rating - Intelligence Data`)
       .id("intelligence_data_overall_effectiveness")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .defaultValue(effectivenessScale.default)
+      .grouping(true, "overall_intelligence_data")
+      // .defaultValue(effectivenessScale.default)
       .required()
       .end();
 
@@ -297,20 +301,32 @@ export class JCC2UserQuestionnaireV2 {
       .section(
         "MOS 1.1.2: Tagging objects of interest and enabling correlation of objects"
       )
-      .id("mos_1_1_2_tagging_objects_correlation")
-      .conditional("exp_app_madss", "not_equals", ["NA"])
-      .field("radio", "Rate the utility of MADSS for Object Tagging")
-      .id("mos_1_1_2_madss_tagging")
-      .options(effectivenessScale.options)
-      .layout("horizontal")
-      .defaultValue(effectivenessScale.default)
-      .end()
-      .field("radio", "Rate the utility of MADSS for Object Correlation")
-      .id("mos_1_1_2_madss_correlation")
-      .options(effectivenessScale.options)
-      .layout("horizontal")
-      .defaultValue(effectivenessScale.default)
-      .end();
+      .id("mos_1_1_2");
+
+    ["MADSS", "Rally", "SigAct", "Threat Hub"].forEach((app) => {
+      const appId = `tagging_${toId(app)}`;
+      const appConditionId = `exp_app_${toId(app)}`;
+      builder
+        .field("radio", `Rate the utility of ${app} for Object Tagging`)
+        .id(`${appId}_tagging`)
+        .options(effectivenessScale.options)
+        .layout("horizontal")
+        .grouping(true, "tagging")
+        // .defaultValue(effectivenessScale.default)
+        .required()
+        .conditional(appConditionId, "not_equals", ["NA"])
+        .end()
+
+        .field("radio", `Rate the utility of ${app} for Object Correlation`)
+        .id(`${appId}_correlation`)
+        .options(effectivenessScale.options)
+        .layout("horizontal")
+        .grouping(true, "correlation")
+        // .defaultValue(effectivenessScale.default)
+        .required()
+        .conditional(appConditionId, "not_equals", ["NA"])
+        .end();
+    });
 
     // MOP 1.1.3: Identify the cause of an operational status change (MADSS)
     builder
@@ -320,22 +336,35 @@ export class JCC2UserQuestionnaireV2 {
       .id("mop_1_1_3_identify_operational_status_change_madss")
       .conditional("exp_app_madss", "not_equals", ["NA"]);
     const madssQuestions = [
-      "MADDS has the capability to notice a change in operational change in cyber asset status.",
-      "MADDS has the capability to identify the cause of the operational change in cyber asset status.",
-      "MADDS has the capability to search for the cause of the operational change in cyber asset status.",
-      "MADDS has the capability to manually change the status of the operational change in cyber assets.",
-      "MADDS has the capability to manually identify and correct inaccurate status changes.",
+      "MADSS has the capability to notice a change in operational change in cyber asset status.",
+      "MADSS has the capability to identify the cause of the operational change in cyber asset status.",
+      "MADSS has the capability to search for the cause of the operational change in cyber asset status.",
+      "MADSS has the capability to manually change the status of the operational change in cyber assets.",
+      "MADSS has the capability to manually identify and correct inaccurate status changes.",
     ];
     madssQuestions.forEach((question, index) => {
       builder
         .field("radio", question)
-        .id(`mop_1_1_3_madss_${index + 1}`)
+        .id(`madss_${index + 1}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .defaultValue(effectivenessScale.default)
+        // .defaultValue(effectivenessScale.default)
+        .grouping(true, "mop_1_1_3_madss")
         .required()
         .end();
     });
+    builder
+      .field(
+        "radio",
+        "Rate the effectiveness of JCC2 facilitating the capability"
+      )
+      .id(`overall`)
+      .options(effectivenessScale.options)
+      .layout("horizontal")
+      // .defaultValue(effectivenessScale.default)
+      .grouping(true, "mop_1_1_3_overall")
+      .required()
+      .end();
 
     // MOPS 1.1.4/1.2.3/1.3.6/2.3.3: Reporting and Data Export
     builder
@@ -441,7 +470,7 @@ export class JCC2UserQuestionnaireV2 {
       .id("mop_1_3_2_dependency_map_downstream_assets_madss")
       .conditional("exp_app_madss", "not_equals", ["NA"]);
     const dependencyMapQuestions = [
-      "The dependency map information within MADDS is complete.",
+      "The dependency map information within MADSS is complete.",
       "The dependency map can be used for determining what services are provided by information technology and cyber assets.",
       "The dependency map simulation mode is useful for determining what assets would be affected during an outage.",
     ];

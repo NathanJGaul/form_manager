@@ -687,6 +687,12 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         <div className="space-y-8">
           {visibleSections.map((section) => {
             const visibleFields = getVisibleFields(section.fields, formData);
+            
+            // Don't render the section if it has no visible fields
+            if (visibleFields.length === 0) {
+              return null;
+            }
+            
             const { grouped, ungrouped } = groupFields(visibleFields);
 
             // Create a combined array of all elements (fields and groups) with their original positions
