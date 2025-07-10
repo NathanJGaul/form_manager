@@ -183,18 +183,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   };
 
   const groupFields = (fields: any[]) => {
-    const grouped: { [key: string]: any[] } = {};
+    const grouped: { [key: string]: { fields: any[], firstFieldIndex: number } } = {};
     const ungrouped: any[] = [];
 
-    fields.forEach(field => {
+    fields.forEach((field, index) => {
       if (field.grouping?.enabled && field.grouping?.groupKey) {
         const groupKey = field.grouping.groupKey;
         if (!grouped[groupKey]) {
-          grouped[groupKey] = [];
+          grouped[groupKey] = { fields: [], firstFieldIndex: index };
         }
-        grouped[groupKey].push(field);
+        grouped[groupKey].fields.push(field);
       } else {
-        ungrouped.push(field);
+        ungrouped.push({ ...field, originalIndex: index });
       }
     });
 
@@ -635,19 +635,49 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             const visibleFields = getVisibleFields(section.fields, formData);
             const { grouped, ungrouped } = groupFields(visibleFields);
 
+            // Create a combined array of all elements (fields and groups) with their original positions
+            const allElements: Array<{
+              type: 'field' | 'group';
+              originalIndex: number;
+              content: any;
+              groupKey?: string;
+            }> = [];
+
+            // Add ungrouped fields
+            ungrouped.forEach(field => {
+              allElements.push({
+                type: 'field',
+                originalIndex: field.originalIndex,
+                content: field
+              });
+            });
+
+            // Add grouped fields (represented by their first field's position)
+            Object.entries(grouped).forEach(([groupKey, groupData]) => {
+              allElements.push({
+                type: 'group',
+                originalIndex: groupData.firstFieldIndex,
+                content: groupData.fields,
+                groupKey
+              });
+            });
+
+            // Sort by original index to maintain template creation order
+            allElements.sort((a, b) => a.originalIndex - b.originalIndex);
+
             return (
               <div key={section.id} className="border rounded-lg p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   {section.title}
                 </h2>
                 <div className="space-y-6">
-                  {/* Render ungrouped fields */}
-                  {ungrouped.map(renderField)}
-                  
-                  {/* Render grouped fields */}
-                  {Object.entries(grouped).map(([groupKey, fields]) =>
-                    renderGroupedFields(groupKey, fields)
-                  )}
+                  {allElements.map((element, index) => {
+                    if (element.type === 'field') {
+                      return renderField(element.content);
+                    } else {
+                      return renderGroupedFields(element.groupKey!, element.content);
+                    }
+                  })}
                 </div>
               </div>
             );
