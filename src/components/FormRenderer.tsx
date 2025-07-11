@@ -48,6 +48,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const currentInstance: FormInstance =
@@ -91,6 +92,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     return () => clearTimeout(timer);
   }, [formData, saveForm]);
+
+  // Sticky header functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const threshold = 100; // Start sticky behavior after 100px scroll
+      setIsHeaderSticky(scrollTop > threshold);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData((prev) => {
@@ -646,7 +659,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className={`flex justify-between items-center mb-6 transition-all duration-300 ${
+          isHeaderSticky
+            ? 'fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b border-gray-200 px-6 py-4 mx-auto max-w-4xl'
+            : ''
+        }`}>
           <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -681,6 +698,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             )}
           </div>
         </div>
+
+        {/* Spacer to prevent content jump when header becomes sticky */}
+        {isHeaderSticky && <div className="h-20"></div>}
 
         <div className="mb-6">
           <div className="w-full bg-gray-200 rounded-full h-2">
