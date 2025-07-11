@@ -46,7 +46,8 @@ export const getVisibleFields = (
 
 export const calculateProgress = (
   sections: FormSection[],
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  visitedSections?: string[]
 ): number => {
   const visibleSections = getVisibleSections(sections, formData);
   if (visibleSections.length === 0) return 0;
@@ -54,13 +55,27 @@ export const calculateProgress = (
   let totalRequiredFields = 0;
   let completedRequiredFields = 0;
   
+  // Calculate total required fields from ALL visible sections (denominator)
   visibleSections.forEach(section => {
     const visibleFields = getVisibleFields(section.fields, formData);
     
     visibleFields.forEach(field => {
-      // Only count required fields for progress calculation
       if (field.required) {
         totalRequiredFields++;
+      }
+    });
+  });
+  
+  // Calculate completed required fields from ONLY visited sections (numerator)
+  const visitedVisibleSections = visitedSections 
+    ? visibleSections.filter(section => visitedSections.includes(section.id))
+    : visibleSections;
+  
+  visitedVisibleSections.forEach(section => {
+    const visibleFields = getVisibleFields(section.fields, formData);
+    
+    visibleFields.forEach(field => {
+      if (field.required) {
         const value = formData[field.id];
         
         // Check if field has a value, default value, or is considered complete

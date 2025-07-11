@@ -56,8 +56,14 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const currentInstance: FormInstance =
     instance || storageManager.getOrCreateInstance(template.id, template.name);
 
+  const [visitedSections, setVisitedSections] = useState<Set<string>>(() => {
+    // Load visited sections from form instance
+    const savedVisitedSections = currentInstance.visitedSections || [];
+    return new Set(savedVisitedSections);
+  });
+
   const visibleSections = getVisibleSections(template.sections, formData);
-  const progress = calculateProgress(template.sections, formData);
+  const progress = calculateProgress(template.sections, formData, Array.from(visitedSections));
   
   // Filter sections for section-by-section view (exclude empty sections)
   const filteredSections = visibleSections.filter(section => {
@@ -75,6 +81,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         ...currentInstance,
         data: nullifiedFormData,
         progress,
+        visitedSections: Array.from(visitedSections),
         updatedAt: new Date(),
       };
 
@@ -88,7 +95,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
     }
-  }, [formData, progress, currentInstance, onSave, template.sections]);
+  }, [formData, progress, currentInstance, onSave, template.sections, visitedSections]);
 
   // Auto-save functionality
   useEffect(() => {
@@ -135,6 +142,30 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [filteredSections.length, currentSectionIndex, viewMode]);
 
+  // Track visited sections
+  useEffect(() => {
+    if (viewMode === 'section' && filteredSections.length > 0) {
+      const currentSection = filteredSections[currentSectionIndex];
+      if (currentSection) {
+        setVisitedSections(prev => new Set([...prev, currentSection.id]));
+      }
+    }
+  }, [currentSectionIndex, filteredSections, viewMode]);
+
+  // Save visited sections to form instance when they change
+  useEffect(() => {
+    const updatedInstance: FormInstance = {
+      ...currentInstance,
+      visitedSections: Array.from(visitedSections),
+      updatedAt: new Date(),
+    };
+    
+    // Only save if there are visited sections to avoid unnecessary saves
+    if (visitedSections.size > 0) {
+      storageManager.saveInstance(updatedInstance);
+    }
+  }, [visitedSections, currentInstance]);
+
   // Keyboard navigation for section view
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
@@ -142,14 +173,90 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         if (e.key === 'ArrowLeft' && currentSectionIndex > 0) {
           setCurrentSectionIndex(currentSectionIndex - 1);
         } else if (e.key === 'ArrowRight' && currentSectionIndex < filteredSections.length - 1) {
-          setCurrentSectionIndex(currentSectionIndex + 1);
+          const nextSectionIndex = currentSectionIndex + 1;
+          const nextSectionAccessibility = getSectionAccessibility(nextSectionIndex);
+          if (nextSectionAccessibility.accessible) {
+            setCurrentSectionIndex(nextSectionIndex);
+          }
         }
       }
     };
 
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
-  }, [viewMode, currentSectionIndex, filteredSections.length]);
+  }, [viewMode, currentSectionIndex, filteredSections.length, visitedSections]);
+
+  // Determine which sections are accessible based on sequential navigation
+  const getSectionAccessibility = (sectionIndex: number) => {
+    // First section is always accessible
+    if (sectionIndex === 0) {
+      return { accessible: true, reason: '' };
+    }
+    
+    // Check if all previous sections have been visited
+    for (let i = 0; i < sectionIndex; i++) {
+      const previousSection = filteredSections[i];
+      if (previousSection && !visitedSections.has(previousSection.id)) {
+        return { 
+          accessible: false, 
+          reason: `Complete section ${i + 1} first` 
+        };
+      }
+    }
+    
+    return { accessible: true, reason: '' };
+  };
+
+  // Calculate section completeness for visual indicators
+  // Only considers required AND visible/enabled fields
+  // Includes fields with default values as complete
+  const getSectionCompleteness = (section: any) => {
+    const visibleFields = getVisibleFields(section.fields, formData);
+    const requiredVisibleFields = visibleFields.filter(field => field.required);
+    
+    // If no required fields are visible, section is considered complete
+    if (requiredVisibleFields.length === 0) {
+      return { status: 'complete', progress: 100 };
+    }
+    
+    const completedRequiredFields = requiredVisibleFields.filter(field => {
+      const value = formData[field.id];
+      const defaultValue = field.defaultValue;
+      
+      // Check if field has a value (either from user input or default value)
+      const hasValue = (() => {
+        if (value !== undefined && value !== null && value !== '') {
+          // User has provided a value
+          if (Array.isArray(value)) {
+            return value.length > 0;
+          }
+          return true;
+        }
+        
+        // Check if field has a default value
+        if (defaultValue !== undefined && defaultValue !== null && defaultValue !== '') {
+          if (Array.isArray(defaultValue)) {
+            return defaultValue.length > 0;
+          }
+          return true;
+        }
+        
+        return false;
+      })();
+      
+      return hasValue;
+    });
+    
+    const progress = Math.round((completedRequiredFields.length / requiredVisibleFields.length) * 100);
+    
+    if (progress === 100) {
+      return { status: 'complete', progress };
+    } else if (progress > 0) {
+      return { status: 'partial', progress };
+    } else {
+      return { status: 'incomplete', progress };
+    }
+  };
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData((prev) => {
@@ -199,6 +306,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       data: nullifiedFormData,
       progress: 100,
       completed: true,
+      visitedSections: Array.from(visitedSections),
       updatedAt: new Date(),
     };
 
@@ -901,42 +1009,165 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
           </div>
         )}
         {viewMode === 'section' && filteredSections.length > 0 && (
-          <div className="mt-6 flex justify-between items-center">
-            <button
-              onClick={() => setCurrentSectionIndex(Math.max(0, currentSectionIndex - 1))}
-              disabled={currentSectionIndex === 0}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Icons.ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">
-                Section {currentSectionIndex + 1} of {filteredSections.length}
-              </span>
-              <div className="flex space-x-1">
-                {filteredSections.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSectionIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      index === currentSectionIndex ? 'bg-blue-600' : 'bg-gray-300'
-                    }`}
-                    title={`Go to section ${index + 1}`}
-                  />
-                ))}
+          <div className="mt-6 bg-gray-50 rounded-lg p-4 border">
+            {/* Section Navigator Header */}
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center space-x-2">
+                <Icons.Navigation className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Section Navigator</span>
               </div>
+              <span className="text-sm text-gray-600">
+                {currentSectionIndex + 1} of {filteredSections.length}
+              </span>
             </div>
             
-            <button
-              onClick={() => setCurrentSectionIndex(Math.min(filteredSections.length - 1, currentSectionIndex + 1))}
-              disabled={currentSectionIndex === filteredSections.length - 1}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>Next</span>
-              <Icons.ChevronRight className="w-4 h-4" />
-            </button>
+            {/* Progress Indicators */}
+            <div className="flex justify-center items-center space-x-2 mb-4">
+              {filteredSections.map((section, index) => {
+                const completeness = getSectionCompleteness(section);
+                const isVisited = visitedSections.has(section.id);
+                const isCurrent = index === currentSectionIndex;
+                const accessibility = getSectionAccessibility(index);
+                const isAccessible = accessibility.accessible;
+                
+                let markerColor = 'bg-gray-300';
+                let borderColor = 'border-gray-300';
+                let statusIcon = null;
+                let buttonClasses = 'w-6 h-6 rounded-full border-2 transition-all duration-200 flex items-center justify-center';
+                
+                if (!isAccessible) {
+                  // Inaccessible sections - locked state
+                  markerColor = 'bg-gray-200';
+                  borderColor = 'border-gray-400';
+                  statusIcon = <Icons.Lock className="w-2 h-2 text-gray-500" />;
+                  buttonClasses += ' cursor-not-allowed opacity-50';
+                } else if (isCurrent) {
+                  markerColor = 'bg-blue-600';
+                  borderColor = 'border-blue-600';
+                  statusIcon = <Icons.Circle className="w-2 h-2 text-white" />;
+                  buttonClasses += ' hover:scale-110';
+                } else if (isVisited) {
+                  buttonClasses += ' hover:scale-110';
+                  switch (completeness.status) {
+                    case 'complete':
+                      markerColor = 'bg-green-500';
+                      borderColor = 'border-green-500';
+                      statusIcon = <Icons.Check className="w-2 h-2 text-white" />;
+                      break;
+                    case 'partial':
+                      markerColor = 'bg-yellow-500';
+                      borderColor = 'border-yellow-500';
+                      statusIcon = <Icons.Minus className="w-2 h-2 text-white" />;
+                      break;
+                    case 'incomplete':
+                      markerColor = 'bg-red-500';
+                      borderColor = 'border-red-500';
+                      statusIcon = <Icons.X className="w-2 h-2 text-white" />;
+                      break;
+                  }
+                } else {
+                  // Accessible but not visited
+                  buttonClasses += ' hover:scale-110';
+                }
+                
+                return (
+                  <div key={section.id} className="flex flex-col items-center space-y-1">
+                    <button
+                      onClick={() => {
+                        if (isAccessible) {
+                          setCurrentSectionIndex(index);
+                        }
+                      }}
+                      disabled={!isAccessible}
+                      className={`${buttonClasses} ${markerColor} ${borderColor}`}
+                      title={!isAccessible ? accessibility.reason : `${section.title} - ${isVisited ? `${completeness.progress}% complete` : 'Not visited'}`}
+                    >
+                      {statusIcon}
+                    </button>
+                    <span className="text-xs text-gray-500">{index + 1}</span>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Navigation Buttons */}
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => setCurrentSectionIndex(Math.max(0, currentSectionIndex - 1))}
+                disabled={currentSectionIndex === 0}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border"
+              >
+                <Icons.ChevronLeft className="w-4 h-4" />
+                <span>Previous</span>
+              </button>
+              
+              <div className="text-center">
+                <div className="text-sm font-medium text-gray-900">
+                  {filteredSections[currentSectionIndex]?.title}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {(() => {
+                    const currentSection = filteredSections[currentSectionIndex];
+                    const completeness = getSectionCompleteness(currentSection);
+                    return `${completeness.progress}% complete`;
+                  })()}
+                </div>
+              </div>
+              
+              <button
+                onClick={() => {
+                  const nextIndex = currentSectionIndex + 1;
+                  if (nextIndex < filteredSections.length && getSectionAccessibility(nextIndex).accessible) {
+                    setCurrentSectionIndex(nextIndex);
+                  }
+                }}
+                disabled={(() => {
+                  const nextIndex = currentSectionIndex + 1;
+                  if (nextIndex >= filteredSections.length) return true;
+                  return !getSectionAccessibility(nextIndex).accessible;
+                })()}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border"
+                title={(() => {
+                  const nextIndex = currentSectionIndex + 1;
+                  if (nextIndex >= filteredSections.length) return "Last section";
+                  const accessibility = getSectionAccessibility(nextIndex);
+                  return accessibility.accessible ? "Go to next section" : accessibility.reason;
+                })()}
+              >
+                <span>Next</span>
+                <Icons.ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {/* Legend */}
+            <div className="mt-4 pt-3 border-t border-gray-200">
+              <div className="flex flex-wrap justify-center gap-4 text-xs">
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                  <span className="text-gray-600">Current</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600">Complete</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <span className="text-gray-600">Partial</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-gray-600">Incomplete</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                  <span className="text-gray-600">Not visited</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-gray-200 border border-gray-400 rounded-full opacity-50"></div>
+                  <span className="text-gray-600">Locked</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

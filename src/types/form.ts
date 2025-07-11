@@ -54,6 +54,7 @@ export interface FormInstance {
   data: Record<string, any>;
   progress: number;
   completed: boolean;
+  visitedSections?: string[];
   createdAt: Date;
   updatedAt: Date;
   lastSaved: Date;
