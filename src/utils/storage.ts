@@ -13,6 +13,7 @@ class StorageManager {
   private readonly INSTANCES_KEY = "form_instances";
   private readonly SUBMISSIONS_KEY = "form_submissions";
   private readonly DEFAULT_TEMPLATES_LOADED_KEY = "default_templates_loaded";
+  private readonly VIEW_MODE_KEY = "form_view_mode";
 
   // Template methods
   getTemplates(): FormTemplate[] {
@@ -460,6 +461,16 @@ class StorageManager {
       .filter((exp) => exp.data)
       .map((exp) => `Template: ${exp.templateName}\n${exp.data}`)
       .join("\n\n");
+  }
+
+  // View mode methods
+  getViewMode(): 'continuous' | 'section' {
+    const stored = localStorage.getItem(this.VIEW_MODE_KEY);
+    return stored === 'continuous' ? 'continuous' : 'section';
+  }
+
+  saveViewMode(viewMode: 'continuous' | 'section'): void {
+    localStorage.setItem(this.VIEW_MODE_KEY, viewMode);
   }
 }
 

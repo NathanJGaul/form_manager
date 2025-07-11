@@ -50,12 +50,20 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [viewMode, setViewMode] = useState<'continuous' | 'section'>(() => storageManager.getViewMode());
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
   const currentInstance: FormInstance =
     instance || storageManager.getOrCreateInstance(template.id, template.name);
 
   const visibleSections = getVisibleSections(template.sections, formData);
   const progress = calculateProgress(template.sections, formData);
+  
+  // Filter sections for section-by-section view (exclude empty sections)
+  const filteredSections = visibleSections.filter(section => {
+    const visibleFields = getVisibleFields(section.fields, formData);
+    return visibleFields.length > 0;
+  });
 
   const saveForm = useCallback(async () => {
     setSaveStatus("saving");
@@ -104,6 +112,44 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Reset section index when switching to section view
+  useEffect(() => {
+    if (viewMode === 'section') {
+      setCurrentSectionIndex(0);
+    }
+  }, [viewMode]);
+
+  // Save view mode to localStorage when it changes
+  useEffect(() => {
+    storageManager.saveViewMode(viewMode);
+  }, [viewMode]);
+
+  // Handle reactive section filtering - adjust current section index when sections change
+  useEffect(() => {
+    if (viewMode === 'section' && filteredSections.length > 0) {
+      // If current section index is out of bounds, adjust it
+      if (currentSectionIndex >= filteredSections.length) {
+        setCurrentSectionIndex(Math.max(0, filteredSections.length - 1));
+      }
+    }
+  }, [filteredSections.length, currentSectionIndex, viewMode]);
+
+  // Keyboard navigation for section view
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (viewMode === 'section') {
+        if (e.key === 'ArrowLeft' && currentSectionIndex > 0) {
+          setCurrentSectionIndex(currentSectionIndex - 1);
+        } else if (e.key === 'ArrowRight' && currentSectionIndex < filteredSections.length - 1) {
+          setCurrentSectionIndex(currentSectionIndex + 1);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [viewMode, currentSectionIndex, filteredSections.length]);
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData((prev) => {
@@ -687,6 +733,18 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               )}
             </div>
             <div className="text-sm text-gray-600">Progress: {progress}%</div>
+            <button
+              onClick={() => setViewMode(viewMode === 'continuous' ? 'section' : 'continuous')}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              title={viewMode === 'continuous' ? 'Switch to section view' : 'Switch to continuous view'}
+            >
+              {viewMode === 'continuous' ? (
+                <Icons.List className="w-4 h-4" />
+              ) : (
+                <Icons.ScrollText className="w-4 h-4" />
+              )}
+              <span className="text-sm">{viewMode === 'continuous' ? 'Sections' : 'Continuous'}</span>
+            </button>
             {onExit && (
               <button
                 onClick={handleExit}
@@ -712,7 +770,8 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         </div>
 
         <div className="space-y-8">
-          {visibleSections.map((section) => {
+          {viewMode === 'continuous' ? (
+            visibleSections.map((section) => {
             const visibleFields = getVisibleFields(section.fields, formData);
             
             // Don't render the section if it has no visible fields
@@ -768,8 +827,118 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                 </div>
               </div>
             );
-          })}
+          })
+          ) : (
+            // Section-by-section view
+            (() => {
+              const currentSection = filteredSections[currentSectionIndex];
+              if (!currentSection) {
+                return (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No sections available</p>
+                  </div>
+                );
+              }
+
+              const visibleFields = getVisibleFields(currentSection.fields, formData);
+              
+              const { grouped, ungrouped } = groupFields(visibleFields);
+
+              // Create a combined array of all elements (fields and groups) with their original positions
+              const allElements: Array<{
+                type: 'field' | 'group';
+                originalIndex: number;
+                content: any;
+                groupKey?: string;
+              }> = [];
+
+              // Add ungrouped fields
+              ungrouped.forEach(field => {
+                allElements.push({
+                  type: 'field',
+                  originalIndex: field.originalIndex,
+                  content: field
+                });
+              });
+
+              // Add grouped fields (represented by their first field's position)
+              Object.entries(grouped).forEach(([groupKey, groupData]) => {
+                allElements.push({
+                  type: 'group',
+                  originalIndex: groupData.firstFieldIndex,
+                  content: groupData.fields,
+                  groupKey
+                });
+              });
+
+              // Sort by original index to maintain template creation order
+              allElements.sort((a, b) => a.originalIndex - b.originalIndex);
+
+              return (
+                <div key={currentSection.id} className="border rounded-lg p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    {currentSection.title}
+                  </h2>
+                  <div className="space-y-6">
+                    {allElements.map((element, index) => {
+                      if (element.type === 'field') {
+                        return renderField(element.content);
+                      } else {
+                        return renderGroupedFields(element.groupKey!, element.content);
+                      }
+                    })}
+                  </div>
+                </div>
+              );
+            })()
+          )}
         </div>
+
+        {/* Navigation controls for section-by-section view */}
+        {viewMode === 'section' && filteredSections.length === 0 && (
+          <div className="mt-6 text-center py-8">
+            <p className="text-gray-500">No sections available with current form data</p>
+          </div>
+        )}
+        {viewMode === 'section' && filteredSections.length > 0 && (
+          <div className="mt-6 flex justify-between items-center">
+            <button
+              onClick={() => setCurrentSectionIndex(Math.max(0, currentSectionIndex - 1))}
+              disabled={currentSectionIndex === 0}
+              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Icons.ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">
+                Section {currentSectionIndex + 1} of {filteredSections.length}
+              </span>
+              <div className="flex space-x-1">
+                {filteredSections.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSectionIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      index === currentSectionIndex ? 'bg-blue-600' : 'bg-gray-300'
+                    }`}
+                    title={`Go to section ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setCurrentSectionIndex(Math.min(filteredSections.length - 1, currentSectionIndex + 1))}
+              disabled={currentSectionIndex === filteredSections.length - 1}
+              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>Next</span>
+              <Icons.ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         <div className="mt-8 flex justify-end space-x-4">
           <button
