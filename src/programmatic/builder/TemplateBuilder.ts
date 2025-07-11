@@ -581,11 +581,12 @@ export class FieldBuilder {
   /**
    * Set field grouping configuration
    */
-  grouping(enabled: boolean, groupKey?: string): FieldBuilder {
+  grouping(enabled: boolean, groupKey?: string, label?: string): FieldBuilder {
     // console.log(`Setting grouping to ${enabled} with key ${groupKey} for field ${this.field.id || this.field.label}`);
     this.field.grouping = {
       enabled,
-      groupKey
+      groupKey,
+      label
     };
     return this;
   }

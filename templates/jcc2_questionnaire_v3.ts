@@ -546,34 +546,51 @@ export class JCC2UserQuestionnaireV3 {
 
     // MOP 1.2.1: Threat Detection (TASC)
     // Note: TASC refers to all JCC2 apps except JCC2 Cyber Ops, JCC2 Readiness, and MADSS
-    builder
-      .section("MOP 1.2.1: Threat Detection (TASC)")
-      .id("mop_1_2_1");
-    
-    // Create sections for each TASC app that the user has experience with
+    builder.section("MOP 1.2.1: Threat Detection").id("mop_1_2_1");
     tascApps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .section(`MOP 1.2.1: Threat Detection (${app})`)
-        .id(`mop_1_2_1_${toId(app)}`)
-        .conditional(appConditionId, "not_equals", ["NA"]);
-      
-      const tascEffectivenessQuestions = [
-        "JCC2 provided applications are accurate in detecting threats.",
-        "Data provided by JCC2 allows me to take action or make decisions about threats.",
-      ];
-      
-      tascEffectivenessQuestions.forEach((question, index) => {
-        builder
-          .field("radio", question)
-          .id(`threat_detection_${toId(app)}_${index + 1}`)
-          .options(effectivenessScale.options)
-          .layout("horizontal")
-          .defaultValue(effectivenessScale.default)
-          .required()
-          .end();
-      });
+        .field("radio", `${app}`)
+        .id(`${toId(app)}_threat_detection_accuracy`)
+        .options(effectivenessScale.options)
+        .layout("horizontal")
+        .grouping(
+          true,
+          "threat_detection_accuracy",
+          "JCC2 provided applications are accurate in detecting threats."
+        )
+        // .defaultValue(effectivenessScale.default)
+        .required()
+        .conditional(appConditionId, "not_equals", ["NA"])
+        .end()
+
+        .field("radio", `${app}`)
+        .id(`${toId(app)}_threat_detection_action`)
+        .options(effectivenessScale.options)
+        .layout("horizontal")
+        .grouping(
+          true,
+          "threat_detection_action",
+          "Data provided by JCC2 allows me to take action or make decisions about threats."
+        )
+        // .defaultValue(effectivenessScale.default)
+        .required()
+        .conditional(appConditionId, "not_equals", ["NA"])
+        .end();
     });
+    builder
+      .field("radio", `JCC2 Overall`)
+      .id("threat_detection_overall")
+      .options(effectivenessScale.options)
+      .layout("horizontal")
+      .grouping(
+        true,
+        "threat_detection_overall",
+        "Overall Effectiveness rating: Rate the effectiveness of JCC2 facilitating the capability."
+      )
+      // .defaultValue(effectivenessScale.default)
+      .required()
+      .end();
 
     // MOP 1.2.2: Threat assessment (Crucible)
     builder
@@ -588,14 +605,28 @@ export class JCC2UserQuestionnaireV3 {
     ];
     crucibleEffectivenessQuestions.forEach((question, index) => {
       builder
-        .field("radio", question)
+        .field("radio", "Crucible")
         .id(`threat_assessment_${index + 1}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .defaultValue(effectivenessScale.default)
+        .grouping(true, `threat_assessment_${index + 1}`, question)
+        // .defaultValue(effectivenessScale.default)
         .required()
         .end();
     });
+    builder
+      .field("radio", `JCC2 Overall`)
+      .id("threat_detection_overall")
+      .options(effectivenessScale.options)
+      .layout("horizontal")
+      .grouping(
+        true,
+        "threat_assessment_overall",
+        "Overall Effectiveness Rating. Rate the effectiveness of JCC2 faciliating the capability."
+      )
+      // .defaultValue(effectivenessScale.default)
+      .required()
+      .end();
 
     // MOS 1.3.1: Common Operating Picture (COP)
     builder
@@ -908,9 +939,7 @@ export class JCC2UserQuestionnaireV3 {
       .end();
 
     // MOS 3.2.1: User rating of JCC2 training
-    builder
-      .section("MOS 3.2.1: User rating of JCC2 training")
-      .id("mos_3_2_1");
+    builder.section("MOS 3.2.1: User rating of JCC2 training").id("mos_3_2_1");
     builder
       .field("radio", "Did you receive any training before you used JCC2?")
       .id("initial_training")

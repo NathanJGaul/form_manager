@@ -204,6 +204,13 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const renderGroupedFields = (groupKey: string, fields: any[]) => {
     if (fields.length === 0) return null;
 
+    // Helper function to get group label
+    const getGroupLabel = (groupKey: string, fields: any[]) => {
+      const firstField = fields[0];
+      // Use custom label if provided, otherwise transform groupKey
+      return firstField?.grouping?.label || groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ');
+    };
+
     // Check if all fields in group have the same options for horizontal grouping
     const firstField = fields[0];
     const allHaveSameOptions = fields.every(field => 
@@ -223,7 +230,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       return (
         <div key={groupKey} className="space-y-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
           <h4 className="text-sm font-semibold text-gray-800 mb-2">
-            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ')}
+            {getGroupLabel(groupKey, fields)}
           </h4>
           
           {/* Table layout for matrix-style grouped fields */}
@@ -315,7 +322,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       return (
         <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ')}
+            {getGroupLabel(groupKey, fields)}
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {fields.map((field) => {
@@ -353,7 +360,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       return (
         <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ')}
+            {getGroupLabel(groupKey, fields)}
           </h4>
           <div className="space-y-4">
             {fields.map(renderField)}

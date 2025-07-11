@@ -132,6 +132,7 @@ export interface ProgrammaticField {
   grouping?: {
     enabled: boolean;
     groupKey?: string;
+    label?: string;
   };
   validation?: ValidationRules;
   conditional?: {

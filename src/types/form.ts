@@ -10,6 +10,7 @@ export interface FormField {
   grouping?: {
     enabled: boolean;
     groupKey?: string;
+    label?: string;
   };
   validation?: {
     min?: number;
