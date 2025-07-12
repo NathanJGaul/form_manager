@@ -1,19 +1,16 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(npm install:*)",
-      "Bash(npx playwright:*)",
-      "Bash(mkdir:*)",
-      "Bash(ls:*)",
-      "Bash(claude mcp:*)",
-      "Bash(node:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm test:*)",
-      "Bash(grep:*)",
-      "Bash(cp:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)"
-    ],
-    "deny": []
+  "environment": {
+    "WORKSPACE": "/home/nathanjgaul/Development/projects/form_manager"
+  },
+  "experimentalTools": {
+    "notify": {
+      "commandAfterRun": "bash /home/nathanjgaul/Development/projects/form_manager/.claude/hooks/notify.sh",
+      "commandAfterUserInput": "bash /home/nathanjgaul/Development/projects/form_manager/.claude/hooks/notify.sh input"
+    }
+  },
+  "experimentalHooks": {
+    "preToolUse": "bash /home/nathanjgaul/Development/projects/form_manager/.claude/hooks/mcp-security-scan.sh",
+    "preToolUse_gemini": "bash /home/nathanjgaul/Development/projects/form_manager/.claude/hooks/gemini-context-injector.sh",
+    "preToolUse_task": "bash /home/nathanjgaul/Development/projects/form_manager/.claude/hooks/subagent-context-injector.sh"
   }
 }
