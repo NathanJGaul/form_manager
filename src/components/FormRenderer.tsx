@@ -47,6 +47,96 @@ interface FormRendererProps {
   onExit?: () => void;
 }
 
+// Utility function to render individual checkbox/radio fields as table when horizontal layout
+const renderFieldAsTable = (
+  field: FormField,
+  value: FormValue,
+  error: string | undefined,
+  handleFieldChange: (fieldId: string, value: FormValue) => void
+): JSX.Element => {
+  if (!field.options || field.layout !== 'horizontal') {
+    throw new Error('renderFieldAsTable should only be used for horizontal checkbox/radio fields with options');
+  }
+
+  const optionCount = field.options.length;
+  const availableWidth = 65; // 100% - 35% for question column
+  const columnWidth = `${availableWidth / optionCount}%`;
+
+  return (
+    <div key={field.id} className="space-y-2">
+      <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          {/* Header row with options */}
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="text-left py-2 pr-2 text-sm font-medium text-gray-700 border-r border-gray-200" style={{ width: '35%' }}>
+                Question
+              </th>
+              {field.options.map((option: string) => (
+                <th key={option} className="text-center py-2 px-1 text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0" style={{ width: columnWidth }}>
+                  <div className="leading-tight break-words hyphens-auto text-center px-1">
+                    {option}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          
+          {/* Body row with field name and input controls */}
+          <tbody className="divide-y divide-gray-100">
+            <tr className="hover:bg-gray-25">
+              {/* Field name/label column */}
+              <td className="py-2 pr-2 text-sm text-gray-900 align-top border-r border-gray-200">
+                <div className="flex flex-col">
+                  <div className="flex items-start">
+                    <span className="leading-tight break-words hyphens-auto">
+                      {field.label}
+                    </span>
+                    {field.required && <span className="text-red-500 ml-1 flex-shrink-0">*</span>}
+                  </div>
+                  {error && (
+                    <div className="text-red-500 text-xs mt-1">{error}</div>
+                  )}
+                </div>
+              </td>
+              
+              {/* Option columns with input controls */}
+              {field.options.map((option: string) => (
+                <td key={option} className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0">
+                  <div className="flex justify-center items-center h-8">
+                    <input
+                      type={field.type}
+                      name={field.type === 'radio' ? field.id : undefined}
+                      value={option}
+                      checked={field.type === 'radio' 
+                        ? value === option 
+                        : Array.isArray(value) && value.includes(option)
+                      }
+                      onChange={(e) => {
+                        if (field.type === 'radio') {
+                          handleFieldChange(field.id, e.target.value);
+                        } else {
+                          const currentValues = Array.isArray(value) ? value : [];
+                          if (e.target.checked) {
+                            handleFieldChange(field.id, [...currentValues, option]);
+                          } else {
+                            handleFieldChange(field.id, currentValues.filter((v) => v !== option));
+                          }
+                        }
+                      }}
+                      className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-4 w-4"
+                    />
+                  </div>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 export const FormRenderer: React.FC<FormRendererProps> = ({
   template,
   instance,
@@ -714,13 +804,19 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         );
 
       case "radio":
+        // Use table rendering for horizontal layout
+        if (field.layout === 'horizontal' && field.options) {
+          return renderFieldAsTable(field, value, error, handleFieldChange);
+        }
+        
+        // Use vertical layout (original implementation)
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <div className={field.layout === 'horizontal' ? "flex flex-wrap gap-4" : "space-y-2"}>
+            <div className="space-y-2">
               {field.options?.map((option: string) => (
                 <label
                   key={option}
@@ -745,13 +841,19 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
         );
 
       case "checkbox":
+        // Use table rendering for horizontal layout
+        if (field.layout === 'horizontal' && field.options) {
+          return renderFieldAsTable(field, value, error, handleFieldChange);
+        }
+        
+        // Use vertical layout (original implementation)
         return (
           <div key={field.id} className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
-            <div className={field.layout === 'horizontal' ? "flex flex-wrap gap-4" : "space-y-2"}>
+            <div className="space-y-2">
               {field.options?.map((option: string) => (
                 <label
                   key={option}
