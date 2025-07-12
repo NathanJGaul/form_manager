@@ -5,6 +5,11 @@ import { exportTemplateToPdf, downloadPdf } from "../utils/pdfExport";
 import * as Icons from "lucide-react";
 import { ProgrammaticImportModal } from "./ProgrammaticImportModal";
 
+interface FormBuilderField extends FormField {
+  optionsText?: string;
+  defaultValueText?: string;
+}
+
 interface FormBuilderProps {
   template?: FormTemplate;
   onSave: (template: FormTemplate) => void;
@@ -25,9 +30,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         ...field,
         // Initialize text fields from existing options if they don't exist
         optionsText:
-          (field as any).optionsText || field.options?.join("\n") || "",
+          (field as FormBuilderField).optionsText || field.options?.join("\n") || "",
         defaultValueText:
-          (field as any).defaultValueText ||
+          (field as FormBuilderField).defaultValueText ||
           (Array.isArray(field.defaultValue)
             ? field.defaultValue.join("\n")
             : ""),
@@ -67,14 +72,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   };
 
   const addField = (sectionId: string) => {
-    const newField: FormField = {
+    const newField: FormBuilderField = {
       id: crypto.randomUUID(),
       type: "text",
       label: "New Field",
       required: false,
       optionsText: "",
       defaultValueText: "",
-    } as any;
+    };
 
     setSections(
       sections.map((s) =>
@@ -209,7 +214,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   value={field.type}
                   onChange={(e) =>
                     updateField(sectionId, field.id, {
-                      type: e.target.value as any,
+                      type: e.target.value as FormField['type'],
                     })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -255,7 +260,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 <div>
                   <textarea
                     value={
-                      (field as any).defaultValueText ||
+                      (field as FormBuilderField).defaultValueText ||
                       (Array.isArray(field.defaultValue)
                         ? field.defaultValue.join("\n")
                         : "")
@@ -346,7 +351,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 </label>
                 <textarea
                   value={
-                    (field as any).optionsText ||
+                    (field as FormBuilderField).optionsText ||
                     field.options?.join("\n") ||
                     ""
                   }

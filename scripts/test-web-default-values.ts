@@ -88,7 +88,7 @@ try {
   const section = testTemplate.sections[0];
   console.log(`Section: ${section.title}`);
   
-  section.fields.forEach((field, index) => {
+  section.fields.forEach((field) => {
     if (field.defaultValue !== undefined) {
       console.log(`  ✓ Field "${field.label}" (${field.type}) has default value: ${JSON.stringify(field.defaultValue)}`);
     } else {

@@ -65,16 +65,16 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleSaveTemplate = (template: FormTemplate) => {
+  const handleSaveTemplate = (_template: FormTemplate) => {
     loadData();
     setCurrentView('dashboard');
   };
 
-  const handleSaveInstance = (instance: FormInstance) => {
+  const handleSaveInstance = (_instance: FormInstance) => {
     loadData();
   };
 
-  const handleSubmitInstance = (instance: FormInstance) => {
+  const handleSubmitInstance = (_instance: FormInstance) => {
     loadData();
     setCurrentView('dashboard');
   };
@@ -266,7 +266,7 @@ export const Dashboard: React.FC = () => {
                 <Icons.Filter className="w-4 h-4 text-gray-500" />
                 <select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  onChange={(e) => setFilterStatus(e.target.value as 'all' | 'completed' | 'in-progress')}
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All Status</option>

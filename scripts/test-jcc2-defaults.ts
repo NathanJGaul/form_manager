@@ -16,7 +16,7 @@ try {
   template.sections.slice(0, 2).forEach((section, sectionIndex) => {
     console.log(`Section ${sectionIndex + 1}: ${section.title}`);
     
-    section.fields.forEach((field, fieldIndex) => {
+    section.fields.forEach((field) => {
       if (field.defaultValue !== undefined) {
         console.log(`  ✓ Field "${field.label}" has default value: ${JSON.stringify(field.defaultValue)}`);
       } else {

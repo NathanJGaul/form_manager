@@ -3,7 +3,7 @@
 import { JCC2UserQuestionnaire } from '../src/programmatic/examples/JCC2UserQuestionnaire';
 import { DefaultValueExample } from '../src/programmatic/examples/DefaultValueExample';
 import { TDLConverter } from '../src/programmatic/tdl/converter';
-import { FormTemplate } from '../src/types/form';
+import { FormTemplate, FormField } from '../src/types/form';
 
 console.log('Testing template import with default values...\n');
 
@@ -26,7 +26,7 @@ try {
         title: section.title,
         fields: section.fields.map(field => ({
           id: field.id,
-          type: field.type as any,
+          type: field.type as FormField['type'],
           label: field.label,
           placeholder: field.placeholder,
           required: field.required || false,
@@ -72,7 +72,7 @@ try {
         title: section.title,
         fields: section.fields.map(field => ({
           id: field.id,
-          type: field.type as any,
+          type: field.type as FormField['type'],
           label: field.label,
           placeholder: field.placeholder,
           required: field.required || false,

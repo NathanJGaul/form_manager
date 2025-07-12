@@ -184,10 +184,10 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
 
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
-  }, [viewMode, currentSectionIndex, filteredSections.length, visitedSections]);
+  }, [viewMode, currentSectionIndex, filteredSections.length, visitedSections, getSectionAccessibility]);
 
   // Determine which sections are accessible based on sequential navigation
-  const getSectionAccessibility = (sectionIndex: number) => {
+  const getSectionAccessibility = useCallback((sectionIndex: number) => {
     // First section is always accessible
     if (sectionIndex === 0) {
       return { accessible: true, reason: '' };
@@ -205,7 +205,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
     
     return { accessible: true, reason: '' };
-  };
+  }, [filteredSections, visitedSections]);
 
   // Calculate section completeness for visual indicators
   // Only considers required AND visible/enabled fields
