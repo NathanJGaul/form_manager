@@ -1,4 +1,4 @@
-import { CommonTemplates } from './src/programmatic/library/CommonTemplates.js';
+import { CommonTemplates } from '../src/programmatic/library/CommonTemplates.js';
 
 console.log('Testing default templates...');
 

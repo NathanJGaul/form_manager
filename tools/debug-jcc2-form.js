@@ -4,7 +4,7 @@ const path = require('path');
 
 // Import the JCC2 template
 const jcc2Template = `
-const { TemplateBuilder } = require('./src/programmatic/index');
+const { TemplateBuilder } = require('../src/programmatic/index');
 
 // Basic required fields test
 const builder = new TemplateBuilder()

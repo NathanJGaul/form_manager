@@ -1,5 +1,5 @@
 // Simple test to verify progress calculation is working
-const { JCC2UserQuestionnaireV2 } = require('./templates/jcc2_questionnaire_v2.ts');
+const { JCC2UserQuestionnaireV2 } = require('../templates/jcc2_questionnaire_v2.ts');
 
 // Mock form data with just the required fields filled
 const mockFormData = {

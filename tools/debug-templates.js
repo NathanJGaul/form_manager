@@ -6,7 +6,7 @@ try {
   console.log('1. Testing import paths...');
   
   // Test if we can import the JCC2 template directly
-  import('./templates/jcc2_questionnaire_v2.ts').then(module => {
+  import('../templates/jcc2_questionnaire_v2.ts').then(module => {
     console.log('✅ JCC2 template imported successfully');
     const template = module.JCC2UserQuestionnaireV2.create();
     console.log(`   Name: ${template.metadata.name}`);
@@ -16,7 +16,7 @@ try {
   });
   
   // Test CommonTemplates
-  import('./src/programmatic/library/CommonTemplates.ts').then(module => {
+  import('../src/programmatic/library/CommonTemplates.ts').then(module => {
     console.log('✅ CommonTemplates imported successfully');
     const templates = module.CommonTemplates.listTemplates();
     console.log(`   Available templates: ${templates.join(', ')}`);

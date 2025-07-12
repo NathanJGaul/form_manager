@@ -10,7 +10,7 @@ async function testCommonTemplates() {
     // Test TypeScript compilation
     try {
         console.log('1. Testing TypeScript compilation...');
-        const { stdout, stderr } = await execAsync('npx tsc --noEmit --skipLibCheck src/programmatic/library/CommonTemplates.ts');
+        const { stdout, stderr } = await execAsync('npx tsc --noEmit --skipLibCheck ../src/programmatic/library/CommonTemplates.ts');
         if (stderr) {
             console.log('❌ TypeScript errors:', stderr);
         } else {
@@ -24,7 +24,7 @@ async function testCommonTemplates() {
     console.log('\n2. Checking file structure...');
     
     const fs = await import('fs');
-    const commonTemplatesContent = fs.readFileSync('src/programmatic/library/CommonTemplates.ts', 'utf8');
+    const commonTemplatesContent = fs.readFileSync('../src/programmatic/library/CommonTemplates.ts', 'utf8');
     
     // Check if JCC2 import exists
     const hasJCC2Import = commonTemplatesContent.includes('JCC2UserQuestionnaireV2');
@@ -41,7 +41,7 @@ async function testCommonTemplates() {
     // Test the JCC2 template file
     console.log('\n3. Testing JCC2 template file...');
     try {
-        const jcc2Content = fs.readFileSync('templates/jcc2_questionnaire_v2.ts', 'utf8');
+        const jcc2Content = fs.readFileSync('../templates/jcc2_questionnaire_v2.ts', 'utf8');
         const hasCorrectImport = jcc2Content.includes('from "../src/programmatic/index"');
         console.log(`Correct import path: ${hasCorrectImport ? '✅' : '❌'}`);
         
