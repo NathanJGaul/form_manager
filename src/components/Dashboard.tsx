@@ -65,16 +65,16 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleSaveTemplate = (_template: FormTemplate) => {
+  const handleSaveTemplate = () => {
     loadData();
     setCurrentView('dashboard');
   };
 
-  const handleSaveInstance = (_instance: FormInstance) => {
+  const handleSaveInstance = () => {
     loadData();
   };
 
-  const handleSubmitInstance = (_instance: FormInstance) => {
+  const handleSubmitInstance = () => {
     loadData();
     setCurrentView('dashboard');
   };

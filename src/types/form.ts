@@ -1,3 +1,5 @@
+export type FormFieldValue = string | number | boolean | string[];
+
 export interface FormField {
   id: string;
   type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'email' | 'tel' | 'url' | 'time' | 'range';
@@ -24,7 +26,7 @@ export interface FormField {
     values: string[];
     operator: 'equals' | 'contains' | 'not_equals';
   };
-  defaultValue?: any;
+  defaultValue?: FormFieldValue;
 }
 
 export interface FormSection {
@@ -51,7 +53,7 @@ export interface FormInstance {
   id: string;
   templateId: string;
   templateName: string;
-  data: Record<string, any>;
+  data: Record<string, FormFieldValue>;
   progress: number;
   completed: boolean;
   visitedSections?: string[];
@@ -65,6 +67,6 @@ export interface FormSubmission {
   formInstanceId: string;
   templateId: string;
   templateName: string;
-  data: Record<string, any>;
+  data: Record<string, FormFieldValue>;
   submittedAt: Date;
 }

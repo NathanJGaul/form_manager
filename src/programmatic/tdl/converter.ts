@@ -429,12 +429,12 @@ export class TDLConverter {
   /**
    * Get conversion statistics
    */
-  getConversionStats(template: FormTemplate | ProgrammaticTemplate): any {
+  getConversionStats(template: FormTemplate | ProgrammaticTemplate): Record<string, number> {
     if ('sections' in template && Array.isArray(template.sections)) {
-      const sections = template.sections as any[];
+      const sections = template.sections as (FormSection | ProgrammaticSection)[];
       const totalFields = sections.reduce((sum, s) => sum + (s.fields?.length || 0), 0);
       const conditionalFields = sections.reduce((sum, s) => 
-        sum + (s.fields?.filter((f: any) => f.conditional)?.length || 0), 0
+        sum + (s.fields?.filter((f: FormField | ProgrammaticField) => f.conditional)?.length || 0), 0
       );
       const conditionalSections = sections.filter(s => s.conditional).length;
       

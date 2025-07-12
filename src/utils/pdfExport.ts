@@ -1,5 +1,5 @@
-import { PDFDocument, PDFForm, rgb } from 'pdf-lib';
-import { FormTemplate, FormField, FormSection } from '../types/form';
+import { PDFDocument, PDFForm, PDFPage, rgb } from 'pdf-lib';
+import { FormTemplate, FormField, FormSection, FormFieldValue } from '../types/form';
 import { PdfExportOptions, PdfFieldLayout, PdfExportResult, DEFAULT_PDF_OPTIONS, PAGE_SIZES } from '../types/pdfExport';
 
 export class PdfExporter {
@@ -18,7 +18,7 @@ export class PdfExporter {
     this.pageHeight = 0;
   }
 
-  private getStringValue(value: any): string {
+  private getStringValue(value: FormFieldValue | null | undefined): string {
     if (value === null || value === undefined) {
       return '';
     }
@@ -91,7 +91,7 @@ export class PdfExporter {
     }
   }
 
-  private async processSection(section: FormSection, page: any): Promise<{ needsNewPage: boolean }> {
+  private async processSection(section: FormSection, page: PDFPage): Promise<{ needsNewPage: boolean }> {
     // Add section header
     if (this.options.includeSectionHeaders && section.title) {
       this.currentY -= 20;
@@ -145,7 +145,7 @@ export class PdfExporter {
     return grouped;
   }
 
-  private async processFieldGroup(groupKey: string, fields: FormField[], page: any): Promise<{ needsNewPage: boolean }> {
+  private async processFieldGroup(groupKey: string, fields: FormField[], page: PDFPage): Promise<{ needsNewPage: boolean }> {
     if (fields.length === 0) return { needsNewPage: false };
 
     // Check if we need a new page
@@ -217,7 +217,7 @@ export class PdfExporter {
     return { needsNewPage: false };
   }
 
-  private async processField(field: FormField, page: any): Promise<{ needsNewPage: boolean }> {
+  private async processField(field: FormField, page: PDFPage): Promise<{ needsNewPage: boolean }> {
     // Check if we need a new page
     const fieldHeight = this.getFieldHeight(field);
     if (this.currentY - fieldHeight < this.margin) {

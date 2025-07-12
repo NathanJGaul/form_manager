@@ -7,6 +7,7 @@ import {
   ControlFlowConfig,
   Condition 
 } from '../types';
+import { FormFieldValue } from '../../types/form';
 
 export interface TDLDocument {
   metadata: {
@@ -17,7 +18,7 @@ export interface TDLDocument {
     tags: string[];
     extends?: string;
   };
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   schema?: {
     validation: 'strict' | 'loose' | 'none';
     requiredFields: string[];
@@ -27,7 +28,7 @@ export interface TDLDocument {
     autoSave?: boolean;
     autoSaveInterval?: number;
     showProgress?: boolean;
-    conditionalLogic?: any[];
+    conditionalLogic?: unknown[];
     functions?: Record<string, string>;
   };
   styling?: {
@@ -36,7 +37,7 @@ export interface TDLDocument {
     spacing?: 'compact' | 'normal' | 'comfortable';
     colors?: string[];
     animations?: boolean;
-    conditionalStyling?: any[];
+    conditionalStyling?: unknown[];
   };
 }
 
@@ -78,11 +79,11 @@ export interface TDLField {
 export interface TDLControlFlow {
   if?: {
     condition: string;
-    then: TDLField[] | any[];
+    then: TDLField[] | unknown[];
   };
   elseIf?: {
     condition: string;
-    then: TDLField[] | any[];
+    then: TDLField[] | unknown[];
   }[];
   else?: {
     fields?: TDLField[];
@@ -90,16 +91,16 @@ export interface TDLControlFlow {
   forEach?: {
     array: string;
     variable: string;
-    do: TDLField[] | any[];
+    do: TDLField[] | unknown[];
   };
   repeat?: {
     count: number | string;
     variable?: string;
-    do: TDLField[] | any[];
+    do: TDLField[] | unknown[];
   };
   while?: {
     condition: string;
-    do: TDLField[] | any[];
+    do: TDLField[] | unknown[];
   };
 }
 
@@ -335,7 +336,7 @@ export class TDLParser {
   /**
    * Parse control flow actions
    */
-  private parseControlFlowActions(actions: any[]): any[] {
+  private parseControlFlowActions(actions: unknown[]): unknown[] {
     return actions.map(action => {
       if (action.type) {
         // Already a template action
@@ -371,7 +372,7 @@ export class TDLParser {
   /**
    * Parse a value string into appropriate type
    */
-  private parseValue(valueStr: string): any {
+  private parseValue(valueStr: string): unknown {
     valueStr = valueStr.trim();
 
     // Handle quoted strings
@@ -400,7 +401,7 @@ export class TDLParser {
   /**
    * Parse array value string
    */
-  private parseArrayValue(valueStr: string): any[] {
+  private parseArrayValue(valueStr: string): unknown[] {
     valueStr = valueStr.trim();
 
     // Handle array literal

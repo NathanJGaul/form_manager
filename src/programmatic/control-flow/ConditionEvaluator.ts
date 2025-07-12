@@ -23,7 +23,7 @@ export class ConditionEvaluator {
         case 'comparison':
           return this.evaluateComparison(condition);
         default:
-          throw new Error(`Unknown condition type: ${(condition as any).type}`);
+          throw new Error(`Unknown condition type: ${(condition as Condition).type}`);
       }
     } catch (error) {
       console.warn('Error evaluating condition:', error);
@@ -103,7 +103,7 @@ export class ConditionEvaluator {
   /**
    * Convert value to boolean
    */
-  private toBooleanValue(value: any): boolean {
+  private toBooleanValue(value: unknown): boolean {
     if (typeof value === 'boolean') {
       return value;
     }
@@ -125,7 +125,7 @@ export class ConditionEvaluator {
   /**
    * Convert value to number
    */
-  private toNumberValue(value: any): number {
+  private toNumberValue(value: unknown): number {
     if (typeof value === 'number') {
       return value;
     }
@@ -216,7 +216,7 @@ export class ConditionEvaluator {
   /**
    * Parse a value string into appropriate type
    */
-  private static parseValue(valueStr: string): any {
+  private static parseValue(valueStr: string): unknown {
     valueStr = valueStr.trim();
 
     // Handle quoted strings
@@ -245,7 +245,7 @@ export class ConditionEvaluator {
   /**
    * Parse array value string
    */
-  private static parseArrayValue(valueStr: string): any[] {
+  private static parseArrayValue(valueStr: string): unknown[] {
     valueStr = valueStr.trim();
 
     // Handle array literal
@@ -322,7 +322,7 @@ export class ConditionEvaluator {
       default:
         errors.push({
           type: 'validation',
-          message: `Unknown condition type: ${(condition as any).type}`,
+          message: `Unknown condition type: ${(condition as Condition).type}`,
         });
     }
 

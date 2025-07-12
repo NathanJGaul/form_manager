@@ -3,10 +3,42 @@ import {
   FormInstance,
   FormSubmission,
   FormField,
+  FormFieldValue,
 } from "../types/form";
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
 import { TDLConverter } from "../programmatic/tdl/converter";
 import { updateConditionalFieldsAsNull } from "./formLogic";
+
+interface StoredTemplate {
+  id: string;
+  name: string;
+  description: string;
+  sections: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface StoredInstance {
+  id: string;
+  templateId: string;
+  templateName: string;
+  data: Record<string, FormFieldValue>;
+  progress: number;
+  completed: boolean;
+  visitedSections?: string[];
+  createdAt: string;
+  updatedAt: string;
+  lastSaved: string;
+}
+
+interface StoredSubmission {
+  id: string;
+  formInstanceId: string;
+  templateId: string;
+  templateName: string;
+  data: Record<string, FormFieldValue>;
+  submittedAt: string;
+}
 
 class StorageManager {
   private readonly TEMPLATES_KEY = "form_templates";
@@ -24,7 +56,7 @@ class StorageManager {
     if (!stored) return [];
 
     const templates = JSON.parse(stored);
-    return templates.map((t: any) => ({
+    return templates.map((t: StoredTemplate) => ({
       ...t,
       createdAt: new Date(t.createdAt),
       updatedAt: new Date(t.updatedAt),
@@ -94,7 +126,7 @@ class StorageManager {
     if (!stored) return [];
 
     const templates = JSON.parse(stored);
-    return templates.map((t: any) => ({
+    return templates.map((t: StoredTemplate) => ({
       ...t,
       createdAt: new Date(t.createdAt),
       updatedAt: new Date(t.updatedAt),
@@ -135,7 +167,7 @@ class StorageManager {
     if (!stored) return [];
 
     const instances = JSON.parse(stored);
-    return instances.map((i: any) => ({
+    return instances.map((i: StoredInstance) => ({
       ...i,
       createdAt: new Date(i.createdAt),
       updatedAt: new Date(i.updatedAt),
@@ -202,7 +234,7 @@ class StorageManager {
     if (!stored) return [];
 
     const submissions = JSON.parse(stored);
-    return submissions.map((s: any) => ({
+    return submissions.map((s: StoredSubmission) => ({
       ...s,
       submittedAt: new Date(s.submittedAt),
     }));
@@ -402,7 +434,7 @@ class StorageManager {
 
     // Map data to new header structure
     const mappedData = allData.map((row) => {
-      const mappedRow: Record<string, any> = {};
+      const mappedRow: Record<string, FormFieldValue | null> = {};
       headers.forEach((header) => {
         // Find the original field key that maps to this header
         const fieldId = Array.from(fieldMap.entries()).find(
@@ -428,7 +460,7 @@ class StorageManager {
     });
 
     // Format CSV content with proper escaping
-    const formatCsvValue = (value: any): string => {
+    const formatCsvValue = (value: FormFieldValue | null | undefined): string => {
       if (value === null) return "null";
       if (value === undefined) return "";
       const stringValue = String(value);

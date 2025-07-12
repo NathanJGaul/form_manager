@@ -4,7 +4,7 @@ export class TemplateContextManager {
   private context: TemplateContext;
   private contextStack: TemplateContext[] = [];
 
-  constructor(initialVariables: Record<string, any> = {}) {
+  constructor(initialVariables: Record<string, unknown> = {}) {
     this.context = {
       variables: { ...initialVariables },
       scope: {},
@@ -17,7 +17,7 @@ export class TemplateContextManager {
   /**
    * Create a new scope for nested execution (loops, conditionals)
    */
-  createScope(variables: Record<string, any> = {}): TemplateContext {
+  createScope(variables: Record<string, unknown> = {}): TemplateContext {
     const newContext: TemplateContext = {
       variables: { ...this.context.variables, ...variables },
       scope: { ...variables },
@@ -63,7 +63,7 @@ export class TemplateContextManager {
   /**
    * Set a variable in the current scope
    */
-  setVariable(name: string, value: any): void {
+  setVariable(name: string, value: unknown): void {
     this.context.variables[name] = value;
     this.context.scope[name] = value;
   }
@@ -71,7 +71,7 @@ export class TemplateContextManager {
   /**
    * Get a variable value with scope resolution
    */
-  getVariable(name: string): any {
+  getVariable(name: string): unknown {
     // First check current scope
     if (name in this.context.scope) {
       return this.context.scope[name];
@@ -114,7 +114,7 @@ export class TemplateContextManager {
   /**
    * Call a registered function
    */
-  callFunction(name: string, ...args: any[]): any {
+  callFunction(name: string, ...args: unknown[]): unknown {
     if (name in this.context.functions) {
       return this.context.functions[name].apply(this.context, args);
     }
@@ -171,7 +171,7 @@ export class TemplateContextManager {
   /**
    * Evaluate a simple expression with variable resolution
    */
-  evaluateExpression(expression: string): any {
+  evaluateExpression(expression: string): unknown {
     try {
       // Handle simple variable references
       if (expression.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)) {
@@ -245,7 +245,7 @@ export class TemplateContextManager {
   /**
    * Get debug information about current context
    */
-  getDebugInfo(): any {
+  getDebugInfo(): Record<string, unknown> {
     return {
       variables: this.context.variables,
       scope: this.context.scope,
@@ -260,7 +260,7 @@ export class TemplateContextManager {
   /**
    * Reset context to initial state
    */
-  reset(initialVariables: Record<string, any> = {}): void {
+  reset(initialVariables: Record<string, unknown> = {}): void {
     this.contextStack = [];
     this.context = {
       variables: { ...initialVariables },

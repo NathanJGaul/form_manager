@@ -15,6 +15,7 @@ import {
   TemplateError,
   ValidationResult 
 } from '../types';
+import { FormFieldValue } from '../../types/form';
 import { TemplateContextManager } from '../control-flow/TemplateContext';
 import { ControlFlowEngine } from '../control-flow/ControlFlowEngine';
 import { ConditionEvaluator } from '../control-flow/ConditionEvaluator';
@@ -114,7 +115,7 @@ export class TemplateBuilder {
   /**
    * Set template variables
    */
-  variables(variables: Record<string, any>): TemplateBuilder {
+  variables(variables: Record<string, unknown>): TemplateBuilder {
     this.context.template.variables = { ...this.context.template.variables, ...variables };
     this.context.variables = { ...this.context.variables, ...variables };
     this.contextManager.setVariable('variables', this.context.variables);
@@ -195,7 +196,7 @@ export class TemplateBuilder {
   /**
    * Loop execution - forEach
    */
-  forEach(array: string | any[], callback: (item: any, index: number, builder: TemplateBuilder) => void): TemplateBuilder {
+  forEach(array: string | unknown[], callback: (item: unknown, index: number, builder: TemplateBuilder) => void): TemplateBuilder {
     const arrayValue = typeof array === 'string' ? this.contextManager.getVariable(array) : array;
     
     if (!Array.isArray(arrayValue)) {
@@ -556,7 +557,7 @@ export class FieldBuilder {
   /**
    * Set field default value
    */
-  defaultValue(value: any): FieldBuilder {
+  defaultValue(value: FormFieldValue): FieldBuilder {
     this.field.defaultValue = value;
     return this;
   }
@@ -676,9 +677,9 @@ export class ConditionalBuilder {
   /**
    * Convert builder to template actions
    */
-  private convertBuilderToActions(builder: TemplateBuilder): any[] {
+  private convertBuilderToActions(builder: TemplateBuilder): unknown[] {
     const context = builder.getContext();
-    const actions: any[] = [];
+    const actions: unknown[] = [];
     
     // Convert sections and fields to actions
     for (const section of context.template.sections || []) {

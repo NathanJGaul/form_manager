@@ -1,4 +1,5 @@
 // Core types for the Programmatic Template System
+import { FormFieldValue } from '../types/form';
 export interface TemplateMetadata {
   name: string;
   version: string;
@@ -13,7 +14,7 @@ export interface TemplateMetadata {
 export interface TemplateSchema {
   validation: 'strict' | 'loose' | 'none';
   requiredFields: string[];
-  constraints?: Record<string, any>;
+  constraints?: Record<string, string | number | boolean>;
 }
 
 export interface ValidationRules {
@@ -22,7 +23,7 @@ export interface ValidationRules {
   minLength?: number;
   maxLength?: number;
   pattern?: string;
-  custom?: (value: any) => boolean | string;
+  custom?: (value: unknown) => boolean | string;
 }
 
 export interface StylingConfig {
@@ -36,8 +37,8 @@ export interface StylingConfig {
 
 export interface ConditionalStyling {
   if: string;
-  then: Record<string, any>;
-  else?: Record<string, any>;
+  then: Record<string, string | number | boolean>;
+  else?: Record<string, string | number | boolean>;
 }
 
 export interface BehaviorConfig {
@@ -62,7 +63,7 @@ export interface Condition {
   function?: (context: TemplateContext) => boolean;
   variable?: string;
   operator?: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'contains';
-  value?: any;
+  value?: unknown;
 }
 
 export interface ConditionalBlock {
@@ -74,7 +75,7 @@ export interface ConditionalBlock {
 
 export interface LoopBlock {
   type: 'forEach' | 'repeat' | 'while';
-  array?: any[];
+  array?: unknown[];
   count?: number;
   condition?: Condition;
   body: TemplateAction[];
@@ -83,14 +84,14 @@ export interface LoopBlock {
 
 export interface TemplateAction {
   type: 'createField' | 'createSection' | 'setVariable' | 'callFunction' | 'conditional' | 'loop';
-  data?: any;
+  data?: unknown;
   conditional?: ConditionalBlock;
   loop?: LoopBlock;
 }
 
 export interface TemplateContext {
-  variables: Record<string, any>;
-  scope: Record<string, any>;
+  variables: Record<string, unknown>;
+  scope: Record<string, unknown>;
   parent?: TemplateContext;
   functions: Record<string, Function>;
   breakLoop?: boolean;
@@ -104,7 +105,7 @@ export interface ControlFlowConfig {
   elseIf?: { condition: Condition; then: TemplateAction[] | ProgrammaticField[] }[];
   else?: TemplateAction[] | ProgrammaticField[];
   forEach?: {
-    array: string | any[];
+    array: string | unknown[];
     variable: string;
     do: TemplateAction[] | ProgrammaticField[];
   };
@@ -142,9 +143,9 @@ export interface ProgrammaticField {
   };
   controlFlow?: ControlFlowConfig;
   // Additional programmatic properties
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   dynamic?: boolean;
-  defaultValue?: any;
+  defaultValue?: FormFieldValue;
 }
 
 export interface ProgrammaticSection {
@@ -158,7 +159,7 @@ export interface ProgrammaticSection {
   };
   controlFlow?: ControlFlowConfig;
   // Additional programmatic properties
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   dynamic?: boolean;
 }
 
@@ -169,7 +170,7 @@ export interface ProgrammaticTemplate {
   validation: ValidationRules;
   styling: StylingConfig;
   behavior: BehaviorConfig;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   controlFlow?: ControlFlowConfig;
 }
 
@@ -216,7 +217,7 @@ export interface BuilderContext {
   template: Partial<ProgrammaticTemplate>;
   currentSection?: ProgrammaticSection;
   currentField?: ProgrammaticField;
-  variables: Record<string, any>;
+  variables: Record<string, unknown>;
   conditionalStack: ConditionalBlock[];
   loopStack: LoopBlock[];
 }
@@ -235,7 +236,7 @@ export interface TemplateError {
   path?: string;
   line?: number;
   column?: number;
-  context?: any;
+  context?: Record<string, unknown>;
 }
 
 export interface ValidationResult {
@@ -263,8 +264,8 @@ export interface ConversionResult {
 export interface MigrationStep {
   from: string;
   to: string;
-  migrate: (template: any) => any;
-  validate: (template: any) => ValidationResult;
+  migrate: (template: unknown) => unknown;
+  validate: (template: unknown) => ValidationResult;
 }
 
 export interface MigrationPlan {

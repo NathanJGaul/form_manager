@@ -13,7 +13,7 @@ export class TDLValidator {
   /**
    * Validate a TDL document structure
    */
-  validateTDL(tdlDocument: any): ValidationResult {
+  validateTDL(tdlDocument: unknown): ValidationResult {
     const errors: TemplateError[] = [];
     const warnings: TemplateError[] = [];
 
@@ -94,7 +94,7 @@ export class TDLValidator {
   /**
    * Validate TDL metadata
    */
-  private validateMetadata(metadata: any, errors: TemplateError[], warnings: TemplateError[]): void {
+  private validateMetadata(metadata: unknown, errors: TemplateError[], warnings: TemplateError[]): void {
     if (!metadata) {
       errors.push({
         type: 'validation',
@@ -151,7 +151,7 @@ export class TDLValidator {
   /**
    * Validate TDL sections
    */
-  private validateSections(sections: any, errors: TemplateError[], warnings: TemplateError[]): void {
+  private validateSections(sections: unknown, errors: TemplateError[], warnings: TemplateError[]): void {
     if (!sections) {
       errors.push({
         type: 'validation',
@@ -177,7 +177,7 @@ export class TDLValidator {
 
     const sectionIds = new Set<string>();
 
-    sections.forEach((section: any, index: number) => {
+    sections.forEach((section: unknown, index: number) => {
       this.validateSection(section, index, sectionIds, errors, warnings);
     });
   }
@@ -186,7 +186,7 @@ export class TDLValidator {
    * Validate a single section
    */
   private validateSection(
-    section: any, 
+    section: unknown, 
     index: number, 
     sectionIds: Set<string>, 
     errors: TemplateError[], 
@@ -238,7 +238,7 @@ export class TDLValidator {
         });
       } else {
         const fieldIds = new Set<string>();
-        section.fields.forEach((field: any, fieldIndex: number) => {
+        section.fields.forEach((field: unknown, fieldIndex: number) => {
           this.validateField(field, `${sectionPath}.fields[${fieldIndex}]`, fieldIds, errors, warnings);
         });
       }
@@ -259,7 +259,7 @@ export class TDLValidator {
    * Validate a single field
    */
   private validateField(
-    field: any, 
+    field: unknown, 
     fieldPath: string, 
     fieldIds: Set<string>, 
     errors: TemplateError[], 
@@ -378,7 +378,7 @@ export class TDLValidator {
    * Validate field validation rules
    */
   private validateFieldValidation(
-    validation: any, 
+    validation: unknown, 
     validationPath: string, 
     errors: TemplateError[], 
     warnings: TemplateError[]
@@ -426,7 +426,7 @@ export class TDLValidator {
    * Validate conditional logic
    */
   private validateConditional(
-    conditional: any, 
+    conditional: unknown, 
     conditionalPath: string, 
     errors: TemplateError[], 
     warnings: TemplateError[]
@@ -478,7 +478,7 @@ export class TDLValidator {
    * Validate control flow configuration
    */
   private validateControlFlow(
-    controlFlow: any, 
+    controlFlow: unknown, 
     controlFlowPath: string, 
     errors: TemplateError[], 
     warnings: TemplateError[]
@@ -517,7 +517,7 @@ export class TDLValidator {
    * Validate if/else control flow
    */
   private validateControlFlowIf(
-    controlFlow: any, 
+    controlFlow: unknown, 
     ifPath: string, 
     errors: TemplateError[], 
     warnings: TemplateError[]
@@ -547,7 +547,7 @@ export class TDLValidator {
           path: `${ifPath}.elseIf`
         });
       } else {
-        controlFlow.elseIf.forEach((branch: any, index: number) => {
+        controlFlow.elseIf.forEach((branch: unknown, index: number) => {
           const branchPath = `${ifPath}.elseIf[${index}]`;
           if (!branch.condition || typeof branch.condition !== 'string') {
             errors.push({
@@ -581,7 +581,7 @@ export class TDLValidator {
    * Validate forEach control flow
    */
   private validateControlFlowForEach(
-    forEach: any, 
+    forEach: unknown, 
     forEachPath: string, 
     errors: TemplateError[], 
     warnings: TemplateError[]
@@ -615,7 +615,7 @@ export class TDLValidator {
    * Validate repeat control flow
    */
   private validateControlFlowRepeat(
-    repeat: any, 
+    repeat: unknown, 
     repeatPath: string, 
     errors: TemplateError[], 
     warnings: TemplateError[]
@@ -649,7 +649,7 @@ export class TDLValidator {
    * Validate while control flow
    */
   private validateControlFlowWhile(
-    whileLoop: any, 
+    whileLoop: unknown, 
     whilePath: string, 
     errors: TemplateError[], 
     warnings: TemplateError[]
@@ -675,7 +675,7 @@ export class TDLValidator {
    * Validate variables
    */
   private validateVariables(
-    variables: any, 
+    variables: unknown, 
     errors: TemplateError[], 
     warnings: TemplateError[]
   ): void {
@@ -692,7 +692,7 @@ export class TDLValidator {
    * Validate schema
    */
   private validateSchema(
-    schema: any, 
+    schema: unknown, 
     errors: TemplateError[], 
     warnings: TemplateError[]
   ): void {
@@ -726,7 +726,7 @@ export class TDLValidator {
    * Validate behavior
    */
   private validateBehavior(
-    behavior: any, 
+    behavior: unknown, 
     errors: TemplateError[], 
     warnings: TemplateError[]
   ): void {
@@ -768,7 +768,7 @@ export class TDLValidator {
    * Validate styling
    */
   private validateStyling(
-    styling: any, 
+    styling: unknown, 
     errors: TemplateError[], 
     warnings: TemplateError[]
   ): void {
@@ -799,23 +799,23 @@ export class TDLValidator {
   }
 
   // Additional validation methods for ProgrammaticTemplate would follow similar patterns
-  private validateTemplateMetadata(metadata: any, errors: TemplateError[], warnings: TemplateError[]): void {
+  private validateTemplateMetadata(metadata: unknown, errors: TemplateError[], warnings: TemplateError[]): void {
     // Similar to validateMetadata but for ProgrammaticTemplate
   }
 
-  private validateTemplateSchema(schema: any, errors: TemplateError[], warnings: TemplateError[]): void {
+  private validateTemplateSchema(schema: unknown, errors: TemplateError[], warnings: TemplateError[]): void {
     // Similar to validateSchema but for ProgrammaticTemplate
   }
 
-  private validateTemplateSections(sections: any, errors: TemplateError[], warnings: TemplateError[]): void {
+  private validateTemplateSections(sections: unknown, errors: TemplateError[], warnings: TemplateError[]): void {
     // Similar to validateSections but for ProgrammaticTemplate
   }
 
-  private validateTemplateBehavior(behavior: any, errors: TemplateError[], warnings: TemplateError[]): void {
+  private validateTemplateBehavior(behavior: unknown, errors: TemplateError[], warnings: TemplateError[]): void {
     // Similar to validateBehavior but for ProgrammaticTemplate
   }
 
-  private validateTemplateStyling(styling: any, errors: TemplateError[], warnings: TemplateError[]): void {
+  private validateTemplateStyling(styling: unknown, errors: TemplateError[], warnings: TemplateError[]): void {
     // Similar to validateStyling but for ProgrammaticTemplate
   }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { FormTemplate, FormInstance } from "../types/form";
+import { FormTemplate, FormInstance, FormField, FormSection } from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
   getVisibleSections,
@@ -9,6 +9,35 @@ import {
   updateConditionalFieldsAsNull,
 } from "../utils/formLogic";
 import * as Icons from "lucide-react";
+
+// Type definitions for form values
+type FormValue = string | number | boolean | string[] | File | null | undefined;
+type FormData = Record<string, FormValue>;
+
+// Type for grouped fields
+interface GroupedField {
+  fields: FormField[];
+  firstFieldIndex: number;
+}
+
+// Type for section completeness
+interface SectionCompleteness {
+  status: 'complete' | 'incomplete' | 'partial';
+  progress: number;
+}
+
+// Extended field type with original index for rendering
+interface FormFieldWithIndex extends FormField {
+  originalIndex: number;
+}
+
+// Type for render elements
+interface RenderElement {
+  type: 'field' | 'group';
+  originalIndex: number;
+  content: FormFieldWithIndex | FormField[];
+  groupKey?: string;
+}
 
 interface FormRendererProps {
   template: FormTemplate;
@@ -31,7 +60,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       return instance.data;
     }
     
-    const defaultData: Record<string, any> = {};
+    const defaultData: FormData = {};
     template.sections.forEach(section => {
       section.fields.forEach(field => {
         if (field.defaultValue !== undefined) {
@@ -43,7 +72,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return defaultData;
   };
 
-  const [formData, setFormData] = useState<Record<string, any>>(initializeFormData());
+  const [formData, setFormData] = useState<FormData>(initializeFormData());
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -210,7 +239,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   // Calculate section completeness for visual indicators
   // Only considers required AND visible/enabled fields
   // Includes fields with default values as complete
-  const getSectionCompleteness = (section: any) => {
+  const getSectionCompleteness = (section: FormSection): SectionCompleteness => {
     const visibleFields = getVisibleFields(section.fields, formData);
     const requiredVisibleFields = visibleFields.filter(field => field.required);
     
@@ -258,7 +287,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   };
 
-  const handleFieldChange = (fieldId: string, value: any) => {
+  const handleFieldChange = (fieldId: string, value: FormValue) => {
     setFormData((prev) => {
       const updated = {
         ...prev,
@@ -349,9 +378,9 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   };
 
-  const groupFields = (fields: any[]) => {
-    const grouped: { [key: string]: { fields: any[], firstFieldIndex: number } } = {};
-    const ungrouped: any[] = [];
+  const groupFields = (fields: FormField[]) => {
+    const grouped: { [key: string]: GroupedField } = {};
+    const ungrouped: FormFieldWithIndex[] = [];
 
     fields.forEach((field, index) => {
       if (field.grouping?.enabled && field.grouping?.groupKey) {
@@ -368,11 +397,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     return { grouped, ungrouped };
   };
 
-  const renderGroupedFields = (groupKey: string, fields: any[]) => {
+  const renderGroupedFields = (groupKey: string, fields: FormField[]) => {
     if (fields.length === 0) return null;
 
     // Helper function to get group label
-    const getGroupLabel = (groupKey: string, fields: any[]) => {
+    const getGroupLabel = (groupKey: string, fields: FormField[]) => {
       const firstField = fields[0];
       // Use custom label if provided, otherwise transform groupKey
       return firstField?.grouping?.label || groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ');
@@ -409,7 +438,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   <th className="text-left py-2 pr-2 text-sm font-medium text-gray-700 border-r border-gray-200" style={{ width: '35%' }}>
                     Question
                   </th>
-                  {firstField.options?.map((option: string, index: number) => {
+                  {firstField.options?.map((option: string) => {
                     const optionCount = firstField.options!.length;
                     const availableWidth = 65; // 100% - 35% for question column
                     const columnWidth = `${availableWidth / optionCount}%`;
@@ -537,7 +566,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     }
   };
 
-  const renderField = (field: any) => {
+  const renderField = (field: FormField | FormFieldWithIndex) => {
     const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
     const error = errors[field.id];
 
@@ -890,12 +919,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
             const { grouped, ungrouped } = groupFields(visibleFields);
 
             // Create a combined array of all elements (fields and groups) with their original positions
-            const allElements: Array<{
-              type: 'field' | 'group';
-              originalIndex: number;
-              content: any;
-              groupKey?: string;
-            }> = [];
+            const allElements: RenderElement[] = [];
 
             // Add ungrouped fields
             ungrouped.forEach(field => {
@@ -925,11 +949,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                   {section.title}
                 </h2>
                 <div className="space-y-6">
-                  {allElements.map((element, index) => {
+                  {allElements.map((element) => {
                     if (element.type === 'field') {
-                      return renderField(element.content);
+                      return renderField(element.content as FormFieldWithIndex);
                     } else {
-                      return renderGroupedFields(element.groupKey!, element.content);
+                      return renderGroupedFields(element.groupKey!, element.content as FormField[]);
                     }
                   })}
                 </div>
@@ -953,12 +977,7 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
               const { grouped, ungrouped } = groupFields(visibleFields);
 
               // Create a combined array of all elements (fields and groups) with their original positions
-              const allElements: Array<{
-                type: 'field' | 'group';
-                originalIndex: number;
-                content: any;
-                groupKey?: string;
-              }> = [];
+              const allElements: RenderElement[] = [];
 
               // Add ungrouped fields
               ungrouped.forEach(field => {
@@ -988,11 +1007,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
                     {currentSection.title}
                   </h2>
                   <div className="space-y-6">
-                    {allElements.map((element, index) => {
+                    {allElements.map((element) => {
                       if (element.type === 'field') {
-                        return renderField(element.content);
+                        return renderField(element.content as FormFieldWithIndex);
                       } else {
-                        return renderGroupedFields(element.groupKey!, element.content);
+                        return renderGroupedFields(element.groupKey!, element.content as FormField[]);
                       }
                     })}
                   </div>

@@ -1,8 +1,8 @@
-import { FormField, FormSection, FormInstance } from '../types/form';
+import { FormField, FormSection, FormInstance, FormFieldValue } from '../types/form';
 
 export const evaluateCondition = (
   condition: { dependsOn: string; values: string[]; operator: 'equals' | 'contains' | 'not_equals' },
-  formData: Record<string, any>
+  formData: Record<string, FormFieldValue>
 ): boolean => {
   const dependentValue = formData[condition.dependsOn];
   
@@ -26,7 +26,7 @@ export const evaluateCondition = (
 
 export const getVisibleSections = (
   sections: FormSection[],
-  formData: Record<string, any>
+  formData: Record<string, FormFieldValue>
 ): FormSection[] => {
   return sections.filter(section => {
     if (!section.conditional) return true;
@@ -36,7 +36,7 @@ export const getVisibleSections = (
 
 export const getVisibleFields = (
   fields: FormField[],
-  formData: Record<string, any>
+  formData: Record<string, FormFieldValue>
 ): FormField[] => {
   return fields.filter(field => {
     if (!field.conditional) return true;
@@ -46,7 +46,7 @@ export const getVisibleFields = (
 
 export const calculateProgress = (
   sections: FormSection[],
-  formData: Record<string, any>,
+  formData: Record<string, FormFieldValue>,
   visitedSections?: string[]
 ): number => {
   const visibleSections = getVisibleSections(sections, formData);
@@ -103,7 +103,7 @@ export const calculateProgress = (
   return totalRequiredFields > 0 ? Math.round((completedRequiredFields / totalRequiredFields) * 100) : 100;
 };
 
-export const validateField = (field: FormField, value: any): string | null => {
+export const validateField = (field: FormField, value: FormFieldValue): string | null => {
   if (field.required && (value === undefined || value === null || value === '')) {
     return `${field.label} is required`;
   }
@@ -165,8 +165,8 @@ export const getAllConditionalSections = (sections: FormSection[]): FormSection[
  */
 export const updateConditionalFieldsAsNull = (
   sections: FormSection[],
-  formData: Record<string, any>
-): Record<string, any> => {
+  formData: Record<string, FormFieldValue>
+): Record<string, FormFieldValue> => {
   const updatedData = { ...formData };
   const visibleSections = getVisibleSections(sections, formData);
   const visibleSectionIds = new Set(visibleSections.map(s => s.id));
@@ -202,7 +202,7 @@ export const updateConditionalFieldsAsNull = (
  */
 export const getConditionalFieldStats = (
   sections: FormSection[],
-  formData: Record<string, any>
+  formData: Record<string, FormFieldValue>
 ): {
   totalConditionalFields: number;
   visibleConditionalFields: number;

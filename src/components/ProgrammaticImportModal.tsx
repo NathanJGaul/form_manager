@@ -9,7 +9,8 @@ import { HorizontalGroupingDemo } from "../../templates/horizontal_grouping_demo
 import { SectionConditionalsTestTemplate } from "../../templates/section_conditionals_test";
 import { TemplateBuilder } from "../programmatic/builder/TemplateBuilder";
 import * as ProgrammaticModules from "../programmatic";
-import { FormTemplate } from "../types/form";
+import { FormTemplate, FormField } from "../types/form";
+import { ProgrammaticTemplate } from "../programmatic/types";
 
 interface ProgrammaticImportModalProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export const ProgrammaticImportModal: React.FC<
   };
 
   const convertProgrammaticTemplate = (
-    programmaticTemplate: any
+    programmaticTemplate: ProgrammaticTemplate
   ): ConversionResult => {
     try {
       const conversionResult = converter.convertToGUI(programmaticTemplate, {
@@ -83,7 +84,7 @@ export const ProgrammaticImportModal: React.FC<
             title: section.title,
             fields: section.fields.map((field) => ({
               id: field.id,
-              type: field.type as any,
+              type: field.type as FormField['type'],
               label: field.label,
               placeholder: field.placeholder,
               required: field.required || false,
@@ -203,8 +204,8 @@ export const ProgrammaticImportModal: React.FC<
 
   const parseAndResolveImports = (
     code: string
-  ): { cleanCode: string; modules: Record<string, any> } => {
-    const modules: Record<string, any> = {};
+  ): { cleanCode: string; modules: Record<string, unknown> } => {
+    const modules: Record<string, unknown> = {};
 
     // Always provide TemplateBuilder as default
     modules.TemplateBuilder = TemplateBuilder;
@@ -306,8 +307,8 @@ export const ProgrammaticImportModal: React.FC<
 
   const parseTemplateFromCode = (
     cleanCode: string,
-    modules: Record<string, any>
-  ): any => {
+    modules: Record<string, unknown>
+  ): ProgrammaticTemplate | null => {
     // Helper function to find problematic code sections
     const findSyntaxError = (code: string, error: Error): string => {
       const lines = code.split("\n");

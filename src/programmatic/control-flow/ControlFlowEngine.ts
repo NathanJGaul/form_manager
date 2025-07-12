@@ -335,7 +335,7 @@ export class ControlFlowEngine {
   /**
    * Convert field/section arrays to template actions
    */
-  private convertToTemplateActions(items: any[]): TemplateAction[] {
+  private convertToTemplateActions(items: unknown[]): TemplateAction[] {
     return items.map(item => ({
       type: 'createField' as const,
       data: item
@@ -412,7 +412,7 @@ export class ControlFlowEngine {
   /**
    * Get current execution state
    */
-  getExecutionState(): any {
+  getExecutionState(): Record<string, unknown> {
     return {
       currentIterations: this.currentIterations,
       maxIterations: this.maxIterations,

@@ -60,7 +60,7 @@ export class CommonTemplates {
       .required()
       .options(["new", "existing", "premium"])
       .end()
-      .forEach(categories, (category: string, index: number, builder: any) => {
+      .forEach(categories, (category: string, index: number, builder: TemplateBuilder) => {
         builder
           .section(
             `${category.charAt(0).toUpperCase() + category.slice(1)} Feedback`
@@ -174,7 +174,7 @@ export class CommonTemplates {
     id: string,
     label: string,
     required: boolean = true
-  ): any {
+  ): ProgrammaticTemplate {
     // This would return a field configuration object
     return {
       id,
@@ -193,7 +193,7 @@ export class CommonTemplates {
     label: string,
     min: number = 1,
     max: number = 5
-  ): any {
+  ): ProgrammaticTemplate {
     const options = [];
     for (let i = min; i <= max; i++) {
       options.push(i.toString());
