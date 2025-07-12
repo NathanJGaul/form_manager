@@ -1,10 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { FormTemplate, FormInstance } from '../types/form';
 import { storageManager } from '../utils/storage';
-import { FormBuilder } from './FormBuilder';
-import { FormRenderer } from './FormRenderer';
+import { ErrorBoundary, FormErrorBoundary, TemplateErrorBoundary } from './ErrorBoundary';
+
+// Lazy load heavy components for better performance
+const FormBuilder = lazy(() => import('./FormBuilder').then(module => ({ default: module.FormBuilder })));
+const FormRenderer = lazy(() => import('./FormRenderer').then(module => ({ default: module.FormRenderer })));
 import { exportTemplateToPdf, downloadPdf } from '../utils/pdfExport';
 import * as Icons from 'lucide-react';
+
+// Loading component for lazy-loaded modules
+const LazyLoadingSpinner: React.FC = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center space-y-4">
+      <Icons.Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-gray-600">Loading component...</p>
+    </div>
+  </div>
+);
 
 export const Dashboard: React.FC = () => {
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
@@ -154,23 +167,31 @@ export const Dashboard: React.FC = () => {
 
   if (currentView === 'builder') {
     return (
-      <FormBuilder
-        template={selectedTemplate || undefined}
-        onSave={handleSaveTemplate}
-        onCancel={() => setCurrentView('dashboard')}
-      />
+      <TemplateErrorBoundary templateName={selectedTemplate?.name || 'New Template'}>
+        <Suspense fallback={<LazyLoadingSpinner />}>
+          <FormBuilder
+            template={selectedTemplate || undefined}
+            onSave={handleSaveTemplate}
+            onCancel={() => setCurrentView('dashboard')}
+          />
+        </Suspense>
+      </TemplateErrorBoundary>
     );
   }
 
   if (currentView === 'form' && selectedTemplate) {
     return (
-      <FormRenderer
-        template={selectedTemplate}
-        instance={selectedInstance || undefined}
-        onSave={handleSaveInstance}
-        onSubmit={handleSubmitInstance}
-        onExit={() => setCurrentView('dashboard')}
-      />
+      <FormErrorBoundary formName={selectedTemplate.name}>
+        <Suspense fallback={<LazyLoadingSpinner />}>
+          <FormRenderer
+            template={selectedTemplate}
+            instance={selectedInstance || undefined}
+            onSave={handleSaveInstance}
+            onSubmit={handleSubmitInstance}
+            onExit={() => setCurrentView('dashboard')}
+          />
+        </Suspense>
+      </FormErrorBoundary>
     );
   }
 
@@ -307,60 +328,81 @@ export const Dashboard: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates.map((template) => (
-                <div key={template.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">{template.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{template.description}</p>
-                      <p className="text-xs text-gray-500">
-                        {template.sections.length} sections • 
-                        {template.sections.reduce((acc, s) => acc + s.fields.length, 0)} fields
+                <ErrorBoundary
+                  key={template.id}
+                  fallback={({ error, resetError }) => (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center space-x-2 text-red-600 mb-2">
+                        <Icons.AlertTriangle className="w-4 h-4" />
+                        <span className="text-sm font-medium">Template Error</span>
+                      </div>
+                      <p className="text-red-700 text-sm mb-3">
+                        Failed to render template: {template.name}
                       </p>
+                      <button
+                        onClick={resetError}
+                        className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
+                      >
+                        Retry
+                      </button>
                     </div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleCreateInstance(template)}
-                        className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
-                      >
-                        <Icons.Play className="w-3 h-3" />
-                        <span>Start</span>
-                      </button>
-                      <button
-                        onClick={() => handleEditTemplate(template)}
-                        className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-                      >
-                        <Icons.Edit className="w-3 h-3" />
-                        <span>Edit</span>
-                      </button>
+                  )}
+                >
+                  <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-2">{template.name}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{template.description}</p>
+                        <p className="text-xs text-gray-500">
+                          {template.sections.length} sections • 
+                          {template.sections.reduce((acc, s) => acc + s.fields.length, 0)} fields
+                        </p>
+                      </div>
                     </div>
                     
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleExportTemplate(template.id)}
-                        className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
-                        title="Export as CSV"
-                      >
-                        <Icons.Download className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleExportTemplateToPdf(template)}
-                        className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
-                        title="Export as PDF"
-                      >
-                        <Icons.FileText className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTemplate(template.id)}
-                        className="p-1 text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <Icons.Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex justify-between items-center">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleCreateInstance(template)}
+                          className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                        >
+                          <Icons.Play className="w-3 h-3" />
+                          <span>Start</span>
+                        </button>
+                        <button
+                          onClick={() => handleEditTemplate(template)}
+                          className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                        >
+                          <Icons.Edit className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleExportTemplate(template.id)}
+                          className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                          title="Export as CSV"
+                        >
+                          <Icons.Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleExportTemplateToPdf(template)}
+                          className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                          title="Export as PDF"
+                        >
+                          <Icons.FileText className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTemplate(template.id)}
+                          className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          <Icons.Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </ErrorBoundary>
               ))}
             </div>
           )}

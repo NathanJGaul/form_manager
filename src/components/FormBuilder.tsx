@@ -1,9 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import { FormTemplate, FormSection, FormField } from "../types/form";
 import { storageManager } from "../utils/storage";
 import { exportTemplateToPdf, downloadPdf } from "../utils/pdfExport";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { bundleAnalyzer } from "../utils/bundleAnalyzer";
 import * as Icons from "lucide-react";
-import { ProgrammaticImportModal } from "./ProgrammaticImportModal";
+
+// Lazy load the ProgrammaticImportModal for better performance
+const ProgrammaticImportModal = lazy(() => {
+  bundleAnalyzer.trackLazyLoad('ProgrammaticImportModal');
+  return import("./ProgrammaticImportModal").then(module => {
+    bundleAnalyzer.trackLazyComplete('ProgrammaticImportModal');
+    return { default: module.ProgrammaticImportModal };
+  });
+});
 
 interface FormBuilderField extends FormField {
   optionsText?: string;
@@ -637,7 +647,35 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ) : (
               <div className="space-y-6">
                 {sections.map((section) => (
-                  <div key={section.id} className="border rounded-lg p-6">
+                  <ErrorBoundary
+                    key={section.id}
+                    fallback={({ error, resetError }) => (
+                      <div className="border border-red-200 rounded-lg p-6 bg-red-50">
+                        <div className="flex items-center space-x-2 text-red-600 mb-3">
+                          <Icons.AlertTriangle className="w-5 h-5" />
+                          <span className="font-medium">Section Error</span>
+                        </div>
+                        <p className="text-red-700 text-sm mb-4">
+                          Failed to render section: {section.title || 'Untitled Section'}
+                        </p>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={resetError}
+                            className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
+                          >
+                            Retry
+                          </button>
+                          <button
+                            onClick={() => removeSection(section.id)}
+                            className="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition-colors"
+                          >
+                            Remove Section
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  >
+                    <div className="border rounded-lg p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <input
@@ -758,9 +796,38 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     })()}
 
                     <div className="space-y-4">
-                      {section.fields.map((field) =>
-                        renderFieldEditor(section.id, field)
-                      )}
+                      {section.fields.map((field) => (
+                        <ErrorBoundary
+                          key={field.id}
+                          fallback={({ error, resetError }) => (
+                            <div className="border border-red-200 rounded p-4 bg-red-50">
+                              <div className="flex items-center space-x-2 text-red-600 mb-2">
+                                <Icons.AlertTriangle className="w-4 h-4" />
+                                <span className="text-sm font-medium">Field Error</span>
+                              </div>
+                              <p className="text-red-700 text-sm mb-3">
+                                Failed to render field: {field.label || field.id}
+                              </p>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={resetError}
+                                  className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+                                >
+                                  Retry
+                                </button>
+                                <button
+                                  onClick={() => removeField(section.id, field.id)}
+                                  className="px-2 py-1 bg-gray-600 text-white rounded text-xs hover:bg-gray-700 transition-colors"
+                                >
+                                  Remove Field
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        >
+                          {renderFieldEditor(section.id, field)}
+                        </ErrorBoundary>
+                      ))}
                     </div>
 
                     <button
@@ -771,6 +838,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       <span>Add Field</span>
                     </button>
                   </div>
+                  </ErrorBoundary>
                 ))}
               </div>
             )}
@@ -805,11 +873,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       </div>
 
       {/* Programmatic Import Modal */}
-      <ProgrammaticImportModal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImport={handleImportTemplate}
-      />
+      {showImportModal && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 flex items-center space-x-3">
+              <Icons.Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+              <span className="text-gray-700">Loading import modal...</span>
+            </div>
+          </div>
+        }>
+          <ProgrammaticImportModal
+            isOpen={showImportModal}
+            onClose={() => setShowImportModal(false)}
+            onImport={handleImportTemplate}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

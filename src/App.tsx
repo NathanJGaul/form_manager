@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
-import { Dashboard } from './components/Dashboard';
+import { AppRouter } from './components/AppRouter';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { storageManager } from './utils/storage';
+import { bundleAnalyzer, estimateBundleImpact } from './utils/bundleAnalyzer';
 import { FormTemplate } from './types/form';
 
 // Sample templates for demonstration
@@ -182,12 +184,28 @@ function App() {
         storageManager.saveTemplate(template);
       });
     }
+
+    // Log bundle analysis in development
+    if (process.env.NODE_ENV === 'development') {
+      estimateBundleImpact();
+      
+      // Log metrics after components have loaded
+      setTimeout(() => {
+        bundleAnalyzer.logMetrics();
+      }, 1000);
+    }
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Dashboard />
-    </div>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('Application error:', error, errorInfo);
+      }}
+    >
+      <div className="min-h-screen bg-gray-50">
+        <AppRouter />
+      </div>
+    </ErrorBoundary>
   );
 }
 
