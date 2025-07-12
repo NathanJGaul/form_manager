@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FormTemplate, FormInstance, FormField, FormSection } from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
@@ -82,8 +82,11 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
   const [viewMode, setViewMode] = useState<'continuous' | 'section'>(() => storageManager.getViewMode());
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
-  const currentInstance: FormInstance =
-    instance || storageManager.getOrCreateInstance(template.id, template.name);
+  // Memoize currentInstance to prevent recreation on every render
+  const currentInstance = useMemo(() => 
+    instance || storageManager.getOrCreateInstance(template.id, template.name), 
+    [instance, template.id, template.name]
+  );
 
   const [visitedSections, setVisitedSections] = useState<Set<string>>(() => {
     // Load visited sections from form instance
@@ -124,18 +127,39 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
     }
-  }, [formData, progress, currentInstance, onSave, template.sections, visitedSections]);
+  }, [formData, progress, visitedSections, onSave, template.sections, currentInstance]);
 
-  // Auto-save functionality
+  // Auto-save functionality - debounced
   useEffect(() => {
+    if (Object.keys(formData).length === 0) return;
+    
     const timer = setTimeout(() => {
-      if (Object.keys(formData).length > 0) {
-        saveForm();
+      setSaveStatus("saving");
+      try {
+        const nullifiedFormData = updateConditionalFieldsAsNull(template.sections, formData);
+        
+        const updatedInstance: FormInstance = {
+          ...currentInstance,
+          data: nullifiedFormData,
+          progress,
+          visitedSections: Array.from(visitedSections),
+          updatedAt: new Date(),
+        };
+
+        storageManager.saveInstance(updatedInstance);
+        onSave?.(updatedInstance);
+        setSaveStatus("saved");
+        setHasUnsavedChanges(false);
+
+        setTimeout(() => setSaveStatus("idle"), 2000);
+      } catch {
+        setSaveStatus("error");
+        setTimeout(() => setSaveStatus("idle"), 2000);
       }
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [formData, saveForm]);
+  }, [formData, progress, visitedSections, template.sections, currentInstance, onSave]);
 
   // Sticky header functionality
   useEffect(() => {
@@ -176,44 +200,32 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     if (viewMode === 'section' && filteredSections.length > 0) {
       const currentSection = filteredSections[currentSectionIndex];
       if (currentSection) {
-        setVisitedSections(prev => new Set([...prev, currentSection.id]));
-      }
-    }
-  }, [currentSectionIndex, filteredSections, viewMode]);
-
-  // Save visited sections to form instance when they change
-  useEffect(() => {
-    const updatedInstance: FormInstance = {
-      ...currentInstance,
-      visitedSections: Array.from(visitedSections),
-      updatedAt: new Date(),
-    };
-    
-    // Only save if there are visited sections to avoid unnecessary saves
-    if (visitedSections.size > 0) {
-      storageManager.saveInstance(updatedInstance);
-    }
-  }, [visitedSections, currentInstance]);
-
-  // Keyboard navigation for section view
-  useEffect(() => {
-    const handleKeydown = (e: KeyboardEvent) => {
-      if (viewMode === 'section') {
-        if (e.key === 'ArrowLeft' && currentSectionIndex > 0) {
-          setCurrentSectionIndex(currentSectionIndex - 1);
-        } else if (e.key === 'ArrowRight' && currentSectionIndex < filteredSections.length - 1) {
-          const nextSectionIndex = currentSectionIndex + 1;
-          const nextSectionAccessibility = getSectionAccessibility(nextSectionIndex);
-          if (nextSectionAccessibility.accessible) {
-            setCurrentSectionIndex(nextSectionIndex);
+        setVisitedSections(prev => {
+          if (prev.has(currentSection.id)) {
+            return prev; // Return same instance if already visited to prevent re-render
           }
-        }
+          return new Set([...prev, currentSection.id]);
+        });
       }
-    };
+    }
+  }, [currentSectionIndex, viewMode]); // Removed filteredSections dependency
 
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [viewMode, currentSectionIndex, filteredSections.length, visitedSections, getSectionAccessibility]);
+  // Save visited sections to form instance when they change (debounced)
+  useEffect(() => {
+    if (visitedSections.size === 0) return;
+    
+    const timer = setTimeout(() => {
+      const updatedInstance: FormInstance = {
+        ...currentInstance,
+        visitedSections: Array.from(visitedSections),
+        updatedAt: new Date(),
+      };
+      
+      storageManager.saveInstance(updatedInstance);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [visitedSections, currentInstance]);
 
   // Determine which sections are accessible based on sequential navigation
   const getSectionAccessibility = useCallback((sectionIndex: number) => {
@@ -235,6 +247,26 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     
     return { accessible: true, reason: '' };
   }, [filteredSections, visitedSections]);
+
+  // Keyboard navigation for section view
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (viewMode === 'section') {
+        if (e.key === 'ArrowLeft' && currentSectionIndex > 0) {
+          setCurrentSectionIndex(currentSectionIndex - 1);
+        } else if (e.key === 'ArrowRight' && currentSectionIndex < filteredSections.length - 1) {
+          const nextSectionIndex = currentSectionIndex + 1;
+          const nextSectionAccessibility = getSectionAccessibility(nextSectionIndex);
+          if (nextSectionAccessibility.accessible) {
+            setCurrentSectionIndex(nextSectionIndex);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, [viewMode, currentSectionIndex, filteredSections.length, visitedSections, getSectionAccessibility]);
 
   // Calculate section completeness for visual indicators
   // Only considers required AND visible/enabled fields
