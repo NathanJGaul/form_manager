@@ -1,138 +1,132 @@
-# Project Structure Template
+# form_manager Project Structure
 
-This document provides a template for documenting the complete technology stack and file tree structure for your project. **AI agents MUST read this file to understand the project organization before making any changes.**
+This document provides the complete technology stack and file tree structure for the form_manager project. **AI agents MUST read this file to understand the project organization before making any changes.**
 
-## Technology Stack Template
+## Technology Stack
 
-### Backend Technologies
-Document your backend technology choices:
-- **[Language] [Version]** with **[Package Manager]** - Dependency management and packaging
-- **[Web Framework] [Version]** - Web framework with specific features (async, type hints, etc.)
-- **[Server] [Version]** - Application server configuration
-- **[Configuration] [Version]** - Configuration management approach
+### Frontend Technologies
+- **TypeScript 5.5.3+** with **npm** - Strongly typed JavaScript with package management
+- **React 18.3.1+** - Component-based UI framework with hooks and modern patterns
+- **Vite 5.4.2+** - Fast build tool and development server with HMR
+- **Tailwind CSS 3.4.1+** - Utility-first CSS framework for rapid styling
 
-Example:
-```
-- Python 3.11+ with Poetry - Dependency management and packaging
-- FastAPI 0.115.0+ - Web framework with type hints and async support
-- Uvicorn 0.32.0+ - ASGI server with standard extras
-- Pydantic Settings 2.5.2+ - Configuration management with type validation
-```
+### Core Libraries & APIs
+- **pdf-lib 1.17.1+** - PDF generation and manipulation for form exports
+- **lucide-react 0.344.0+** - Modern icon library for UI components
+- **LocalStorage API** - Client-side data persistence for forms and templates
+- **File API** - File uploads and template import/export functionality
 
-### Integration Services & APIs
-Document external services and integrations:
-- **[Service Name] [API/SDK Version]** - Purpose and usage pattern
-- **[AI Service] [Version]** - AI/ML service integration details
-- **[Database] [Version]** - Data storage and management
-- **[Monitoring] [Version]** - Observability and logging
-
-### Real-time Communication
-Document real-time features:
-- **[WebSocket Library]** - Real-time communication patterns
-- **[HTTP Client]** - Async HTTP communication
-- **[Message Queue]** - Event processing (if applicable)
+### Form System Architecture
+- **Template Engine** - Programmatic form template creation and management
+- **Conditional Logic Engine** - Dynamic field and section visibility control
+- **Data Persistence** - Auto-save and form instance management
+- **Export System** - Multi-format export (PDF, CSV, JSON)
 
 ### Development & Quality Tools
-Document development toolchain:
-- **[Formatter] [Version]** - Code formatting
-- **[Linter] [Version]** - Code quality and linting
-- **[Type Checker] [Version]** - Static type checking
-- **[Testing Framework] [Version]** - Testing approach
-- **[Task Runner]** - Build automation and task orchestration
+- **ESLint 9.9.1+** - Code linting with TypeScript and React rules
+- **TypeScript 5.5.3+** - Static type checking and compilation
+- **Playwright 1.53.2+** - End-to-end testing with browser automation
+- **PostCSS 8.4.35+** - CSS processing and Tailwind compilation
+- **Vite** - Build automation and development server
 
-### Frontend Technologies (if applicable)
-Document frontend technology stack:
-- **[Language] [Version]** - Frontend development language
-- **[Framework] [Version]** - UI framework
-- **[Build Tool] [Version]** - Development and build tooling
-- **[Deployment] [Version]** - Deployment and hosting approach
+### Testing & MCP Integration
+- **@playwright/test** - Comprehensive E2E testing suite
+- **@playwright/mcp 0.0.29+** - MCP server integration for testing
+- **Single-file builds** - Standalone HTML distributions
+- **Static hosting ready** - No backend dependencies required
 
 ### Future Technologies
-Document planned technology additions:
-- **[Planned Technology]** - Future integration plans
-- **[Platform]** - Target platform expansion
-- **[Service]** - Planned service integrations
+- **Backend API** - Planned server-side template and data management
+- **Real-time collaboration** - Multi-user form editing capabilities
+- **Cloud storage** - Template sharing and backup systems
+- **Advanced analytics** - Form completion and usage analytics
 
-## Complete Project Structure Template
+## Complete Project Structure
 
 ```
-[PROJECT-NAME]/
+form_manager/
 ├── README.md                           # Project overview and setup
 ├── CLAUDE.md                           # Master AI context file
-├── [BUILD-FILE]                        # Build configuration (Makefile, package.json, etc.)
+├── package.json                        # npm configuration and scripts
+├── package-lock.json                   # Dependency lock file
 ├── .gitignore                          # Git ignore patterns
-├── .[IDE-CONFIG]/                      # IDE workspace configuration
-│   ├── settings.[ext]                  # IDE settings
-│   ├── extensions.[ext]                # Recommended extensions
-│   └── launch.[ext]                    # Debug configurations
-├── [BACKEND-DIR]/                      # Backend application
-│   ├── CONTEXT.md                      # Backend-specific AI context
-│   ├── src/                            # Source code
-│   │   ├── config/                     # Configuration management
-│   │   │   └── settings.[ext]          # Application settings
-│   │   ├── core/                       # Core business logic
-│   │   │   ├── CONTEXT.md              # Core logic patterns
-│   │   │   ├── services/               # Business services
-│   │   │   │   ├── [service1].[ext]    # Service implementations
-│   │   │   │   └── [service2].[ext]
-│   │   │   ├── models/                 # Data models
-│   │   │   │   ├── [model1].[ext]      # Model definitions
-│   │   │   │   └── [model2].[ext]
-│   │   │   └── utils/                  # Utility functions
-│   │   │       ├── logging.[ext]       # Structured logging
-│   │   │       ├── validation.[ext]    # Input validation
-│   │   │       └── helpers.[ext]       # Helper functions
-│   │   ├── api/                        # API layer
-│   │   │   ├── CONTEXT.md              # API patterns and conventions
-│   │   │   ├── routes/                 # API route definitions
-│   │   │   │   ├── [resource1].[ext]   # Resource-specific routes
-│   │   │   │   └── [resource2].[ext]
-│   │   │   ├── middleware/             # API middleware
-│   │   │   │   ├── auth.[ext]          # Authentication middleware
-│   │   │   │   ├── logging.[ext]       # Request logging
-│   │   │   │   └── validation.[ext]    # Request validation
-│   │   │   └── schemas/                # Request/response schemas
-│   │   │       ├── [schema1].[ext]     # Data schemas
-│   │   │       └── [schema2].[ext]
-│   │   └── integrations/               # External service integrations
-│   │       ├── CONTEXT.md              # Integration patterns
-│   │       ├── [service1]/             # Service-specific integration
-│   │       │   ├── client.[ext]        # API client
-│   │       │   ├── models.[ext]        # Integration models
-│   │       │   └── handlers.[ext]      # Response handlers
-│   │       └── [service2]/
-│   ├── tests/                          # Test suite
-│   │   ├── unit/                       # Unit tests
-│   │   ├── integration/                # Integration tests
-│   │   └── fixtures/                   # Test fixtures and data
-│   ├── [PACKAGE-FILE]                  # Package configuration
-│   └── [ENV-FILE]                      # Environment configuration
-├── [FRONTEND-DIR]/                     # Frontend application (if applicable)
-│   ├── CONTEXT.md                      # Frontend-specific AI context
-│   ├── src/                            # Source code
-│   │   ├── components/                 # UI components
-│   │   │   ├── CONTEXT.md              # Component patterns
-│   │   │   ├── common/                 # Shared components
-│   │   │   └── [feature]/              # Feature-specific components
-│   │   ├── pages/                      # Page components/routes
-│   │   │   ├── [page1].[ext]           # Page implementations
-│   │   │   └── [page2].[ext]
-│   │   ├── stores/                     # State management
-│   │   │   ├── CONTEXT.md              # State management patterns
-│   │   │   ├── [store1].[ext]          # Store implementations
-│   │   │   └── [store2].[ext]
-│   │   ├── api/                        # API client layer
-│   │   │   ├── CONTEXT.md              # Client patterns
-│   │   │   ├── client.[ext]            # HTTP client setup
-│   │   │   └── endpoints/              # API endpoint definitions
-│   │   ├── utils/                      # Utility functions
-│   │   │   ├── logging.[ext]           # Client-side logging
-│   │   │   ├── validation.[ext]        # Form validation
-│   │   │   └── helpers.[ext]           # Helper functions
-│   │   └── assets/                     # Static assets
-│   ├── tests/                          # Frontend tests
-│   ├── [BUILD-CONFIG]                  # Build configuration
-│   └── [PACKAGE-FILE]                  # Package configuration
+├── tsconfig.json                       # TypeScript project references
+├── tsconfig.app.json                   # App-specific TypeScript config
+├── tsconfig.node.json                  # Node.js TypeScript config
+├── vite.config.ts                      # Vite build configuration
+├── vite.config.inline.ts               # Single-file build configuration
+├── tailwind.config.js                  # Tailwind CSS configuration
+├── postcss.config.js                   # PostCSS processing configuration
+├── eslint.config.js                    # ESLint configuration
+├── playwright.config.ts                # Playwright testing configuration
+├── src/                                # Source code
+│   ├── main.tsx                        # Application entry point
+│   ├── App.tsx                         # Root application component
+│   ├── index.css                       # Global styles and Tailwind imports
+│   ├── vite-env.d.ts                   # Vite environment type definitions
+│   ├── components/                     # React components
+│   │   ├── Dashboard.tsx               # Main dashboard component
+│   │   ├── FormBuilder.tsx             # Form template builder interface
+│   │   ├── FormRenderer.tsx            # Dynamic form rendering engine
+│   │   └── ProgrammaticImportModal.tsx # Template import modal
+│   ├── types/                          # TypeScript type definitions
+│   │   ├── form.ts                     # Core form interfaces and types
+│   │   └── pdfExport.ts                # PDF export type definitions
+│   ├── utils/                          # Utility functions
+│   │   ├── formLogic.ts                # Form validation and logic
+│   │   ├── pdfExport.ts                # PDF generation utilities
+│   │   └── storage.ts                  # LocalStorage management
+│   └── programmatic/                   # Programmatic template system
+│       ├── index.ts                    # Main programmatic API exports
+│       ├── types.ts                    # Programmatic system types
+│       ├── builder/                    # Template building utilities
+│       │   └── TemplateBuilder.ts      # Fluent API for template creation
+│       ├── control-flow/               # Conditional logic engine
+│       │   ├── ConditionEvaluator.ts   # Condition evaluation logic
+│       │   ├── ControlFlowEngine.ts    # Flow control orchestration
+│       │   └── TemplateContext.ts      # Template execution context
+│       ├── examples/                   # Example template implementations
+│       │   ├── ComprehensiveEventForm.ts # Complex event form example
+│       │   ├── DefaultValueExample.ts  # Default value patterns
+│       │   ├── EventFormShowcase.ts    # Showcase template
+│       │   ├── JCC2UserQuestionnaire.ts # JCC2 questionnaire template
+│       │   └── WorkingComprehensiveTemplate.ts # Working complex example
+│       ├── library/                    # Reusable template library
+│       │   └── CommonTemplates.ts      # Common template definitions
+│       └── tdl/                        # Template Definition Language
+│           ├── converter.ts            # TDL to template conversion
+│           ├── parser.ts               # TDL parsing logic
+│           └── validator.ts            # TDL validation rules
+├── templates/                          # Static template definitions
+│   ├── conditionals_test.ts            # Conditional logic test template
+│   ├── empty_section_test.ts           # Empty section handling test
+│   ├── horizontal_grouping_demo.ts     # Horizontal field grouping demo
+│   ├── jcc2_questionnaire.ts           # JCC2 questionnaire v1
+│   ├── jcc2_questionnaire_v2.ts        # JCC2 questionnaire v2
+│   ├── jcc2_questionnaire_v3.ts        # JCC2 questionnaire v3 (current)
+│   ├── section_conditionals_test.ts    # Section conditional test
+│   ├── simple_conditionals_test.ts     # Simple conditional test
+│   ├── test_template.ts                # Basic test template
+│   └── text_field_horizontal_test.ts   # Text field horizontal layout test
+├── tests/                              # E2E test suite
+│   ├── global-setup.ts                 # Playwright global setup
+│   ├── app.spec.ts                     # Basic application tests
+│   ├── dashboard.spec.ts               # Dashboard functionality tests
+│   ├── form-builder.spec.ts            # Form builder tests
+│   ├── conditional-logic.spec.ts       # Conditional logic tests
+│   ├── data-persistence.spec.ts        # Data persistence tests
+│   ├── import-functionality.spec.ts    # Template import tests
+│   ├── programmatic-import.spec.ts     # Programmatic import tests
+│   ├── programmatic-template-system.spec.ts # Programmatic system tests
+│   ├── jcc2-questionnaire-e2e.spec.ts # JCC2 questionnaire E2E tests
+│   ├── jcc2-dashboard-form-e2e-working.spec.ts # Working JCC2 E2E tests
+│   ├── comprehensive-event-form.spec.ts # Comprehensive form tests
+│   ├── event-form-showcase.spec.ts     # Event form showcase tests
+│   ├── working-comprehensive-template.spec.ts # Comprehensive template tests
+│   ├── prd-requirements.spec.ts        # PRD compliance tests
+│   ├── single-html-file.spec.ts        # Single-file build tests
+│   ├── form-exit-functionality.spec.ts # Form exit tests
+│   └── form-instance-overwrite.spec.ts # Instance overwrite tests
 ├── docs/                               # Documentation
 │   ├── ai-context/                     # AI-specific documentation
 │   │   ├── project-structure.md        # This file
@@ -140,21 +134,81 @@ Document planned technology additions:
 │   │   ├── system-integration.md       # Integration patterns
 │   │   ├── deployment-infrastructure.md # Infrastructure docs
 │   │   └── handoff.md                  # Task management
-│   ├── api/                            # API documentation
-│   ├── deployment/                     # Deployment guides
-│   └── development/                    # Development guides
-├── scripts/                            # Automation scripts
-│   ├── setup.[ext]                     # Environment setup
-│   ├── deploy.[ext]                    # Deployment scripts
-│   └── maintenance/                    # Maintenance scripts
-├── [INFRASTRUCTURE-DIR]/               # Infrastructure as code (if applicable)
-│   ├── [PROVIDER]/                     # Cloud provider configurations
-│   ├── docker/                         # Container configurations
-│   └── monitoring/                     # Monitoring and alerting
-└── [CONFIG-FILES]                      # Root-level configuration files
+│   ├── COMPREHENSIVE-TEMPLATE-DEMO.md  # Comprehensive template documentation
+│   ├── CONTEXT-tier2-component.md      # Component-level context
+│   ├── CONTEXT-tier3-feature.md        # Feature-level context
+│   ├── CSV_EXPORT_IMPROVEMENTS.md      # CSV export documentation
+│   ├── DEFAULT_VALUES_IMPLEMENTATION.md # Default values implementation
+│   ├── FIELD_TYPES_AND_PROGRAMMATIC_API.md # Field types and API docs
+│   ├── IMPORT-BUTTON-GUIDE.md          # Import functionality guide
+│   ├── PHASE-1-IMPLEMENTATION-REPORT.md # Phase 1 implementation report
+│   ├── PRD-COMPLIANCE-REPORT.md        # PRD compliance documentation
+│   ├── PRD.md                          # Product Requirements Document
+│   ├── PROGRAMMATIC-TEMPLATE-SYSTEM-PLAN.md # Programmatic system plan
+│   ├── SINGLE-HTML-IMPLEMENTATION.md   # Single HTML implementation guide
+│   ├── open-issues/                    # Open issues documentation
+│   │   └── example-api-performance-issue.md # Performance issue tracking
+│   └── specs/                          # Technical specifications
+│       ├── example-api-integration-spec.md # API integration spec
+│       └── example-feature-specification.md # Feature specification template
+├── scripts/                            # Automation and testing scripts
+│   ├── debug-console.js                # Debug console utilities
+│   ├── debug-template-detailed.js      # Detailed template debugging
+│   ├── debug-template.js               # Template debugging utilities
+│   ├── mcp-test.js                     # MCP testing scripts
+│   ├── test-conditionals-templates.js  # Conditional logic testing
+│   ├── test-csv-export.js              # CSV export testing
+│   ├── test-default-values.js          # Default values testing (JS)
+│   ├── test-default-values.ts          # Default values testing (TS)
+│   ├── test-import-with-defaults.ts    # Import with defaults testing
+│   ├── test-jcc2-defaults.ts           # JCC2 defaults testing
+│   ├── test-single-file.js             # Single file testing
+│   └── test-web-default-values.ts      # Web default values testing
+├── dist/                               # Built application files
+├── node_modules/                       # npm dependencies
+├── logs/                               # Application logs
+├── pdfs/                               # Sample PDF files
+│   ├── data_collection_form.pdf        # Sample data collection form
+│   └── questionnaire.pdf               # Sample questionnaire
+├── playwright-report/                  # Playwright test reports
+│   └── index.html                      # Test report viewer
+├── test-results/                       # Test result files
+│   ├── results.json                    # JSON test results
+│   └── results.xml                     # XML test results
+├── index.html                          # Main application HTML
+├── force-reload-templates.html         # Template reload utility
+├── test-defaults-browser.html          # Browser-based default testing
+├── test-storage.html                   # Storage testing utility
+├── markdownify-mcp/                    # MCP server directory
+└── *.js                               # Various testing and debugging scripts
 ```
 
+## Key Architecture Patterns
+
+### Component Architecture
+- **Dashboard.tsx** - Central hub for template management and form instances
+- **FormBuilder.tsx** - Visual form template creation interface
+- **FormRenderer.tsx** - Dynamic form rendering with conditional logic
+- **ProgrammaticImportModal.tsx** - Programmatic template import interface
+
+### Programmatic Template System
+- **TemplateBuilder.ts** - Fluent API for creating form templates programmatically
+- **ConditionEvaluator.ts** - Evaluates conditional logic for field visibility
+- **ControlFlowEngine.ts** - Orchestrates form flow and section progression
+- **TDL (Template Definition Language)** - Custom DSL for template definition
+
+### Data Flow
+1. Templates stored in localStorage with unique IDs
+2. Form instances track progress and data separately from templates
+3. Conditional logic evaluated in real-time during form interaction
+4. Export system generates PDFs, CSV, and JSON from completed forms
+
+### Testing Strategy
+- **Playwright E2E tests** - Full user journey testing
+- **Component isolation tests** - Individual component behavior
+- **Template validation tests** - Programmatic template correctness
+- **Export functionality tests** - Multi-format export validation
 
 ---
 
-*This template provides a comprehensive foundation for documenting project structure. Adapt it based on your specific technology stack, architecture decisions, and organizational requirements.*
+*This structure supports a comprehensive form management system with dynamic templating, conditional logic, and multiple export formats. The programmatic API enables complex form creation while maintaining type safety and validation.*

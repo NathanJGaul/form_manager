@@ -1,16 +1,16 @@
-# form_manager - AI Context Template (claude-master)
+# form_manager - Dynamic Form Management System
 
 ## 1. Project Overview
-- **Vision:** [Describe your project's vision and goals]
-- **Current Phase:** [Current development phase and status]
-- **Key Architecture:** [High-level architecture description]
-- **Development Strategy:** [Development approach and strategy notes]
+- **Vision:** A flexible, TypeScript-based form management system with dynamic templating, conditional logic, and programmatic API for building complex data collection forms
+- **Current Phase:** v3 development with enhanced JCC2 questionnaire templates, E2E testing implementation, and advanced conditional rendering
+- **Key Architecture:** React + TypeScript frontend with Vite build system, programmatic template engine, and comprehensive PDF export capabilities
+- **Development Strategy:** Test-driven development with Playwright E2E testing, modular component architecture, and extensive template library with real-world use cases
 
 ## 2. Project Structure
 
 **⚠️ CRITICAL: AI agents MUST read the [Project Structure documentation](/docs/ai-context/project-structure.md) before attempting any task to understand the complete technology stack, file tree and project organization.**
 
-[Project Name] follows a [describe architecture pattern]. For the complete tech stack and file tree structure, see [docs/ai-context/project-structure.md](/docs/ai-context/project-structure.md).
+form_manager follows a component-based React architecture with a powerful programmatic template system. For the complete tech stack and file tree structure, see [docs/ai-context/project-structure.md](/docs/ai-context/project-structure.md).
 
 ## 3. Coding Standards & AI Instructions
 
@@ -41,66 +41,74 @@
 - Structure projects with clear folder hierarchies and consistent naming conventions
 - Import/export properly - design for reusability and maintainability
 
-### Type Hints (REQUIRED)
-- **Always** use type hints for function parameters and return values
-- Use `from typing import` for complex types
-- Prefer `Optional[T]` over `Union[T, None]`
-- Use Pydantic models for data structures
+### TypeScript Types (REQUIRED)
+- **Always** use TypeScript interfaces and types for all data structures
+- Define strict interfaces for form templates, fields, and instances
+- Use generic types for reusable components
+- Leverage union types for field types and conditional operators
 
-```python
-# Good
-from typing import Optional, List, Dict, Tuple
-
-async def process_audio(
-    audio_data: bytes,
-    session_id: str,
-    language: Optional[str] = None
-) -> Tuple[bytes, Dict[str, Any]]:
-    """Process audio through the pipeline."""
-    pass
+```typescript
+// Good
+interface FormField {
+  id: string;
+  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox';
+  label: string;
+  required: boolean;
+  conditional?: {
+    dependsOn: string;
+    values: string[];
+    operator: 'equals' | 'contains' | 'not_equals';
+  };
+}
 ```
 
 ### Naming Conventions
-- **Classes**: PascalCase (e.g., `VoicePipeline`)
-- **Functions/Methods**: snake_case (e.g., `process_audio`)
-- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_AUDIO_SIZE`)
-- **Private methods**: Leading underscore (e.g., `_validate_input`)
-- **Pydantic Models**: PascalCase with `Schema` suffix (e.g., `ChatRequestSchema`, `UserSchema`)
+- **Components**: PascalCase (e.g., `FormRenderer`, `TemplateBuilder`)
+- **Functions/Methods**: camelCase (e.g., `evaluateCondition`, `renderField`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `FIELD_TYPES`, `DEFAULT_LAYOUT`)
+- **Types/Interfaces**: PascalCase (e.g., `FormTemplate`, `FieldValidation`)
+- **Files**: kebab-case for utilities, PascalCase for components (e.g., `form-logic.ts`, `FormBuilder.tsx`)
 
 
 ### Documentation Requirements
-- Every module needs a docstring
-- Every public function needs a docstring
-- Use Google-style docstrings
-- Include type information in docstrings
+- Every module needs a header comment explaining its purpose
+- Every public function needs JSDoc comments
+- Use TSDoc syntax for TypeScript documentation
+- Include type information and examples in documentation
 
-```python
-def calculate_similarity(text1: str, text2: str) -> float:
-    """Calculate semantic similarity between two texts.
-
-    Args:
-        text1: First text to compare
-        text2: Second text to compare
-
-    Returns:
-        Similarity score between 0 and 1
-
-    Raises:
-        ValueError: If either text is empty
-    """
-    pass
+```typescript
+/**
+ * Evaluates conditional logic for form fields and sections
+ * @param condition - The conditional configuration object
+ * @param formData - Current form data to evaluate against
+ * @returns Boolean indicating if condition is met
+ * @example
+ * ```typescript
+ * const isVisible = evaluateCondition({
+ *   dependsOn: 'age',
+ *   values: ['18+'],
+ *   operator: 'equals'
+ * }, { age: '18+' });
+ * ```
+ */
+function evaluateCondition(
+  condition: ConditionalLogic,
+  formData: Record<string, any>
+): boolean {
+  // implementation
+}
 ```
 
 ### Security First
-- Never trust external inputs - validate everything at the boundaries
-- Keep secrets in environment variables, never in code
-- Log security events (login attempts, auth failures, rate limits, permission denials) but never log sensitive data (audio, conversation content, tokens, personal info)
-- Authenticate users at the API gateway level - never trust client-side tokens
-- Use Row Level Security (RLS) to enforce data isolation between users
-- Design auth to work across all client types consistently
-- Use secure authentication patterns for your platform
-- Validate all authentication tokens server-side before creating sessions
-- Sanitize all user inputs before storing or processing
+- Validate all form inputs on both client and server side
+- Sanitize user-generated content before rendering
+- Prevent XSS attacks by properly encoding dynamic content
+- Validate file uploads and restrict file types
+- Never trust programmatic template imports - validate structure and content
+- Implement proper error boundaries to prevent information leakage
+- Use Content Security Policy headers for production deployments
+- Validate template JSON structure before processing
+- Escape user input in generated PDFs
 
 ### Error Handling
 - Use specific exceptions over generic ones
@@ -109,24 +117,28 @@ def calculate_similarity(text1: str, text2: str) -> float:
 - Fail securely - errors shouldn't reveal system internals
 
 ### Observable Systems & Logging Standards
-- Every request needs a correlation ID for debugging
-- Structure logs for machines, not humans - use JSON format with consistent fields (timestamp, level, correlation_id, event, context) for automated analysis
-- Make debugging possible across service boundaries
+- Log form rendering events and template loading for debugging
+- Track conditional logic evaluation and field visibility changes
+- Log template import/export operations with validation results
+- Structure logs for form analytics - track completion rates, field interaction patterns
+- Include template IDs and instance IDs in all form-related logs
 
 ### State Management
-- Have one source of truth for each piece of state
-- Make state changes explicit and traceable
-- Design for multi-service voice processing - use session IDs for state coordination, avoid storing conversation data in server memory
-- Keep conversation history lightweight (text, not audio)
+- Use localStorage for form persistence and template storage
+- Maintain single source of truth for form data and templates
+- Track form instance state including progress and visited sections
+- Implement auto-save functionality for form data
+- Separate template definitions from form instances
+- Cache compiled templates for performance
 
-### API Design Principles
-- RESTful design with consistent URL patterns
-- Use HTTP status codes correctly
-- Version APIs from day one (/v1/, /v2/)
-- Support pagination for list endpoints
-- Use consistent JSON response format:
-  - Success: `{ "data": {...}, "error": null }`
-  - Error: `{ "data": null, "error": {"message": "...", "code": "..."} }`
+### Form System Design Principles
+- Programmatic API for template creation and modification
+- Consistent field type definitions across templates
+- Immutable template definitions with versioning
+- Predictable conditional logic evaluation
+- Standardized export formats (PDF, CSV, JSON)
+- Template validation before storage
+- Backward-compatible template evolution
 
 
 ## 4. Multi-Agent Workflows & Context Injection
