@@ -86,7 +86,7 @@ Tested and confirmed working on:
 ```
 
 ### **Testing Infrastructure**
-- `test-single-file.js`: Compliance verification script
+- `tools/test-single-file.js`: Compliance verification script
 - `tests/single-html-file.spec.ts`: Playwright test suite
 - Automated PRD requirement validation
 
@@ -125,7 +125,7 @@ The PRD compliance report identified single HTML file implementation as:
 ### **Updating the Single File**
 1. Make changes to React source code
 2. Run `npm run build:single`
-3. Test with `node test-single-file.js`
+3. Test with `node tools/test-single-file.js`
 4. Deploy updated `standalone-form-manager.html`
 
 ### **Version Control**

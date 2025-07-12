@@ -65,15 +65,23 @@ form_manager/
 │   ├── index.css                       # Global styles and Tailwind imports
 │   ├── vite-env.d.ts                   # Vite environment type definitions
 │   ├── components/                     # React components
+│   │   ├── AppRouter.tsx               # Application routing component
 │   │   ├── Dashboard.tsx               # Main dashboard component
+│   │   ├── ErrorBoundary.tsx           # Error boundary for error handling
 │   │   ├── FormBuilder.tsx             # Form template builder interface
 │   │   ├── FormRenderer.tsx            # Dynamic form rendering engine
 │   │   └── ProgrammaticImportModal.tsx # Template import modal
 │   ├── types/                          # TypeScript type definitions
 │   │   ├── form.ts                     # Core form interfaces and types
 │   │   └── pdfExport.ts                # PDF export type definitions
+│   ├── routes/                         # Route components
+│   │   ├── BuilderRoute.tsx            # Form builder route component
+│   │   ├── DashboardRoute.tsx          # Dashboard route component
+│   │   └── FormRoute.tsx               # Form route component
 │   ├── utils/                          # Utility functions
+│   │   ├── bundleAnalyzer.ts           # Bundle analysis utilities
 │   │   ├── formLogic.ts                # Form validation and logic
+│   │   ├── lazyExamples.ts             # Lazy loading examples
 │   │   ├── pdfExport.ts                # PDF generation utilities
 │   │   └── storage.ts                  # LocalStorage management
 │   └── programmatic/                   # Programmatic template system
@@ -133,18 +141,24 @@ form_manager/
 │   │   ├── docs-overview.md            # Documentation architecture
 │   │   ├── system-integration.md       # Integration patterns
 │   │   ├── deployment-infrastructure.md # Infrastructure docs
-│   │   └── handoff.md                  # Task management
+│   │   ├── handoff.md                  # Task management
+│   │   └── MCP-ASSISTANT-RULES.md      # MCP integration rules and patterns
 │   ├── COMPREHENSIVE-TEMPLATE-DEMO.md  # Comprehensive template documentation
+│   ├── COMPREHENSIVE_CODE_REVIEW.md    # Code review documentation
 │   ├── CONTEXT-tier2-component.md      # Component-level context
 │   ├── CONTEXT-tier3-feature.md        # Feature-level context
 │   ├── CSV_EXPORT_IMPROVEMENTS.md      # CSV export documentation
 │   ├── DEFAULT_VALUES_IMPLEMENTATION.md # Default values implementation
 │   ├── FIELD_TYPES_AND_PROGRAMMATIC_API.md # Field types and API docs
 │   ├── IMPORT-BUTTON-GUIDE.md          # Import functionality guide
+│   ├── LAZY_LOADING_IMPLEMENTATION.md  # Lazy loading documentation
 │   ├── PHASE-1-IMPLEMENTATION-REPORT.md # Phase 1 implementation report
 │   ├── PRD-COMPLIANCE-REPORT.md        # PRD compliance documentation
 │   ├── PRD.md                          # Product Requirements Document
 │   ├── PROGRAMMATIC-TEMPLATE-SYSTEM-PLAN.md # Programmatic system plan
+│   ├── README-mcp-playwright.md        # MCP Playwright documentation
+│   ├── README-playwright.md            # Playwright testing guide
+│   ├── README.md                       # Documentation overview
 │   ├── SINGLE-HTML-IMPLEMENTATION.md   # Single HTML implementation guide
 │   ├── open-issues/                    # Open issues documentation
 │   │   └── example-api-performance-issue.md # Performance issue tracking
@@ -170,17 +184,34 @@ form_manager/
 ├── pdfs/                               # Sample PDF files
 │   ├── data_collection_form.pdf        # Sample data collection form
 │   └── questionnaire.pdf               # Sample questionnaire
+├── assets/                             # Project assets
+│   └── screenshots/                    # Screenshot documentation
+│       ├── after-import.png            # Import functionality screenshot
+│       ├── after-refresh.png           # Refresh functionality screenshot
+│       ├── dashboard-full.png          # Full dashboard view
+│       ├── dashboard-templates-section.png # Templates section view
+│       └── template-ui.png             # Template UI documentation
+├── tools/                              # Development and debugging tools
+│   ├── debug-jcc2-form.js              # JCC2 form debugging script
+│   ├── debug-templates.js              # Template debugging utilities
+│   ├── screenshot-dashboard.js         # Dashboard screenshot automation
+│   ├── test-common-templates.js        # Common templates testing
+│   ├── test-default-templates.js       # Default templates testing
+│   ├── test-progress-calculation.js    # Progress calculation testing
+│   ├── test-refresh-button.js          # Refresh button testing
+│   ├── test-runtime.js                 # Runtime testing utilities
+│   ├── test-template-load.js           # Template loading testing
+│   └── verify-jcc2-csv.js              # JCC2 CSV verification
+├── test-utils/                         # HTML testing utilities
+│   ├── force-reload-templates.html     # Template reload utility
+│   ├── test-defaults-browser.html      # Browser-based default testing
+│   └── test-storage.html               # Storage testing utility
 ├── playwright-report/                  # Playwright test reports
 │   └── index.html                      # Test report viewer
 ├── test-results/                       # Test result files
 │   ├── results.json                    # JSON test results
 │   └── results.xml                     # XML test results
-├── index.html                          # Main application HTML
-├── force-reload-templates.html         # Template reload utility
-├── test-defaults-browser.html          # Browser-based default testing
-├── test-storage.html                   # Storage testing utility
-├── markdownify-mcp/                    # MCP server directory
-└── *.js                               # Various testing and debugging scripts
+└── index.html                          # Main application HTML
 ```
 
 ## Key Architecture Patterns
