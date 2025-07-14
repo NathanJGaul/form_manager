@@ -440,6 +440,14 @@ export class SectionBuilder {
   }
 
   /**
+   * Enable N/A option for this section
+   */
+  naable(enabled: boolean = true): SectionBuilder {
+    this.section.naable = enabled;
+    return this;
+  }
+
+  /**
    * Return to parent builder
    */
   end(): TemplateBuilder {

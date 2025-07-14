@@ -38,6 +38,7 @@ export interface FormSection {
     values: string[];
     operator: 'equals' | 'contains' | 'not_equals';
   };
+  naable?: boolean;
 }
 
 export interface FormTemplate {
@@ -57,6 +58,7 @@ export interface FormInstance {
   progress: number;
   completed: boolean;
   visitedSections?: string[];
+  naSections?: string[];
   createdAt: Date;
   updatedAt: Date;
   lastSaved: Date;

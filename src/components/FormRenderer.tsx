@@ -193,8 +193,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     return new Set(savedVisitedSections);
   });
 
+  const [naSections, setNaSections] = useState<Set<string>>(() => {
+    // Load N/A sections from form instance
+    const savedNaSections = currentInstance.naSections || [];
+    return new Set(savedNaSections);
+  });
+
   const visibleSections = getVisibleSections(template.sections, formData);
-  const progress = calculateProgress(template.sections, formData, Array.from(visitedSections));
+  const progress = calculateProgress(template.sections, formData, Array.from(visitedSections), Array.from(naSections));
   
   // Filter sections for section-by-section view (exclude empty sections)
   const filteredSections = visibleSections.filter(section => {
@@ -213,6 +219,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         data: nullifiedFormData,
         progress,
         visitedSections: Array.from(visitedSections),
+        naSections: Array.from(naSections),
         updatedAt: new Date(),
       };
 
@@ -481,11 +488,61 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
   };
 
+  const handleNaToggle = (sectionId: string, checked: boolean) => {
+    setNaSections((prev) => {
+      const updated = new Set(prev);
+      if (checked) {
+        updated.add(sectionId);
+      } else {
+        updated.delete(sectionId);
+      }
+      return updated;
+    });
+
+    // If checking N/A, set all visible fields in the section to appropriate N/A value
+    if (checked) {
+      const section = template.sections.find(s => s.id === sectionId);
+      if (section) {
+        const visibleFields = getVisibleFields(section.fields, formData);
+        setFormData((prev) => {
+          const updated = { ...prev };
+          visibleFields.forEach(field => {
+            // Check if field has "Not Applicable" as an option
+            if (field.options && Array.isArray(field.options)) {
+              const naOption = field.options.find(opt => 
+                (typeof opt === 'string' && opt === "Not Applicable") ||
+                (typeof opt === 'object' && opt.label === "Not Applicable")
+              );
+              if (naOption) {
+                // Set to "Not Applicable" if it's an option
+                updated[field.id] = typeof naOption === 'string' ? naOption : naOption.value;
+              } else {
+                // Otherwise set to "N/A"
+                updated[field.id] = "N/A";
+              }
+            } else {
+              // For non-select/radio/checkbox fields, set to "N/A"
+              updated[field.id] = "N/A";
+            }
+          });
+          return updated;
+        });
+      }
+    }
+    
+    setHasUnsavedChanges(true);
+  };
+
   const handleSubmit = () => {
     // Validate all visible fields
     const newErrors: Record<string, string> = {};
 
     visibleSections.forEach((section) => {
+      // Skip validation for N/A sections
+      if (naSections.has(section.id)) {
+        return;
+      }
+      
       const visibleFields = getVisibleFields(section.fields, formData);
       visibleFields.forEach((field) => {
         const error = validateField(field, formData[field.id]);
@@ -509,6 +566,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       progress: 100,
       completed: true,
       visitedSections: Array.from(visitedSections),
+      naSections: Array.from(naSections),
       updatedAt: new Date(),
     };
 
@@ -755,10 +813,23 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
     const error = errors[field.id];
     const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
+    const isNaSection = sectionId && naSections.has(sectionId);
+    
+    // Determine the N/A display value for this field
+    let naDisplayValue = "N/A";
+    if (isNaSection && field.options && Array.isArray(field.options)) {
+      const naOption = field.options.find(opt => 
+        (typeof opt === 'string' && opt === "Not Applicable") ||
+        (typeof opt === 'object' && opt.label === "Not Applicable")
+      );
+      if (naOption) {
+        naDisplayValue = "Not Applicable";
+      }
+    }
 
     const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
       error ? "border-red-500" : "border-gray-300"
-    }`;
+    } ${isNaSection ? "bg-gray-100 cursor-not-allowed" : ""}`;
 
     switch (field.type) {
       case "text":
@@ -773,10 +844,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                 <input
                   type="text"
                   name={field.id}
-                  value={value || ""}
+                  value={isNaSection ? naDisplayValue : (value || "")}
                   onChange={(e) => handleFieldChange(field.id, e.target.value)}
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
+                  disabled={isNaSection}
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               </div>
@@ -1163,11 +1235,24 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
             return (
               <div key={section.id} className="border rounded-lg p-6">
-                <Tooltip content={`id: ${section.id}`} delay={500}>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    {section.title}
-                  </h2>
-                </Tooltip>
+                <div className="mb-4">
+                  {section.naable && (
+                    <label className="flex items-center space-x-2 mb-2">
+                      <input
+                        type="checkbox"
+                        checked={naSections.has(section.id)}
+                        onChange={(e) => handleNaToggle(section.id, e.target.checked)}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Mark this section as N/A</span>
+                    </label>
+                  )}
+                  <Tooltip content={`id: ${section.id}`} delay={500}>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {section.title}
+                    </h2>
+                  </Tooltip>
+                </div>
                 <div className="space-y-6">
                   {allElements.map((element) => {
                     if (element.type === 'field') {
@@ -1223,11 +1308,24 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
               return (
                 <div key={currentSection.id} className="border rounded-lg p-6">
-                  <Tooltip content={`id: ${currentSection.id}`} delay={500}>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                      {currentSection.title}
-                    </h2>
-                  </Tooltip>
+                  <div className="mb-4">
+                    {currentSection.naable && (
+                      <label className="flex items-center space-x-2 mb-2">
+                        <input
+                          type="checkbox"
+                          checked={naSections.has(currentSection.id)}
+                          onChange={(e) => handleNaToggle(currentSection.id, e.target.checked)}
+                          className="text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">Mark this section as N/A</span>
+                      </label>
+                    )}
+                    <Tooltip content={`id: ${currentSection.id}`} delay={500}>
+                      <h2 className="text-xl font-semibold text-gray-900">
+                        {currentSection.title}
+                      </h2>
+                    </Tooltip>
+                  </div>
                   <div className="space-y-6">
                     {allElements.map((element) => {
                       if (element.type === 'field') {

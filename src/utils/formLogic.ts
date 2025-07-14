@@ -47,7 +47,8 @@ export const getVisibleFields = (
 export const calculateProgress = (
   sections: FormSection[],
   formData: Record<string, FormFieldValue>,
-  visitedSections?: string[]
+  visitedSections?: string[],
+  naSections?: string[]
 ): number => {
   const visibleSections = getVisibleSections(sections, formData);
   if (visibleSections.length === 0) return 0;
@@ -73,6 +74,16 @@ export const calculateProgress = (
   
   visitedVisibleSections.forEach(section => {
     const visibleFields = getVisibleFields(section.fields, formData);
+    
+    // If this section is marked as N/A, count all its required fields as complete
+    if (naSections && naSections.includes(section.id)) {
+      visibleFields.forEach(field => {
+        if (field.required) {
+          completedRequiredFields++;
+        }
+      });
+      return; // Skip to next section
+    }
     
     visibleFields.forEach(field => {
       if (field.required) {

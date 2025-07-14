@@ -161,6 +161,7 @@ export interface ProgrammaticSection {
   // Additional programmatic properties
   variables?: Record<string, unknown>;
   dynamic?: boolean;
+  naable?: boolean;
 }
 
 export interface ProgrammaticTemplate {
