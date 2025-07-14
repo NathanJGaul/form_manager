@@ -9,6 +9,7 @@ import {
   updateConditionalFieldsAsNull,
 } from "../utils/formLogic";
 import * as Icons from "lucide-react";
+import Tooltip from "./Tooltip";
 
 // Type definitions for form values
 type FormValue = string | number | boolean | string[] | File | null | undefined;
@@ -52,8 +53,10 @@ const renderFieldAsTable = (
   field: FormField,
   value: FormValue,
   error: string | undefined,
-  handleFieldChange: (fieldId: string, value: FormValue) => void
+  handleFieldChange: (fieldId: string, value: FormValue) => void,
+  sectionId?: string
 ): JSX.Element => {
+  const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
   if (!field.options || field.layout !== 'horizontal') {
     throw new Error('renderFieldAsTable should only be used for horizontal checkbox/radio fields with options');
   }
@@ -63,9 +66,10 @@ const renderFieldAsTable = (
   const columnWidth = `${availableWidth / optionCount}%`;
 
   return (
-    <div key={field.id} className="space-y-2">
-      <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
+    <Tooltip key={field.id} content={tooltipContent} delay={500}>
+      <div className="space-y-2">
+        <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
+          <table className="w-full text-sm">
           {/* Header row with options */}
           <thead className="bg-gray-100">
             <tr>
@@ -134,6 +138,7 @@ const renderFieldAsTable = (
         </table>
       </div>
     </div>
+    </Tooltip>
   );
 };
 
@@ -565,7 +570,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     return { grouped, ungrouped };
   };
 
-  const renderGroupedFields = (groupKey: string, fields: FormField[]) => {
+  const renderGroupedFields = (groupKey: string, fields: FormField[], sectionId?: string) => {
     if (fields.length === 0) return null;
 
     // Helper function to get group label
@@ -593,9 +598,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       // Render as a table/matrix with field names on left axis and options on top axis
       return (
         <div key={groupKey} className="space-y-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
-          <h4 className="text-sm font-semibold text-gray-800 mb-2">
-            {getGroupLabel(groupKey, fields)}
-          </h4>
+          <Tooltip content={`group: ${groupKey}`} delay={500}>
+            <h4 className="text-sm font-semibold text-gray-800 mb-2">
+              {getGroupLabel(groupKey, fields)}
+            </h4>
+          </Tooltip>
           
           {/* Table layout for matrix-style grouped fields */}
           <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
@@ -627,21 +634,24 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
                   const error = errors[field.id];
                   
+                  const fieldTooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
                   return (
                     <tr key={field.id} className="hover:bg-gray-25">
                       {/* Field name/label column */}
                       <td className="py-2 pr-2 text-sm text-gray-900 align-top border-r border-gray-200">
-                        <div className="flex flex-col">
-                          <div className="flex items-start">
-                            <span className="leading-tight break-words hyphens-auto">
-                              {field.label}
-                            </span>
-                            {field.required && <span className="text-red-500 ml-1 flex-shrink-0">*</span>}
+                        <Tooltip content={fieldTooltipContent} delay={500}>
+                          <div className="flex flex-col">
+                            <div className="flex items-start">
+                              <span className="leading-tight break-words hyphens-auto">
+                                {field.label}
+                              </span>
+                              {field.required && <span className="text-red-500 ml-1 flex-shrink-0">*</span>}
+                            </div>
+                            {error && (
+                              <div className="text-red-500 text-xs mt-1">{error}</div>
+                            )}
                           </div>
-                          {error && (
-                            <div className="text-red-500 text-xs mt-1">{error}</div>
-                          )}
-                        </div>
+                        </Tooltip>
                       </td>
                       
                       {/* Option columns with input controls */}
@@ -685,9 +695,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       // Render text fields in horizontal layout
       return (
         <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
-            {getGroupLabel(groupKey, fields)}
-          </h4>
+          <Tooltip content={`group: ${groupKey}`} delay={500}>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              {getGroupLabel(groupKey, fields)}
+            </h4>
+          </Tooltip>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {fields.map((field) => {
               const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
@@ -696,24 +708,27 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                 error ? "border-red-500" : "border-gray-300"
               }`;
 
+              const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
               return (
-                <div key={field.id} className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    {field.label}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  <input
-                    type={field.type}
-                    name={field.id}
-                    value={value || ""}
-                    onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                    placeholder={field.placeholder || `Enter ${field.label}`}
-                    min={field.type === 'number' ? field.validation?.min : undefined}
-                    max={field.type === 'number' ? field.validation?.max : undefined}
-                    className={baseInputClasses}
-                  />
-                  {error && <p className="text-red-500 text-sm">{error}</p>}
-                </div>
+                <Tooltip key={field.id} content={tooltipContent} delay={500}>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    <input
+                      type={field.type}
+                      name={field.id}
+                      value={value || ""}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      placeholder={field.placeholder || `Enter ${field.label}`}
+                      min={field.type === 'number' ? field.validation?.min : undefined}
+                      max={field.type === 'number' ? field.validation?.max : undefined}
+                      className={baseInputClasses}
+                    />
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
+                  </div>
+                </Tooltip>
               );
             })}
           </div>
@@ -723,20 +738,23 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       // Render fields individually but within a group container
       return (
         <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
-            {getGroupLabel(groupKey, fields)}
-          </h4>
+          <Tooltip content={`group: ${groupKey}`} delay={500}>
+            <h4 className="text-sm font-medium text-gray-700 mb-3">
+              {getGroupLabel(groupKey, fields)}
+            </h4>
+          </Tooltip>
           <div className="space-y-4">
-            {fields.map(renderField)}
+            {fields.map(field => renderField(field, sectionId))}
           </div>
         </div>
       );
     }
   };
 
-  const renderField = (field: FormField | FormFieldWithIndex) => {
+  const renderField = (field: FormField | FormFieldWithIndex, sectionId?: string) => {
     const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
     const error = errors[field.id];
+    const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
 
     const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
       error ? "border-red-500" : "border-gray-300"
@@ -745,273 +763,293 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     switch (field.type) {
       case "text":
         return (
-          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
-              <input
-                type="text"
-                name={field.id}
-                value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                placeholder={field.placeholder || `Enter ${field.label}`}
-                className={baseInputClasses}
-              />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+                <input
+                  type="text"
+                  name={field.id}
+                  value={value || ""}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  placeholder={field.placeholder || `Enter ${field.label}`}
+                  className={baseInputClasses}
+                />
+                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              </div>
             </div>
-          </div>
+          </Tooltip>
         );
 
       case "email":
         return (
-          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
-              <input
-                type="email"
-                name={field.id}
-                value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                placeholder={field.placeholder || `Enter ${field.label}`}
-                className={baseInputClasses}
-              />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+                <input
+                  type="email"
+                  name={field.id}
+                  value={value || ""}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  placeholder={field.placeholder || `Enter ${field.label}`}
+                  className={baseInputClasses}
+                />
+                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              </div>
             </div>
-          </div>
+          </Tooltip>
         );
 
       case "tel":
         return (
-          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
-              <input
-                type="tel"
-                name={field.id}
-                value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                placeholder={field.placeholder || `Enter ${field.label}`}
-                className={baseInputClasses}
-              />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+                <input
+                  type="tel"
+                  name={field.id}
+                  value={value || ""}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  placeholder={field.placeholder || `Enter ${field.label}`}
+                  className={baseInputClasses}
+                />
+                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              </div>
             </div>
-          </div>
+          </Tooltip>
         );
 
       case "textarea":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <textarea
-              name={field.id}
-              value={value || ""}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.placeholder || `Enter ${field.label}`}
-              rows={4}
-              className={baseInputClasses}
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <textarea
+                name={field.id}
+                value={value || ""}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                placeholder={field.placeholder || `Enter ${field.label}`}
+                rows={4}
+                className={baseInputClasses}
+              />
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+            </div>
+          </Tooltip>
         );
 
       case "select":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <select
-              name={field.id}
-              value={value || ""}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              className={baseInputClasses}
-            >
-              <option value="">Select an option</option>
-              {field.options?.map((option: string) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <select
+                name={field.id}
+                value={value || ""}
+                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                className={baseInputClasses}
+              >
+                <option value="">Select an option</option>
+                {field.options?.map((option: string) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+            </div>
+          </Tooltip>
         );
 
       case "radio":
         // Use table rendering for horizontal layout
         if (field.layout === 'horizontal' && field.options) {
-          return renderFieldAsTable(field, value, error, handleFieldChange);
+          return renderFieldAsTable(field, value, error, handleFieldChange, sectionId);
         }
         
         // Use vertical layout (original implementation)
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              {field.options?.map((option: string) => (
-                <label
-                  key={option}
-                  className="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name={field.id}
-                    value={option}
-                    checked={value === option}
-                    onChange={(e) =>
-                      handleFieldChange(field.id, e.target.value)
-                    }
-                    className="text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{option}</span>
-                </label>
-              ))}
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <div className="space-y-2">
+                {field.options?.map((option: string) => (
+                  <label
+                    key={option}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name={field.id}
+                      value={option}
+                      checked={value === option}
+                      onChange={(e) =>
+                        handleFieldChange(field.id, e.target.value)
+                      }
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+          </Tooltip>
         );
 
       case "checkbox":
         // Use table rendering for horizontal layout
         if (field.layout === 'horizontal' && field.options) {
-          return renderFieldAsTable(field, value, error, handleFieldChange);
+          return renderFieldAsTable(field, value, error, handleFieldChange, sectionId);
         }
         
         // Use vertical layout (original implementation)
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              {field.options?.map((option: string) => (
-                <label
-                  key={option}
-                  className="flex items-center space-x-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    name={field.id}
-                    value={option}
-                    checked={Array.isArray(value) && value.includes(option)}
-                    onChange={(e) => {
-                      const currentValues = Array.isArray(value) ? value : [];
-                      if (e.target.checked) {
-                        handleFieldChange(field.id, [...currentValues, option]);
-                      } else {
-                        handleFieldChange(
-                          field.id,
-                          currentValues.filter((v) => v !== option)
-                        );
-                      }
-                    }}
-                    className="text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{option}</span>
-                </label>
-              ))}
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <div className="space-y-2">
+                {field.options?.map((option: string) => (
+                  <label
+                    key={option}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      name={field.id}
+                      value={option}
+                      checked={Array.isArray(value) && value.includes(option)}
+                      onChange={(e) => {
+                        const currentValues = Array.isArray(value) ? value : [];
+                        if (e.target.checked) {
+                          handleFieldChange(field.id, [...currentValues, option]);
+                        } else {
+                          handleFieldChange(
+                            field.id,
+                            currentValues.filter((v) => v !== option)
+                          );
+                        }
+                      }}
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">{option}</span>
+                  </label>
+                ))}
+              </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+          </Tooltip>
         );
 
       case "number":
         return (
-          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
-              <input
-                type="number"
-                value={value || ""}
-                onChange={(e) =>
-                  handleFieldChange(
-                    field.id,
-                    e.target.value ? Number(e.target.value) : ""
-                  )
-                }
-                placeholder={field.placeholder || `Enter ${field.label}`}
-                min={field.validation?.min}
-                max={field.validation?.max}
-                className={baseInputClasses}
-              />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+                <input
+                  type="number"
+                  value={value || ""}
+                  onChange={(e) =>
+                    handleFieldChange(
+                      field.id,
+                      e.target.value ? Number(e.target.value) : ""
+                    )
+                  }
+                  placeholder={field.placeholder || `Enter ${field.label}`}
+                  min={field.validation?.min}
+                  max={field.validation?.max}
+                  className={baseInputClasses}
+                />
+                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              </div>
             </div>
-          </div>
+          </Tooltip>
         );
 
       case "date":
         return (
-          <div key={field.id} className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-            <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
-              <input
-                type="date"
-                name={field.id}
-                value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
-                className={baseInputClasses}
-              />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
+              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+                <input
+                  type="date"
+                  name={field.id}
+                  value={value || ""}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  className={baseInputClasses}
+                />
+                {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              </div>
             </div>
-          </div>
+          </Tooltip>
         );
 
       case "file":
         return (
-          <div key={field.id} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    handleFieldChange(field.id, {
-                      name: file.name,
-                      size: file.size,
-                      type: file.type,
-                      data: e.target?.result,
-                    });
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              className={baseInputClasses}
-            />
-            {value && (
-              <div className="text-sm text-gray-600">
-                Selected: {value.name} ({Math.round(value.size / 1024)}KB)
-              </div>
-            )}
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-          </div>
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      handleFieldChange(field.id, {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        data: e.target?.result,
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className={baseInputClasses}
+              />
+              {value && (
+                <div className="text-sm text-gray-600">
+                  Selected: {value.name} ({Math.round(value.size / 1024)}KB)
+                </div>
+              )}
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+            </div>
+          </Tooltip>
         );
 
       default:
@@ -1125,15 +1163,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
             return (
               <div key={section.id} className="border rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  {section.title}
-                </h2>
+                <Tooltip content={`id: ${section.id}`} delay={500}>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    {section.title}
+                  </h2>
+                </Tooltip>
                 <div className="space-y-6">
                   {allElements.map((element) => {
                     if (element.type === 'field') {
-                      return renderField(element.content as FormFieldWithIndex);
+                      return renderField(element.content as FormFieldWithIndex, section.id);
                     } else {
-                      return renderGroupedFields(element.groupKey!, element.content as FormField[]);
+                      return renderGroupedFields(element.groupKey!, element.content as FormField[], section.id);
                     }
                   })}
                 </div>
@@ -1183,15 +1223,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
               return (
                 <div key={currentSection.id} className="border rounded-lg p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    {currentSection.title}
-                  </h2>
+                  <Tooltip content={`id: ${currentSection.id}`} delay={500}>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                      {currentSection.title}
+                    </h2>
+                  </Tooltip>
                   <div className="space-y-6">
                     {allElements.map((element) => {
                       if (element.type === 'field') {
-                        return renderField(element.content as FormFieldWithIndex);
+                        return renderField(element.content as FormFieldWithIndex, currentSection.id);
                       } else {
-                        return renderGroupedFields(element.groupKey!, element.content as FormField[]);
+                        return renderGroupedFields(element.groupKey!, element.content as FormField[], currentSection.id);
                       }
                     })}
                   </div>
