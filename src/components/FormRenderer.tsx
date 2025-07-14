@@ -53,7 +53,7 @@ const renderFieldAsTable = (
   field: FormField,
   value: FormValue,
   error: string | undefined,
-  handleFieldChange: (fieldId: string, value: FormValue) => void,
+  handleFieldChange: (fieldId: string, value: FormValue, sectionId?: string) => void,
   sectionId?: string
 ): JSX.Element => {
   const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
@@ -118,13 +118,13 @@ const renderFieldAsTable = (
                       }
                       onChange={(e) => {
                         if (field.type === 'radio') {
-                          handleFieldChange(field.id, e.target.value);
+                          handleFieldChange(field.id, e.target.value, sectionId);
                         } else {
                           const currentValues = Array.isArray(value) ? value : [];
                           if (e.target.checked) {
-                            handleFieldChange(field.id, [...currentValues, option]);
+                            handleFieldChange(field.id, [...currentValues, option], sectionId);
                           } else {
-                            handleFieldChange(field.id, currentValues.filter((v) => v !== option));
+                            handleFieldChange(field.id, currentValues.filter((v) => v !== option), sectionId);
                           }
                         }
                       }}
@@ -233,7 +233,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
     }
-  }, [formData, progress, visitedSections, onSave, template.sections, currentInstance]);
+  }, [formData, progress, visitedSections, naSections, onSave, template.sections, currentInstance]);
 
   // Auto-save functionality - debounced
   useEffect(() => {
@@ -467,7 +467,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
   };
 
-  const handleFieldChange = (fieldId: string, value: FormValue) => {
+  const handleFieldChange = (fieldId: string, value: FormValue, sectionId?: string) => {
     setFormData((prev) => {
       const updated = {
         ...prev,
@@ -485,6 +485,23 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         delete newErrors[fieldId];
         return newErrors;
       });
+    }
+
+    // If the field is in an N/A section and the value is changed from N/A to something else,
+    // remove the section from naSections
+    if (sectionId && naSections.has(sectionId)) {
+      // Check if the new value is not N/A or Not Applicable
+      const isNotNaValue = value !== 'N/A' && value !== 'Not Applicable' && 
+                          !(Array.isArray(value) && value.length === 1 && 
+                            (value[0] === 'N/A' || value[0] === 'Not Applicable'));
+      
+      if (isNotNaValue) {
+        setNaSections((prev) => {
+          const updated = new Set(prev);
+          updated.delete(sectionId);
+          return updated;
+        });
+      }
     }
   };
 
@@ -726,13 +743,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                               }
                               onChange={(e) => {
                                 if (field.type === 'radio') {
-                                  handleFieldChange(field.id, e.target.value);
+                                  handleFieldChange(field.id, e.target.value, sectionId);
                                 } else {
                                   const currentValues = Array.isArray(value) ? value : [];
                                   if (e.target.checked) {
-                                    handleFieldChange(field.id, [...currentValues, option]);
+                                    handleFieldChange(field.id, [...currentValues, option], sectionId);
                                   } else {
-                                    handleFieldChange(field.id, currentValues.filter((v) => v !== option));
+                                    handleFieldChange(field.id, currentValues.filter((v) => v !== option), sectionId);
                                   }
                                 }
                               }}
@@ -778,7 +795,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                       type={field.type}
                       name={field.id}
                       value={value || ""}
-                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
                       placeholder={field.placeholder || `Enter ${field.label}`}
                       min={field.type === 'number' ? field.validation?.min : undefined}
                       max={field.type === 'number' ? field.validation?.max : undefined}
@@ -845,7 +862,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   type="text"
                   name={field.id}
                   value={isNaSection ? naDisplayValue : (value || "")}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
                   disabled={isNaSection}
@@ -869,7 +886,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   type="email"
                   name={field.id}
                   value={value || ""}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
                 />
@@ -892,7 +909,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   type="tel"
                   name={field.id}
                   value={value || ""}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
                 />
@@ -913,7 +930,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               <textarea
                 name={field.id}
                 value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
                 placeholder={field.placeholder || `Enter ${field.label}`}
                 rows={4}
                 className={baseInputClasses}
@@ -934,7 +951,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               <select
                 name={field.id}
                 value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
                 className={baseInputClasses}
               >
                 <option value="">Select an option</option>
@@ -975,7 +992,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                       value={option}
                       checked={value === option}
                       onChange={(e) =>
-                        handleFieldChange(field.id, e.target.value)
+                        handleFieldChange(field.id, e.target.value, sectionId)
                       }
                       className="text-blue-600 focus:ring-blue-500"
                     />
@@ -1016,11 +1033,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                       onChange={(e) => {
                         const currentValues = Array.isArray(value) ? value : [];
                         if (e.target.checked) {
-                          handleFieldChange(field.id, [...currentValues, option]);
+                          handleFieldChange(field.id, [...currentValues, option], sectionId);
                         } else {
                           handleFieldChange(
                             field.id,
-                            currentValues.filter((v) => v !== option)
+                            currentValues.filter((v) => v !== option),
+                            sectionId
                           );
                         }
                       }}
@@ -1050,7 +1068,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   onChange={(e) =>
                     handleFieldChange(
                       field.id,
-                      e.target.value ? Number(e.target.value) : ""
+                      e.target.value ? Number(e.target.value) : "",
+                      sectionId
                     )
                   }
                   placeholder={field.placeholder || `Enter ${field.label}`}
@@ -1077,7 +1096,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   type="date"
                   name={field.id}
                   value={value || ""}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
                   className={baseInputClasses}
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
@@ -1107,7 +1126,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                         size: file.size,
                         type: file.type,
                         data: e.target?.result,
-                      });
+                      }, sectionId);
                     };
                     reader.readAsDataURL(file);
                   }

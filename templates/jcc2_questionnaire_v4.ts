@@ -313,14 +313,14 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     builder
-      .field("radio", `Overall JCC2 Effectiveness Rating - Intelligence Data`)
+      .field("radio", "JCC2 Overall")
       .id("intelligence_data_overall_effectiveness")
       .options(effectivenessScale.options)
       .layout("horizontal")
       .grouping(
         true,
         "overall_intelligence_data",
-        "Overall Effectiveness Rating"
+        "Overall JCC2 Effectiveness Rating - Intelligence Data"
       )
       .required()
       .end();
@@ -365,14 +365,15 @@ export class JCC2UserQuestionnaireV4 {
     });
 
     builder
-      .field(
-        "radio",
-        "Overall Effectiveness rating. Rate the effectiveness of JCC2 facilitating the capability"
-      )
+      .field("radio", "JCC2 Overall")
       .id("tagging_correlation_overall")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "tagging_correlation_overall")
+      .grouping(
+        true,
+        "tagging_correlation_overall",
+        "Overall Effectiveness rating. Rate the effectiveness of JCC2 facilitating the capability"
+      )
       .required()
       .end();
 
@@ -417,14 +418,15 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     builder
-      .field(
-        "radio",
-        "Overall Effectiveness rating. Rate the effectiveness of JCC2 facilitating the capability"
-      )
+      .field("radio", "JCC2 Overall")
       .id("operational_status_change_overall")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "operational_status_change_overall")
+      .grouping(
+        true,
+        "operational_status_change_overall",
+        "Overall Effectiveness rating. Rate the effectiveness of JCC2 facilitating the capability"
+      )
       .required()
       .end();
 
@@ -553,11 +555,15 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     builder
-      .field("radio", "Overall Effectiveness rating for Reporting capability")
+      .field("radio", "JCC2 Overall")
       .id("reports_overall_effectiveness")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "reports_overall")
+      .grouping(
+        true,
+        "reports_overall",
+        "Overall Effectiveness rating for Reporting capability"
+      )
       .required()
       .end();
 
@@ -569,37 +575,39 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `Data created in ${app} can be shared with other Joint Forces members within JCC2 without the need for external applications.`
-        )
-        .id(`${toId(app)}_info_sharing`)
+        .field("radio", app)
+        .id(`info_sharing_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "info_sharing")
+        .grouping(
+          true,
+          "info_sharing",
+          "Data created in JCC2 can be shared with other Joint Forces members within JCC2 without the need for external applications."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
     });
     builder
-      .field(
-        "radio",
-        `Overall Effectiveness rating. Rate the effectiveness of JCC2 facilitating the capability.`
-      )
+      .field("radio", "JCC2 Overall")
       .id("info_sharing_overall")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "info_sharing_overall")
+      .grouping(
+        true,
+        "info_sharing_overall",
+        "Overall Effectiveness rating. Rate the effectiveness of JCC2 facilitating the capability."
+      )
       .required()
       .end();
 
     // MOP 1.2.1: Threat Detection (TASC)
-    builder.section("MOP 1.2.1: Threat Detection").id("mop_1_2_1");
+    builder.section("MOP 1.2.1: Threat Detection").id("mop_1_2_1").naable();
     tascApps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `${app}`)
-        .id(`${toId(app)}_threat_detection_accuracy`)
+        .field("radio", app)
+        .id(`threat_detection_accuracy_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
         .grouping(
@@ -611,8 +619,8 @@ export class JCC2UserQuestionnaireV4 {
         .conditional(appConditionId, "not_equals", ["NA"])
         .end()
 
-        .field("radio", `${app}`)
-        .id(`${toId(app)}_threat_detection_action`)
+        .field("radio", app)
+        .id(`threat_detection_action_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
         .grouping(
@@ -625,7 +633,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     builder
-      .field("radio", `JCC2 Overall`)
+      .field("radio", "JCC2 Overall")
       .id("threat_detection_overall")
       .options(effectivenessScale.options)
       .layout("horizontal")
@@ -641,25 +649,38 @@ export class JCC2UserQuestionnaireV4 {
     builder
       .section("MOP 1.2.2: Threat assessment (Crucible)")
       .id("mop_1_2_2")
-      .conditional("exp_app_crucible", "not_equals", ["NA"]);
+      .conditional("exp_app_crucible", "not_equals", ["NA"])
+      .naable();
     const crucibleEffectivenessQuestions = [
-      "JCC2 provides data to fully assess cyber threats.",
-      "Data provided by JCC2 allows me to identify which threats are relevant to my area of responsibility.",
-      "Crucible assists threat assessment with automatic analysis.",
-      "Crucible enables decisions about the prioritization of threats.",
+      [
+        "JCC2 provides data to fully assess cyber threats.",
+        "fully_assess_threats",
+      ],
+      [
+        "Data provided by JCC2 allows me to identify which threats are relevant to my area of responsibility.",
+        "identify_relevant_threats",
+      ],
+      [
+        "Crucible assists threat assessment with automatic analysis.",
+        "automatic_analysis",
+      ],
+      [
+        "Crucible enables decisions about the prioritization of threats.",
+        "threat_prioritization",
+      ],
     ];
-    crucibleEffectivenessQuestions.forEach((question, index) => {
+    crucibleEffectivenessQuestions.forEach((question) => {
       builder
-        .field("radio", "Crucible")
-        .id(`threat_assessment_${index + 1}`)
+        .field("radio", question[0])
+        .id(`crucible_${question[1]}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, `threat_assessment_${index + 1}`, question)
+        .grouping(true, "threat_assessment")
         .required()
         .end();
     });
     builder
-      .field("radio", `JCC2 Overall`)
+      .field("radio", "JCC2 Overall")
       .id("threat_assessment_overall")
       .options(effectivenessScale.options)
       .layout("horizontal")
@@ -674,21 +695,22 @@ export class JCC2UserQuestionnaireV4 {
     // MOS 1.3.1: Common Operating Picture (COP) - COMPLETE IMPLEMENTATION
     builder
       .section("MOS 1.3.1: Common Operating Picture (COP)")
-      .id("mos_1_3_1");
+      .id("mos_1_3_1")
+      .naable();
 
     // COP Relevance
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `The ${app} COP displays information that is relevant to my duties.`
-        )
-        .id(`${toId(app)}_cop_relevant`)
+        .field("radio", app)
+        .id(`cop_relevant_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "cop_relevance")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "cop_relevance",
+          "The JCC2 COP displays information that is relevant to my duties."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -698,12 +720,15 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `The ${app} COP displays information that is accurate.`)
-        .id(`${toId(app)}_cop_accurate`)
+        .field("radio", app)
+        .id(`cop_accurate_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "cop_accuracy")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "cop_accuracy",
+          "The JCC2 COP displays information that is accurate."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -713,12 +738,15 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `The ${app} COP displays information that is complete.`)
-        .id(`${toId(app)}_cop_complete`)
+        .field("radio", app)
+        .id(`cop_complete_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "cop_completeness")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "cop_completeness",
+          "The JCC2 COP displays information that is complete."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -728,12 +756,15 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `The ${app} COP displays information that is timely.`)
-        .id(`${toId(app)}_cop_timely`)
+        .field("radio", app)
+        .id(`cop_timely_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "cop_timeliness")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "cop_timeliness",
+          "The JCC2 COP displays information that is timely."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -743,15 +774,15 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `The ${app} COP displays information that is not visually cluttered.`
-        )
-        .id(`${toId(app)}_cop_not_cluttered`)
+        .field("radio", app)
+        .id(`cop_not_cluttered_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "cop_visual_clarity")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "cop_visual_clarity",
+          "The JCC2 COP displays information that is not visually cluttered."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -761,15 +792,15 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `The ${app} COP has adequate sort, filter, and search capabilities.`
-        )
-        .id(`${toId(app)}_cop_search_capabilities`)
+        .field("radio", app)
+        .id(`cop_search_capabilities_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "cop_search_filter_sort")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "cop_search_filter_sort",
+          "The JCC2 COP has adequate sort, filter, and search capabilities."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -779,12 +810,15 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `The ${app} COP displays allow for customization.`)
-        .id(`${toId(app)}_cop_customizable`)
+        .field("radio", app)
+        .id(`cop_customizable_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "cop_customization")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "cop_customization",
+          "The JCC2 COP displays allow for customization."
+        )
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -792,11 +826,11 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Overall Effectiveness
     builder
-      .field("radio", "Overall COP Effectiveness Rating")
+      .field("radio", "JCC2 Overall")
       .id("cop_overall_effectiveness")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "cop_overall")
+      .grouping(true, "cop_overall", "Overall COP Effectiveness Rating")
       .required()
       .end();
 
@@ -806,33 +840,47 @@ export class JCC2UserQuestionnaireV4 {
         "MOP 1.3.2: Dependency map for locating downstream assets (MADSS)"
       )
       .id("mop_1_3_2")
-      .conditional("exp_app_madss", "not_equals", ["NA"]);
+      .conditional("exp_app_madss", "not_equals", ["NA"])
+      .naable();
     const dependencyMapQuestions = [
-      "The dependency map information within MADSS is complete.",
-      "The dependency map can be used for determining what services are provided by information technology and cyber assets.",
-      "The dependency map simulation mode is useful for determining what assets would be affected during an outage.",
+      [
+        "The dependency map information within MADSS is complete.",
+        "dependency_map_complete",
+      ],
+      [
+        "The dependency map can be used for determining what services are provided by information technology and cyber assets.",
+        "dependency_map_services",
+      ],
+      [
+        "The dependency map simulation mode is useful for determining what assets would be affected during an outage.",
+        "dependency_map_simulation",
+      ],
     ];
-    dependencyMapQuestions.forEach((question, index) => {
+    dependencyMapQuestions.forEach((question) => {
       builder
-        .field("radio", question)
-        .id(`dependency_map_${index + 1}`)
+        .field("radio", question[0])
+        .id(`madss_${question[1]}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .defaultValue(effectivenessScale.default)
+        .grouping(true, "dependency_map")
         .required()
         .end();
     });
     builder
-      .field("radio", "Overall Dependency Map Effectiveness Rating")
+      .field("radio", "JCC2 Overall")
       .id("dependency_map_overall_effectiveness")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "dependency_map_overall")
+      .grouping(
+        true,
+        "dependency_map_overall",
+        "Overall Dependency Map Effectiveness Rating"
+      )
       .required()
       .end();
 
     // MOP 1.3.3: Event creation
-    builder.section("MOP 1.3.3: Event creation").id("mop_1_3_3");
+    builder.section("MOP 1.3.3: Event creation").id("mop_1_3_3").naable();
     const eventCreationApps = [
       "SigAct",
       "Rally",
@@ -855,7 +903,7 @@ export class JCC2UserQuestionnaireV4 {
       eventCreationApps.forEach((app) => {
         builder
           .field("radio", `${app}`)
-          .id(`${toId(app)}`)
+          .id(`${question[1]}_${toId(app)}`)
           .options(effectivenessScale.options)
           .conditional(`exp_app_${toId(app)}`, "not_equals", ["NA"])
           .required()
@@ -863,17 +911,6 @@ export class JCC2UserQuestionnaireV4 {
           .grouping(true, question[1], question[0])
           .end();
       });
-
-      // eventCreationQuestions.forEach((question, index) => {
-      //   builder
-      //     .field("radio", question)
-      //     .id(`event_creation_${toId(app)}_${index + 1}`)
-      //     .options(effectivenessScale.options)
-      //     .layout("horizontal")
-      //     .defaultValue(effectivenessScale.default)
-      //     .required()
-      //     .end();
-      // });
     });
 
     builder
@@ -890,21 +927,23 @@ export class JCC2UserQuestionnaireV4 {
       .section(
         "MOP 1.3.4: Alerts aid users in maintaining situational awareness"
       )
-      .id("mop_1_3_4");
+      .id("mop_1_3_4")
+      .naable();
 
     // Alert Customization
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `Alerts can be customized to stay informed of changes for incidents they are following in ${app}.`
-        )
-        .id(`${toId(app)}_alerts_customized`)
+        .field("radio", app)
+        .id(`alerts_customized_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "alerts_customization")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "alerts_customization",
+          "Alerts can be customized to stay informed of changes for incidents they are following."
+        )
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -914,15 +953,16 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `Alerts keep users informed about current events within their job role in ${app}.`
-        )
-        .id(`${toId(app)}_alerts_current_events`)
+        .field("radio", app)
+        .id(`alerts_current_events_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "alerts_current_events")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "alerts_current_events",
+          "Alerts keep users informed about current events within their job role."
+        )
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -932,12 +972,12 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `Alerts received from ${app} are timely.`)
-        .id(`${toId(app)}_alerts_timely`)
+        .field("radio", app)
+        .id(`alerts_timely_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "alerts_timeliness")
-        .defaultValue(effectivenessScale.default)
+        .grouping(true, "alerts_timeliness", "Alerts received are timely.")
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -947,12 +987,16 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `Alerts received from ${app} are configurable.`)
-        .id(`${toId(app)}_alerts_configurable`)
+        .field("radio", app)
+        .id(`alerts_configurable_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "alerts_configurability")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "alerts_configurability",
+          "Alerts received are configurable."
+        )
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -960,11 +1004,11 @@ export class JCC2UserQuestionnaireV4 {
 
     // Alerts Overall Effectiveness
     builder
-      .field("radio", "Overall Alerts Effectiveness Rating")
+      .field("radio", "JCC2 Overall")
       .id("alerts_overall_effectiveness")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "alerts_overall")
+      .grouping(true, "alerts_overall", "Overall Alerts Effectiveness Rating")
       .required()
       .end();
 
