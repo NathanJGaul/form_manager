@@ -13,7 +13,7 @@ const FormRenderer = lazy(() => {
   bundleAnalyzer.trackLazyLoad('FormRenderer');
   return import('../components/FormRenderer').then(module => {
     bundleAnalyzer.trackLazyComplete('FormRenderer');
-    return { default: module.FormRenderer };
+    return module;
   });
 });
 
