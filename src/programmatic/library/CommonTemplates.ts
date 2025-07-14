@@ -2,6 +2,7 @@ import { TemplateBuilder } from "../builder/TemplateBuilder";
 import { ProgrammaticTemplate } from "../types";
 import { JCC2UserQuestionnaireV3 } from "../../../templates/jcc2_questionnaire_v3";
 import { JCC2UserQuestionnaireV4 } from "../../../templates/jcc2_questionnaire_v4";
+import { JCC2DataCollectionForm } from "../../../templates/jcc2_data_collection_form_v1";
 
 /**
  * Library of common template patterns and pre-built templates
@@ -61,23 +62,26 @@ export class CommonTemplates {
       .required()
       .options(["new", "existing", "premium"])
       .end()
-      .forEach(categories, (category: string, index: number, builder: TemplateBuilder) => {
-        builder
-          .section(
-            `${category.charAt(0).toUpperCase() + category.slice(1)} Feedback`
-          )
-          .field("radio", `Rate our ${category}`)
-          .id(`${category}_rating`)
-          .required()
-          .options(["1", "2", "3", "4", "5"])
-          .layout("horizontal")
-          .end()
-          .field("textarea", `What can we improve in ${category}?`)
-          .id(`${category}_improvement`)
-          .optional()
-          .minLength(10)
-          .end();
-      })
+      .forEach(
+        categories,
+        (category: string, index: number, builder: TemplateBuilder) => {
+          builder
+            .section(
+              `${category.charAt(0).toUpperCase() + category.slice(1)} Feedback`
+            )
+            .field("radio", `Rate our ${category}`)
+            .id(`${category}_rating`)
+            .required()
+            .options(["1", "2", "3", "4", "5"])
+            .layout("horizontal")
+            .end()
+            .field("textarea", `What can we improve in ${category}?`)
+            .id(`${category}_improvement`)
+            .optional()
+            .minLength(10)
+            .end();
+        }
+      )
       .section("Overall Feedback")
       .field("textarea", "Additional Comments")
       .id("additional_comments")
@@ -224,10 +228,24 @@ export class CommonTemplates {
   }
 
   /**
+   * Create JCC2 Data Collection and Interview Form template
+   */
+  static createJCC2DataCollectionForm(): ProgrammaticTemplate {
+    return JCC2DataCollectionForm.create();
+  }
+
+  /**
    * Get list of available templates
    */
   static listTemplates(): string[] {
-    return ["contact", "survey", "registration", "jcc2-questionnaire", "jcc2-questionnaire-v4"];
+    return [
+      "contact",
+      "survey",
+      "registration",
+      "jcc2-questionnaire",
+      "jcc2-questionnaire-v4",
+      "jcc2-data-collection",
+    ];
   }
 
   /**
@@ -250,6 +268,10 @@ export class CommonTemplates {
       case "jcc2-questionnaire-v4":
       case "jcc2-v4":
         return this.createJCC2QuestionnaireV4();
+      case "jcc2-data-collection":
+      case "jcc2-data-collection-form":
+      case "jcc2-dc":
+        return this.createJCC2DataCollectionForm();
       default:
         throw new Error(`Template '${name}' not found`);
     }

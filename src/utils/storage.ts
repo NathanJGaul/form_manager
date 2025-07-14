@@ -73,7 +73,10 @@ class StorageManager {
 
     // Load default templates from CommonTemplates
     // const defaultTemplateNames = ['contact', 'survey', 'registration', 'jcc2-questionnaire'];
-    const defaultTemplateNames = ["jcc2-questionnaire", "jcc2-questionnaire-v3"];
+    const defaultTemplateNames = [
+      "jcc2-questionnaire",
+      "jcc2-data-collection-form",
+    ];
     const existingTemplates = this.getTemplatesRaw();
     const converter = new TDLConverter();
 
@@ -460,7 +463,9 @@ class StorageManager {
     });
 
     // Format CSV content with proper escaping
-    const formatCsvValue = (value: FormFieldValue | null | undefined): string => {
+    const formatCsvValue = (
+      value: FormFieldValue | null | undefined
+    ): string => {
       if (value === null) return "null";
       if (value === undefined) return "";
       const stringValue = String(value);
@@ -496,12 +501,12 @@ class StorageManager {
   }
 
   // View mode methods
-  getViewMode(): 'continuous' | 'section' {
+  getViewMode(): "continuous" | "section" {
     const stored = localStorage.getItem(this.VIEW_MODE_KEY);
-    return stored === 'continuous' ? 'continuous' : 'section';
+    return stored === "continuous" ? "continuous" : "section";
   }
 
-  saveViewMode(viewMode: 'continuous' | 'section'): void {
+  saveViewMode(viewMode: "continuous" | "section"): void {
     localStorage.setItem(this.VIEW_MODE_KEY, viewMode);
   }
 }
