@@ -1,6 +1,7 @@
 import { TemplateBuilder } from "../builder/TemplateBuilder";
 import { ProgrammaticTemplate } from "../types";
 import { JCC2UserQuestionnaireV3 } from "../../../templates/jcc2_questionnaire_v3";
+import { JCC2UserQuestionnaireV4 } from "../../../templates/jcc2_questionnaire_v4";
 
 /**
  * Library of common template patterns and pre-built templates
@@ -216,10 +217,17 @@ export class CommonTemplates {
   }
 
   /**
+   * Create JCC2 User Questionnaire V4 template (comprehensive version)
+   */
+  static createJCC2QuestionnaireV4(): ProgrammaticTemplate {
+    return JCC2UserQuestionnaireV4.create();
+  }
+
+  /**
    * Get list of available templates
    */
   static listTemplates(): string[] {
-    return ["contact", "survey", "registration", "jcc2-questionnaire"];
+    return ["contact", "survey", "registration", "jcc2-questionnaire", "jcc2-questionnaire-v4"];
   }
 
   /**
@@ -235,7 +243,13 @@ export class CommonTemplates {
         return this.createRegistrationForm();
       case "jcc2-questionnaire":
       case "jcc2":
+        return this.createJCC2QuestionnaireV4(); // Changed to V4 as default
+      case "jcc2-questionnaire-v3":
+      case "jcc2-v3":
         return this.createJCC2QuestionnaireV3();
+      case "jcc2-questionnaire-v4":
+      case "jcc2-v4":
+        return this.createJCC2QuestionnaireV4();
       default:
         throw new Error(`Template '${name}' not found`);
     }

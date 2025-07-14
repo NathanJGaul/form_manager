@@ -26,7 +26,7 @@ interface FormBuilderProps {
   onCancel: () => void;
 }
 
-export const FormBuilder: React.FC<FormBuilderProps> = ({
+const FormBuilder: React.FC<FormBuilderProps> = ({
   template,
   onSave,
   onCancel,
@@ -892,3 +892,5 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     </div>
   );
 };
+
+export default FormBuilder;

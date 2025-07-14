@@ -8,9 +8,9 @@ import { storageManager } from '../utils/storage';
 import * as Icons from 'lucide-react';
 
 // Lazy load route components for better code splitting
-const DashboardRoute = lazy(() => import('../routes/DashboardRoute').then(module => ({ default: module.DashboardRoute })));
-const BuilderRoute = lazy(() => import('../routes/BuilderRoute').then(module => ({ default: module.BuilderRoute })));
-const FormRoute = lazy(() => import('../routes/FormRoute').then(module => ({ default: module.FormRoute })));
+const DashboardRoute = lazy(() => import('../routes/DashboardRoute'));
+const BuilderRoute = lazy(() => import('../routes/BuilderRoute'));
+const FormRoute = lazy(() => import('../routes/FormRoute'));
 
 // Loading component for route transitions
 const RouteLoadingSpinner: React.FC = () => (

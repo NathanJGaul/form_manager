@@ -35,7 +35,7 @@ interface FormRouteProps {
   onExit: () => void;
 }
 
-export const FormRoute: React.FC<FormRouteProps> = ({
+const FormRoute: React.FC<FormRouteProps> = ({
   template,
   instance,
   onSave,
@@ -56,3 +56,5 @@ export const FormRoute: React.FC<FormRouteProps> = ({
     </FormErrorBoundary>
   );
 };
+
+export default FormRoute;

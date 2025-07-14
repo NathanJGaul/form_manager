@@ -137,7 +137,7 @@ const renderFieldAsTable = (
   );
 };
 
-export const FormRenderer: React.FC<FormRendererProps> = ({
+const FormRenderer: React.FC<FormRendererProps> = ({
   template,
   instance,
   onSave,
@@ -1344,3 +1344,5 @@ export const FormRenderer: React.FC<FormRendererProps> = ({
     </div>
   );
 };
+
+export default FormRenderer;

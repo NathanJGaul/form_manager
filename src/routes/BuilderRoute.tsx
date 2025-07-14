@@ -33,7 +33,7 @@ interface BuilderRouteProps {
   onCancel: () => void;
 }
 
-export const BuilderRoute: React.FC<BuilderRouteProps> = ({
+const BuilderRoute: React.FC<BuilderRouteProps> = ({
   template,
   onSave,
   onCancel
@@ -50,3 +50,5 @@ export const BuilderRoute: React.FC<BuilderRouteProps> = ({
     </TemplateErrorBoundary>
   );
 };
+
+export default BuilderRoute;

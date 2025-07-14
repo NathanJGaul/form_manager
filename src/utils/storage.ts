@@ -73,7 +73,7 @@ class StorageManager {
 
     // Load default templates from CommonTemplates
     // const defaultTemplateNames = ['contact', 'survey', 'registration', 'jcc2-questionnaire'];
-    const defaultTemplateNames = ["jcc2-questionnaire"];
+    const defaultTemplateNames = ["jcc2-questionnaire", "jcc2-questionnaire-v3"];
     const existingTemplates = this.getTemplatesRaw();
     const converter = new TDLConverter();
 
