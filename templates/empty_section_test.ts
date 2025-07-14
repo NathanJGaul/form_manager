@@ -1,7 +1,7 @@
 import {
   TemplateBuilder,
   ProgrammaticTemplate,
-} from "../src/programmatic/index";
+} from "../src/programmatic/core";
 
 /**
  * Test template for empty section hiding functionality

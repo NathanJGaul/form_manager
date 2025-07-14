@@ -1,7 +1,7 @@
 import {
   TemplateBuilder,
   ProgrammaticTemplate,
-} from "../src/programmatic/index";
+} from "../src/programmatic/core";
 
 // Helper data for JCC2 applications
 const jcc2Applications = [
