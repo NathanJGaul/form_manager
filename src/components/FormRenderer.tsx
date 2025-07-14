@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { FormTemplate, FormInstance, FormField, FormSection } from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
@@ -172,6 +172,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   const [viewMode, setViewMode] = useState<'continuous' | 'section'>(() => storageManager.getViewMode());
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
+  // Refs for pagination scrolling
+  const paginationContainerRef = useRef<HTMLDivElement>(null);
+  const sectionButtonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
   // Memoize currentInstance to prevent recreation on every render
   const currentInstance = useMemo(() => 
     instance || storageManager.getOrCreateInstance(template.id, template.name), 
@@ -298,7 +302,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         });
       }
     }
-  }, [currentSectionIndex, viewMode]); // Removed filteredSections dependency
+  }, [currentSectionIndex, viewMode, filteredSections]);
 
   // Save visited sections to form instance when they change (debounced)
   useEffect(() => {
@@ -357,6 +361,48 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [viewMode, currentSectionIndex, filteredSections.length, visitedSections, getSectionAccessibility]);
+
+  // Auto-scroll active section into view in the pagination container only
+  useEffect(() => {
+    if (viewMode === 'section' && filteredSections.length > 0) {
+      const currentSection = filteredSections[currentSectionIndex];
+      if (currentSection) {
+        const buttonRef = sectionButtonRefs.current[currentSection.id];
+        const containerRef = paginationContainerRef.current;
+        
+        if (buttonRef && containerRef) {
+          // Use a small delay to ensure DOM is updated
+          setTimeout(() => {
+            // Get button position relative to its offset parent (the scrollable container)
+            const buttonOffsetLeft = buttonRef.offsetLeft;
+            const buttonWidth = buttonRef.offsetWidth;
+            const containerWidth = containerRef.clientWidth;
+            const containerScrollLeft = containerRef.scrollLeft;
+            
+            // Check if button is fully visible
+            const buttonLeftEdge = buttonOffsetLeft;
+            const buttonRightEdge = buttonOffsetLeft + buttonWidth;
+            const visibleLeft = containerScrollLeft;
+            const visibleRight = containerScrollLeft + containerWidth;
+            
+            const isFullyVisible = 
+              buttonLeftEdge >= visibleLeft && 
+              buttonRightEdge <= visibleRight;
+            
+            if (!isFullyVisible) {
+              // Center the button in the container
+              const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2);
+              
+              containerRef.scrollTo({
+                left: Math.max(0, targetScrollLeft),
+                behavior: 'smooth'
+              });
+            }
+          }, 50); // Small delay to ensure DOM measurements are accurate
+        }
+      }
+    }
+  }, [currentSectionIndex, filteredSections, viewMode]);
 
   // Calculate section completeness for visual indicators
   // Only considers required AND visible/enabled fields
@@ -1175,8 +1221,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
             
             {/* Progress Indicators */}
-            <div className="flex justify-center items-center space-x-2 mb-4">
-              {filteredSections.map((section, index) => {
+            <div ref={paginationContainerRef} className="mb-4 overflow-x-auto scrollbar-thin">
+              <div className="flex justify-center items-center space-x-2 min-w-max px-4">
+                {filteredSections.map((section, index) => {
                 const completeness = getSectionCompleteness(section);
                 const isVisited = visitedSections.has(section.id);
                 const isCurrent = index === currentSectionIndex;
@@ -1226,6 +1273,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                 return (
                   <div key={section.id} className="flex flex-col items-center space-y-1">
                     <button
+                      ref={(el) => { sectionButtonRefs.current[section.id] = el; }}
                       onClick={() => {
                         if (isAccessible) {
                           setCurrentSectionIndex(index);
@@ -1241,6 +1289,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   </div>
                 );
               })}
+              </div>
             </div>
             
             {/* Navigation Buttons */}
