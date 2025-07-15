@@ -1,27 +1,15 @@
 import { FormField, FormSection, FormInstance, FormFieldValue } from '../types/form';
+import { evaluateConditional } from './formLogicEnhanced';
+import { ConditionalLogic } from '../types/conditional';
 
+// For backward compatibility, keep the old evaluateCondition function signature
+// but use the enhanced logic internally
 export const evaluateCondition = (
-  condition: { dependsOn: string; values: string[]; operator: 'equals' | 'contains' | 'not_equals' },
+  condition: { dependsOn: string; values: string[]; operator: 'equals' | 'contains' | 'not_equals' } | ConditionalLogic,
   formData: Record<string, FormFieldValue>
 ): boolean => {
-  const dependentValue = formData[condition.dependsOn];
-  
-  if (dependentValue === undefined || dependentValue === null) {
-    return false;
-  }
-  
-  const valueString = String(dependentValue).toLowerCase();
-  
-  switch (condition.operator) {
-    case 'equals':
-      return condition.values.some(val => val.toLowerCase() === valueString);
-    case 'contains':
-      return condition.values.some(val => valueString.includes(val.toLowerCase()));
-    case 'not_equals':
-      return !condition.values.some(val => val.toLowerCase() === valueString);
-    default:
-      return false;
-  }
+  // Use the enhanced evaluation logic which handles both single and compound conditions
+  return evaluateConditional(condition as ConditionalLogic, formData);
 };
 
 export const getVisibleSections = (

@@ -1,3 +1,5 @@
+import { ConditionalLogic } from './conditional';
+
 export type FormFieldValue = string | number | boolean | string[];
 
 export interface FormField {
@@ -21,11 +23,7 @@ export interface FormField {
     maxLength?: number;
     pattern?: string;
   };
-  conditional?: {
-    dependsOn: string;
-    values: string[];
-    operator: 'equals' | 'contains' | 'not_equals';
-  };
+  conditional?: ConditionalLogic;
   defaultValue?: FormFieldValue;
 }
 
@@ -33,11 +31,7 @@ export interface FormSection {
   id: string;
   title: string;
   fields: FormField[];
-  conditional?: {
-    dependsOn: string;
-    values: string[];
-    operator: 'equals' | 'contains' | 'not_equals';
-  };
+  conditional?: ConditionalLogic;
   naable?: boolean;
 }
 

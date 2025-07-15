@@ -16,6 +16,11 @@ import {
   ValidationResult 
 } from '../types';
 import { FormFieldValue } from '../../types/form';
+import { 
+  ConditionalLogic, 
+  SingleCondition, 
+  CompoundCondition 
+} from '../../types/conditional';
 import { TemplateContextManager } from '../control-flow/TemplateContext';
 import { ControlFlowEngine } from '../control-flow/ControlFlowEngine';
 import { ConditionEvaluator } from '../control-flow/ConditionEvaluator';
@@ -436,6 +441,54 @@ export class SectionBuilder {
    */
   conditional(dependsOn: string, operator: 'equals' | 'contains' | 'not_equals', values: string[]): SectionBuilder {
     this.section.conditional = { dependsOn, operator, values };
+    return this;
+  }
+
+  /**
+   * Set multiple conditions with OR logic
+   * @example
+   * .conditionalOr([
+   *   { dependsOn: 'field1', operator: 'equals', values: ['yes'] },
+   *   { dependsOn: 'field2', operator: 'not_equals', values: ['no'] }
+   * ])
+   */
+  conditionalOr(conditions: SingleCondition[]): SectionBuilder {
+    this.section.conditional = {
+      logic: 'or',
+      conditions
+    } as CompoundCondition;
+    return this;
+  }
+
+  /**
+   * Set multiple conditions with AND logic
+   * @example
+   * .conditionalAnd([
+   *   { dependsOn: 'field1', operator: 'equals', values: ['yes'] },
+   *   { dependsOn: 'field2', operator: 'equals', values: ['active'] }
+   * ])
+   */
+  conditionalAnd(conditions: SingleCondition[]): SectionBuilder {
+    this.section.conditional = {
+      logic: 'and',
+      conditions
+    } as CompoundCondition;
+    return this;
+  }
+
+  /**
+   * Set a compound conditional with full control
+   * @example
+   * .conditionalCompound({
+   *   logic: 'or',
+   *   conditions: [
+   *     { dependsOn: 'exp_jcc2_cyber_ops', operator: 'not_equals', values: ['NA'] },
+   *     { dependsOn: 'exp_jcc2_readiness', operator: 'not_equals', values: ['NA'] }
+   *   ]
+   * })
+   */
+  conditionalCompound(condition: CompoundCondition): SectionBuilder {
+    this.section.conditional = condition;
     return this;
   }
 

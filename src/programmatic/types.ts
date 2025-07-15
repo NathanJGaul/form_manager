@@ -1,5 +1,6 @@
 // Core types for the Programmatic Template System
 import { FormFieldValue } from '../types/form';
+import { ConditionalLogic } from '../types/conditional';
 export interface TemplateMetadata {
   name: string;
   version: string;
@@ -136,11 +137,7 @@ export interface ProgrammaticField {
     label?: string;
   };
   validation?: ValidationRules;
-  conditional?: {
-    dependsOn: string;
-    values: string[];
-    operator: 'equals' | 'contains' | 'not_equals';
-  };
+  conditional?: ConditionalLogic;
   controlFlow?: ControlFlowConfig;
   // Additional programmatic properties
   variables?: Record<string, unknown>;
@@ -152,11 +149,7 @@ export interface ProgrammaticSection {
   id: string;
   title: string;
   fields: ProgrammaticField[];
-  conditional?: {
-    dependsOn: string;
-    values: string[];
-    operator: 'equals' | 'contains' | 'not_equals';
-  };
+  conditional?: ConditionalLogic;
   controlFlow?: ControlFlowConfig;
   // Additional programmatic properties
   variables?: Record<string, unknown>;
