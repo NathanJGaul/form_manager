@@ -82,6 +82,7 @@ const experienceLevels = {
 const frequencyOfUse = ["Never", "Daily", "Weekly", "Monthly"];
 const classificationOptions = ["NIPR", "SIPR", "JWICS"];
 const yesNo = ["Yes", "No"];
+const yesNaNo = ["Yes", "NA", "No"];
 
 const agreementScale = [
   "Strongly Disagree",
@@ -90,6 +91,15 @@ const agreementScale = [
   "Neutral",
   "Slightly Agree",
   "Agree",
+  "Strongly Agree",
+];
+
+const usabilityScale = [
+  "Strongly Disagree",
+  "Moderately Disagree",
+  "Slightly Disagree",
+  "Slightly Agree",
+  "Moderately Agree",
   "Strongly Agree",
 ];
 
@@ -1216,15 +1226,23 @@ export class JCC2UserQuestionnaireV4 {
     //   .id("mop_2_1_9")
     //   .naable();
     const planningApps = ["JCC2 Cyber Ops", "JCC2 Readiness"];
-    
+
     // MOP 2.1.9 displays when user has experience with EITHER
     // "JCC2 Cyber Ops" OR "JCC2 Readiness"
     builder
       .section("MOP 2.1.9: Joint forces to perform collaborative planning")
       .id(`mop_2_1_9`)
       .conditionalOr([
-        { dependsOn: `exp_app_${toId(planningApps[0])}`, operator: "not_equals", values: ["NA"] },
-        { dependsOn: `exp_app_${toId(planningApps[1])}`, operator: "not_equals", values: ["NA"] }
+        {
+          dependsOn: `exp_app_${toId(planningApps[0])}`,
+          operator: "not_equals",
+          values: ["NA"],
+        },
+        {
+          dependsOn: `exp_app_${toId(planningApps[1])}`,
+          operator: "not_equals",
+          values: ["NA"],
+        },
       ])
       .naable();
 
@@ -1291,9 +1309,18 @@ export class JCC2UserQuestionnaireV4 {
       .naable();
     const dispatchQuestions = [
       ["Dispatch enables the creation of orders.", "creation_of_orders"],
-      ["Dispatch enables changes to orders to be completed.", "changes_to_orders"],
-      ["Dispatch enables collaborative order generation.", "collaborative_order_generation"],
-      ["Dispatch enables compliance tracking of generated orders.", "compliance_tracking"],
+      [
+        "Dispatch enables changes to orders to be completed.",
+        "changes_to_orders",
+      ],
+      [
+        "Dispatch enables collaborative order generation.",
+        "collaborative_order_generation",
+      ],
+      [
+        "Dispatch enables compliance tracking of generated orders.",
+        "compliance_tracking",
+      ],
       ["Orders generated within Dispatch are accurate.", "orders_accurate"],
     ];
     dispatchQuestions.forEach((question) => {
@@ -1316,38 +1343,35 @@ export class JCC2UserQuestionnaireV4 {
       .end();
 
     // MOP 2.3.2: JCC2 displays force disposition
+    const dispositionApps = ["JCC2 Readiness", "JCC2 Cyber Ops"];
     builder
       .section("MOP 2.3.2: JCC2 displays force disposition")
       .id("mop_2_3_2")
+      .conditionalOr([
+        {
+          dependsOn: `exp_app_${toId(dispositionApps[0])}`,
+          operator: "not_equals",
+          values: ["NA"],
+        },
+        {
+          dependsOn: `exp_app_${toId(dispositionApps[1])}`,
+          operator: "not_equals",
+          values: ["NA"],
+        },
+      ])
       .naable();
-    const dispositionApps = ["JCC2 Readiness", "JCC2 Cyber Ops"];
-    dispositionApps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
-      builder
-        .field(
-          "radio",
-          `Rate the effectiveness of ${app} facilitating the desired task.`
-        )
-        .id(`force_disposition_${toId(app)}`)
-        .options(effectivenessScale.options)
-        .layout("horizontal")
-        .grouping(true, "force_disposition_display")
-        .defaultValue(effectivenessScale.default)
-        .required()
-        .conditional(appConditionId, "not_equals", ["NA"])
-        .end();
-    });
     builder
-      .field("radio", "JCC2 Overall")
-      .id("force_disposition_display_overall_effectiveness")
+      .field(
+        "radio",
+        "Rate the effectiveness of JCC2's force disposition capability."
+      )
+      .id(`force_disposition_display`)
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(
-        true,
-        "force_disposition_display_overall",
-        "Overall Force Disposition Display Effectiveness Rating"
-      )
+      .grouping(true, "force_disposition_display")
+      // .defaultValue(effectivenessScale.default)
       .required()
+      // .conditional(appConditionId, "not_equals", ["NA"])
       .end();
 
     // MOP 2.4.1: Enable the user to assess mission-progress (JCC2 Cyber-Ops) - COMPLETE IMPLEMENTATION
@@ -1366,8 +1390,8 @@ export class JCC2UserQuestionnaireV4 {
       .id("mission_progress_assessment")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .grouping(true, "mission_progress_assessment")
-      .defaultValue(effectivenessScale.default)
+      // .grouping(true, "mission_progress_assessment")
+      // .defaultValue(effectivenessScale.default)
       .required()
       .end();
     builder
@@ -1402,7 +1426,7 @@ export class JCC2UserQuestionnaireV4 {
     // ADDED: Missing overall effectiveness rating
     builder
       .field("radio", "JCC2 Overall")
-      .id("mission_progress_assessment_overall_effectiveness")
+      .id("mission_progress_assessment_overall")
       .options(effectivenessScale.options)
       .layout("horizontal")
       .grouping(
@@ -1420,15 +1444,17 @@ export class JCC2UserQuestionnaireV4 {
       .id("initial_training")
       .options(yesNo)
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
+      .required()
       .end();
     builder
       .field(
         "textarea",
-        "No, please concisely describe any problems or issues and the operational impact:"
+        "If no, please concisely describe any problems or issues and the operational impact:"
       )
-      .id("initial_training_no")
+      .id("no_initial_training_operational_impact")
       .conditional("initial_training", "equals", ["No"])
+      .required()
       .end();
     builder
       .field("checkbox", "What format of training have you received?")
@@ -1440,6 +1466,7 @@ export class JCC2UserQuestionnaireV4 {
         "On-The-Job Training",
         "None",
       ])
+      .required()
       .end();
     builder
       .field(
@@ -1449,7 +1476,8 @@ export class JCC2UserQuestionnaireV4 {
       .id("supplemental_training")
       .options(yesNo)
       .layout("horizontal")
-      .defaultValue("No")
+      .required()
+      // .defaultValue("No")
       .end();
     builder
       .field(
@@ -1458,49 +1486,71 @@ export class JCC2UserQuestionnaireV4 {
       )
       .id("supplemental_training_no")
       .conditional("supplemental_training", "equals", ["No"])
+      .required()
       .end();
     builder
       .field("radio", "Do you want (more) training?")
       .id("request_training")
       .options(yesNo)
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
+      .required()
       .end();
-    builder
-      .field(
-        "textarea",
-        "Yes, please concisely describe any problems or issues and the operational impact:"
-      )
-      .id("request_training_yes")
-      .conditional("request_training", "equals", ["Yes"])
-      .end();
+    // builder
+    //   .field(
+    //     "textarea",
+    //     "Yes, please concisely describe any problems or issues and the operational impact:"
+    //   )
+    //   .id("request_training_yes")
+    //   .conditional("request_training", "equals", ["Yes"])
+    //   .end();
     const trainingAssessmentQuestions = [
-      "All of the information covered was relevant to how I interact with the system.",
-      "The training prepared me to easily use the system to accomplish my mission.",
-      "Training accurately portrayed operations in the field.",
-      "The training prepared me to properly interact with the system.",
-      "Training prepared me to solve common problems.",
-      "Training adequately covered all important ways I interact with the system.",
+      [
+        "All of the information covered was relevant to how I interact with the system.",
+        "relavancy",
+      ],
+      [
+        "The training prepared me to easily use the system to accomplish my mission.",
+        "preparation_mission",
+      ],
+      ["Training accurately portrayed operations in the field.", "accuracy"],
+      [
+        "The training prepared me to properly interact with the system.",
+        "system_interaction",
+      ],
+      [
+        "Training prepared me to solve common problems.",
+        "preparation_problems",
+      ],
+      [
+        "Training adequately covered all important ways I interact with the system.",
+        "system_interaction_important",
+      ],
     ];
-    trainingAssessmentQuestions.forEach((question, index) => {
+    trainingAssessmentQuestions.forEach((question) => {
       builder
-        .field("radio", question)
-        .id(`training_assessment_${index + 1}`)
+        .field("radio", question[0])
+        .id(`training_assessment_${question[1]}`)
         .options(agreementScale)
         .layout("horizontal")
-        .defaultValue("Neutral")
+        // .defaultValue("Neutral")
+        .grouping(
+          true,
+          "training_assessment_questions",
+          "Operational Assessment of Training Received"
+        )
         .required()
         .end();
     });
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `Summative Training Rating for ${app}`)
+        .field("radio", app)
         .id(`training_rating_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "training_rating")
-        .defaultValue(effectivenessScale.default)
+        .grouping(true, "training_rating", "Summative Training Rating")
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -1525,7 +1575,8 @@ export class JCC2UserQuestionnaireV4 {
       .id("documentation_effectiveness")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .defaultValue(effectivenessScale.default)
+      // .defaultValue(effectivenessScale.default)
+      .required()
       .end();
     builder
       .field("checkbox", "What format was JCC2 documentation delivered in?")
@@ -1539,23 +1590,28 @@ export class JCC2UserQuestionnaireV4 {
         "Internal training document",
         "None",
       ])
+      .required()
       .end();
     builder
       .field("radio", "Does the provided documentation meet your needs?")
       .id("documentation_completeness")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .defaultValue(effectivenessScale.default)
+      // .defaultValue(effectivenessScale.default)
       .end();
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `Summative Documentation Rating for ${app}`)
+        .field("radio", app)
         .id(`documentation_rating_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "documentation_rating")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "app_documentation_rating",
+          "Rate the effectiveness of JCC2 Documentation"
+        )
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -1568,12 +1624,12 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `Help desk tickets can be submitted for ${app}.`)
+        .field("radio", app)
         .id(`submit_ticket_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "submit_ticket")
-        .defaultValue(effectivenessScale.default)
+        .grouping(true, "submit_ticket", "Help desk tickets can be submitted.")
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -1581,15 +1637,16 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `A confirmation of a ticket being submitted is received when contacting the help desk for ${app}.`
-        )
+        .field("radio", app)
         .id(`confirm_ticket_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "confirm_ticket")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "confirm_ticket",
+          "A confirmation of a ticket being submitted is received when contacting the help desk"
+        )
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -1597,15 +1654,16 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field(
-          "radio",
-          `The help desk is able to successfully fix my issues when contacted for ${app}.`
-        )
+        .field("radio", app)
         .id(`fix_issues_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "fix_issues")
-        .defaultValue(effectivenessScale.default)
+        .grouping(
+          true,
+          "fix_issues",
+          "The help desk is able to successfully fix my issues when contacted."
+        )
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -1613,12 +1671,12 @@ export class JCC2UserQuestionnaireV4 {
     allJcc2Apps.forEach((app) => {
       const appConditionId = `exp_app_${toId(app)}`;
       builder
-        .field("radio", `The help desk is responsive for ${app}.`)
+        .field("radio", app)
         .id(`responsive_${toId(app)}`)
         .options(effectivenessScale.options)
         .layout("horizontal")
-        .grouping(true, "responsive")
-        .defaultValue(effectivenessScale.default)
+        .grouping(true, "responsive", "The help desk is responsive.")
+        // .defaultValue(effectivenessScale.default)
         .required()
         .conditional(appConditionId, "not_equals", ["NA"])
         .end();
@@ -1626,12 +1684,12 @@ export class JCC2UserQuestionnaireV4 {
     builder
       .field(
         "radio",
-        "Summative Support Rating. Rate the effectiveness of JCC2 support."
+        "Summative Support Rating. Rate the overall effectiveness of JCC2 support."
       )
       .id("summative_support_rating")
       .options(effectivenessScale.options)
       .layout("horizontal")
-      .defaultValue(effectivenessScale.default)
+      // .defaultValue(effectivenessScale.default)
       .end();
     builder
       .field(
@@ -1644,55 +1702,56 @@ export class JCC2UserQuestionnaireV4 {
     // User evaluation of overall system usability (SUS Questionnaire)
     builder
       .section("User evaluation of overall system usability")
-      .id("user_evaluation_overall_system_usability");
+      .id("overall_system_usability");
     const usabilityItems = [
       {
-        id: "usability_like_to_use",
+        id: "like_to_use",
         label: "I think that I would like to use JCC2 frequently",
       },
       {
-        id: "usability_unnecessarily_complex",
+        id: "unnecessarily_complex",
         label: "I found JCC2 unnecessarily complex.",
       },
-      { id: "usability_easy_to_use", label: "I thought JCC2 was easy to use." },
+      { id: "easy_to_use", label: "I thought JCC2 was easy to use." },
       {
-        id: "usability_need_expert_support",
+        id: "need_expert_support",
         label:
           "I think that I would need the support of an expert to be able to use JCC2.",
       },
       {
-        id: "usability_functions_well_integrated",
+        id: "functions_well_integrated",
         label: "I found the various functions in JCC2 to be well integrated",
       },
       {
-        id: "usability_quick_to_learn",
+        id: "quick_to_learn",
         label: "I would imagine most people could quickly learn to use JCC2",
       },
       {
-        id: "usability_cumbersome_to_use",
+        id: "cumbersome_to_use",
         label: "I found JCC2 very cumbersome to use",
       },
       {
-        id: "usability_confident_using",
+        id: "confident_using",
         label: "I felt very confident using JCC2",
       },
       {
-        id: "usability_needed_to_learn_alot",
+        id: "needed_to_learn_alot",
         label:
           "I needed to learn a lot of things before I could effectively use JCC2",
       },
       {
-        id: "usability_liked_interface",
+        id: "liked_interface",
         label: "I liked the user interface of JCC2",
       },
     ];
     usabilityItems.forEach((item) => {
       builder
-        .field("range", item.label)
+        .field("radio", item.label)
         .id(item.id)
-        .min(1)
-        .max(6)
-        .defaultValue(4)
+        .options(usabilityScale)
+        .layout("horizontal")
+        .grouping(true, "overall_system_usability", "Overall System Usability")
+        // .defaultValue(4)
         .required()
         .end();
     });
@@ -1700,49 +1759,51 @@ export class JCC2UserQuestionnaireV4 {
     // User Evaluation of Overall System Suitability
     builder
       .section("User Evaluation of Overall System Suitability")
-      .id("user_evaluation_overall_system_suitability")
+      .id("overall_system_suitability_eval")
       .field(
         "radio",
         "Do you experience issues with data exchange or functional compatibility between JCC2 applications?"
       )
-      .id("eval_internal_interop")
-      .options(yesNo)
+      .id("internal_interop")
+      .options(yesNaNo)
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
       .end()
       .field(
         "textarea",
         "If yes, please describe the problems, the specific applications involved, and the operational impact:"
       )
-      .id("eval_internal_interop_details")
+      .id("internal_interop_details")
       .required()
-      .conditional("eval_internal_interop", "equals", ["Yes"])
+      .conditional("internal_interop", "equals", ["Yes"])
       .end()
       .field(
         "radio",
         "Do you experience issues integrating data from external sources into JCC2?"
       )
-      .id("eval_external_integ")
-      .options(yesNo)
+      .id("external_integration")
+      .required()
+      .options(yesNaNo)
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
       .end()
       .field(
         "textarea",
         "If yes, please describe the problems, the specific data sources involved, and the operational impact:"
       )
-      .id("eval_external_integ_details")
+      .id("external_integ_details")
       .required()
-      .conditional("eval_external_integ", "equals", ["Yes"])
+      .conditional("external_integration", "equals", ["Yes"])
       .end()
       .field(
         "radio",
         "Do you experience issues with JCC2's compatibility with legacy software packages used in your operations?"
       )
-      .id("eval_legacy_compat")
-      .options(yesNo)
+      .id("legacy_compatibility")
+      .options(yesNaNo)
+      .required()
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
       .end()
       .field(
         "textarea",
@@ -1750,115 +1811,121 @@ export class JCC2UserQuestionnaireV4 {
       )
       .id("eval_legacy_compat_details")
       .required()
-      .conditional("eval_legacy_compat", "equals", ["Yes"])
+      .conditional("legacy_compatibility", "equals", ["Yes"])
       .end()
       .field(
         "radio",
         "Do you experience issues sharing information up the chain of command or with other teams within the JCC2?"
       )
-      .id("eval_info_sharing")
-      .options(yesNo)
+      .id("info_sharing")
+      .options(yesNaNo)
       .layout("horizontal")
-      .defaultValue("No")
+      .required()
+      // .defaultValue("No")
       .end()
       .field(
         "textarea",
         "If yes, please concisely describe any problems or issues and the operational impact:"
       )
-      .id("eval_info_sharing_details")
+      .id("info_sharing_details")
       .required()
-      .conditional("eval_info_sharing", "equals", ["Yes"])
+      .conditional("info_sharing", "equals", ["Yes"])
       .end()
       .field(
         "radio",
         "Do you experience performance slowdowns within JCC2 that negatively impact your ability to complete tasks efficiently?"
       )
-      .id("eval_performance")
-      .options(yesNo)
+      .id("performance")
+      .options(yesNaNo)
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
+      .required()
       .end()
       .field(
         "textarea",
         "If yes, please describe the specific situations where slowdowns occur, the perceived cause (if known), and the operational impact:"
       )
-      .id("eval_performance_details")
+      .id("performance_details")
       .required()
-      .conditional("eval_performance", "equals", ["Yes"])
+      .conditional("performance", "equals", ["Yes"])
       .end()
       .field(
         "radio",
         "Do you experience issues accessing specific JCC2 databases or applications due to permission restrictions?"
       )
-      .id("eval_access_control")
-      .options(yesNo)
+      .id("access_control")
+      .options(yesNaNo)
+      .required()
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
       .end()
       .field(
         "textarea",
         "If yes, please describe the specific resources you are unable to access and the operational impact:"
       )
-      .id("eval_access_control_details")
+      .id("access_control_details")
       .required()
-      .conditional("eval_access_control", "equals", ["Yes"])
+      .conditional("access_control", "equals", ["Yes"])
       .end()
       .field(
         "radio",
         "Are the current role-based access controls within JCC2 appropriate for your operational needs?"
       )
-      .id("eval_rbac")
-      .options(yesNo)
+      .id("rbac")
+      .options(yesNaNo)
       .layout("horizontal")
-      .defaultValue("Yes")
+      // .defaultValue("Yes")
+      .required()
       .end()
       .field("textarea", "If no, please explain why and suggest improvements:")
-      .id("eval_rbac_details")
+      .id("rbac_details")
       .required()
-      .conditional("eval_rbac", "equals", ["No"])
+      .conditional("rbac", "equals", ["No"])
       .end()
       .field(
         "radio",
         "Is it clear who to contact to request changes to access permissions?"
       )
-      .id("eval_access_requests")
-      .options(yesNo)
+      .id("access_requests")
+      .options(yesNaNo)
       .layout("horizontal")
-      .defaultValue("Yes")
+      // .defaultValue("Yes")
+      .required()
       .end()
       .field(
         "textarea",
         "If no, please explain the difficulties you have encountered:"
       )
-      .id("eval_access_requests_details")
+      .id("access_requests_details")
       .required()
-      .conditional("eval_access_requests", "equals", ["No"])
+      .conditional("access_requests", "equals", ["No"])
       .end()
       .field(
         "radio",
         "Have you previously submitted change or feature requests to the JCC2 development teams or Program Office?"
       )
-      .id("eval_feature_requests")
+      .id("feature_requests")
       .options(yesNo)
       .layout("horizontal")
-      .defaultValue("No")
+      .required()
       .end()
       .field(
         "radio",
         "Are there any changes or improvements you would like to see implemented in JCC2?"
       )
-      .id("eval_improvements")
+      .id("improvements")
       .options(yesNo)
       .layout("horizontal")
-      .defaultValue("No")
+      // .defaultValue("No")
+      .required()
       .end()
       .field(
         "textarea",
-        'If you answered "Yes" to question b, please describe the desired changes or improvements in detail:'
+        "If yes, please describe the desired changes or improvements in detail:"
       )
-      .id("eval_improvements_details")
+      .id("improvements_details")
       .required()
-      .conditional("eval_improvements", "equals", ["Yes"])
+      .conditional("improvements", "equals", ["Yes"])
       .end()
       .field(
         "textarea",
