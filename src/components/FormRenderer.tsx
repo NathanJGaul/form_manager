@@ -13,6 +13,9 @@ import Tooltip from "./Tooltip";
 import { DevDropdownMenu } from "./DevDropdownMenu";
 import { MockDataConfigModal } from "./MockDataConfigModal";
 import { MockDataGenerator } from "../utils/mockDataGenerator";
+import { FormDevTool } from "./dev-tools/FormDevTool";
+import { CSVIntegrityResults } from "./dev-tools/CSVIntegrityResults";
+import { CSVIntegrityResult } from "../utils/csvIntegrityChecker";
 
 // Type definitions for form values
 type FormValue = string | number | boolean | string[] | File | null | undefined;
@@ -180,6 +183,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   const [viewMode, setViewMode] = useState<'continuous' | 'section'>(() => storageManager.getViewMode());
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [showMockDataModal, setShowMockDataModal] = useState(false);
+  const [showFormDevTool, setShowFormDevTool] = useState(false);
+  const [csvIntegrityResults, setCsvIntegrityResults] = useState<CSVIntegrityResult | null>(null);
 
   // Refs for pagination scrolling
   const paginationContainerRef = useRef<HTMLDivElement>(null);
@@ -575,6 +580,35 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     };
     
     storageManager.saveInstance(updatedInstance);
+  };
+
+  const handleShowFormDevTool = () => {
+    setShowFormDevTool(true);
+  };
+
+  const handleFormDevToolDataUpdate = (data: Record<string, FormValue>) => {
+    setFormData(data);
+    setHasUnsavedChanges(true);
+    
+    // Mark all visible sections as visited
+    const visibleSectionIds = visibleSections.map(s => s.id);
+    setVisitedSections(new Set(visibleSectionIds));
+    
+    // Save the instance
+    const updatedInstance: FormInstance = {
+      ...currentInstance,
+      data: data,
+      visitedSections: visibleSectionIds,
+      lastSaved: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    storageManager.saveInstance(updatedInstance);
+  };
+
+  const handleShowIntegrityResults = (results: CSVIntegrityResult) => {
+    setCsvIntegrityResults(results);
+    setShowFormDevTool(false);
   };
 
   const handleSubmit = () => {
@@ -1207,7 +1241,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
             <div className="text-sm text-gray-600">Progress: {progress}%</div>
             {process.env.NODE_ENV === 'development' && (
-              <DevDropdownMenu onFillMockData={() => setShowMockDataModal(true)} />
+              <DevDropdownMenu 
+                onFillMockData={() => setShowMockDataModal(true)} 
+                onFormDevTool={handleShowFormDevTool}
+              />
             )}
             <button
               onClick={() => setViewMode(viewMode === 'continuous' ? 'section' : 'continuous')}
@@ -1586,6 +1623,39 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         onClose={() => setShowMockDataModal(false)}
         onConfirm={handleFillMockData}
       />
+
+      {/* Form Dev Tool Modal */}
+      {showFormDevTool && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[60vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Form Dev Tool</h2>
+              <button
+                onClick={() => setShowFormDevTool(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <Icons.X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <FormDevTool
+                template={template}
+                formData={formData}
+                onDataUpdate={handleFormDevToolDataUpdate}
+                onShowResults={handleShowIntegrityResults}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Integrity Results Modal */}
+      {csvIntegrityResults && (
+        <CSVIntegrityResults
+          results={csvIntegrityResults}
+          onClose={() => setCsvIntegrityResults(null)}
+        />
+      )}
     </div>
   );
 };

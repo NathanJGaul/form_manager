@@ -390,7 +390,16 @@ class StorageManager {
   }
 
   // Export methods
-  exportToCSV(templateId: string): string {
+  /**
+   * Export form submissions to CSV format
+   * @param templateId - The template ID to export submissions for
+   * @param preserveOriginalData - If true, preserves original data without applying conditional field nullification.
+   *                              This is used by dev tools to maintain data integrity for validation purposes.
+   *                              When false (default), applies updateConditionalFieldsAsNull to ensure hidden 
+   *                              conditional fields are exported as null.
+   * @returns CSV string with headers, schema row, and data rows
+   */
+  exportToCSV(templateId: string, preserveOriginalData: boolean = false): string {
     const submissions = this.getSubmissions().filter(
       (s) => s.templateId === templateId
     );
@@ -402,10 +411,11 @@ class StorageManager {
     // This prevents duplicate records from appearing in exports
     const allData = submissions.map((s) => {
       // Apply conditional field nullification to ensure consistent null handling
-      const nullifiedData = updateConditionalFieldsAsNull(
-        template.sections,
-        s.data
-      );
+      // unless preserveOriginalData is true (used by dev tools for data integrity checks)
+      const dataToExport = preserveOriginalData 
+        ? s.data 
+        : updateConditionalFieldsAsNull(template.sections, s.data);
+      
       return {
         id: s.id,
         status: "Submitted",
@@ -413,7 +423,7 @@ class StorageManager {
         createdAt: s.submittedAt.toISOString(),
         updatedAt: s.submittedAt.toISOString(),
         lastSaved: s.submittedAt.toISOString(),
-        ...nullifiedData,
+        ...dataToExport,
       };
     });
 

@@ -3,9 +3,10 @@ import * as Icons from 'lucide-react';
 
 interface DevDropdownMenuProps {
   onFillMockData: () => void;
+  onFormDevTool: () => void;
 }
 
-export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({ onFillMockData }) => {
+export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({ onFillMockData, onFormDevTool }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -54,20 +55,19 @@ export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({ onFillMockData
             </button>
             <div className="border-t border-gray-200 my-1" />
             <button
+              onClick={() => handleItemClick(onFormDevTool)}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+            >
+              <Icons.TestTube size={16} />
+              Form Dev Tool
+            </button>
+            <button
               onClick={() => handleItemClick(() => console.log('Clear form data'))}
               className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 opacity-50 cursor-not-allowed"
               disabled
             >
               <Icons.Trash2 size={16} />
               Clear Form Data (Coming Soon)
-            </button>
-            <button
-              onClick={() => handleItemClick(() => console.log('Export test data'))}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 opacity-50 cursor-not-allowed"
-              disabled
-            >
-              <Icons.Download size={16} />
-              Export Test Data (Coming Soon)
             </button>
           </div>
         </div>
