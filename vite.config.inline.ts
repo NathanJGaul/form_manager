@@ -20,8 +20,8 @@ export default defineConfig({
     sourcemap: true,
     // Use terser for better minification control
     minify: "terser",
-    // Use a more compatible target
-    target: "es2015",
+    // Use a more compatible target that supports BigInt
+    target: "es2020",
     assetsInlineLimit: 100000000, // 100MB - inline everything
     cssCodeSplit: false,
     terserOptions: {

@@ -10,6 +10,9 @@ import {
 } from "../utils/formLogic";
 import * as Icons from "lucide-react";
 import Tooltip from "./Tooltip";
+import { DevDropdownMenu } from "./DevDropdownMenu";
+import { MockDataConfigModal } from "./MockDataConfigModal";
+import { MockDataGenerator } from "../utils/mockDataGenerator";
 
 // Type definitions for form values
 type FormValue = string | number | boolean | string[] | File | null | undefined;
@@ -176,6 +179,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [viewMode, setViewMode] = useState<'continuous' | 'section'>(() => storageManager.getViewMode());
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [showMockDataModal, setShowMockDataModal] = useState(false);
 
   // Refs for pagination scrolling
   const paginationContainerRef = useRef<HTMLDivElement>(null);
@@ -548,6 +552,29 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
     
     setHasUnsavedChanges(true);
+  };
+
+  const handleFillMockData = (config: import('../utils/mockDataGenerator').MockDataConfig) => {
+    const generator = new MockDataGenerator(config);
+    const mockData = generator.generateMockFormData(template, formData);
+    
+    setFormData(mockData);
+    setHasUnsavedChanges(true);
+    
+    // Mark all visible sections as visited
+    const visibleSectionIds = visibleSections.map(s => s.id);
+    setVisitedSections(new Set(visibleSectionIds));
+    
+    // Save the instance
+    const updatedInstance: FormInstance = {
+      ...currentInstance,
+      data: mockData,
+      visitedSections: visibleSectionIds,
+      lastSaved: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    storageManager.saveInstance(updatedInstance);
   };
 
   const handleSubmit = () => {
@@ -1179,6 +1206,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               )}
             </div>
             <div className="text-sm text-gray-600">Progress: {progress}%</div>
+            {process.env.NODE_ENV === 'development' && (
+              <DevDropdownMenu onFillMockData={() => setShowMockDataModal(true)} />
+            )}
             <button
               onClick={() => setViewMode(viewMode === 'continuous' ? 'section' : 'continuous')}
               className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
@@ -1549,6 +1579,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           </button>
         </div>
       </div>
+      
+      {/* Mock Data Configuration Modal */}
+      <MockDataConfigModal
+        isOpen={showMockDataModal}
+        onClose={() => setShowMockDataModal(false)}
+        onConfirm={handleFillMockData}
+      />
     </div>
   );
 };
