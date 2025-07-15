@@ -197,6 +197,10 @@ class StorageManager {
   deleteInstance(instanceId: string): void {
     const instances = this.getInstances().filter((i) => i.id !== instanceId);
     localStorage.setItem(this.INSTANCES_KEY, JSON.stringify(instances));
+    
+    // Also delete the associated submission record if it exists
+    // Since instances and submissions now share the same ID, we can delete by the same ID
+    this.deleteSubmission(instanceId);
   }
 
   // Find existing draft instance for a template (incomplete instance)
@@ -246,6 +250,11 @@ class StorageManager {
   saveSubmission(submission: FormSubmission): void {
     const submissions = this.getSubmissions();
     submissions.push(submission);
+    localStorage.setItem(this.SUBMISSIONS_KEY, JSON.stringify(submissions));
+  }
+
+  deleteSubmission(submissionId: string): void {
+    const submissions = this.getSubmissions().filter((s) => s.id !== submissionId);
     localStorage.setItem(this.SUBMISSIONS_KEY, JSON.stringify(submissions));
   }
 
@@ -382,9 +391,6 @@ class StorageManager {
 
   // Export methods
   exportToCSV(templateId: string): string {
-    const instances = this.getInstances().filter(
-      (i) => i.templateId === templateId
-    );
     const submissions = this.getSubmissions().filter(
       (s) => s.templateId === templateId
     );
@@ -392,40 +398,24 @@ class StorageManager {
 
     if (!template) return "";
 
-    const allData = [
-      ...instances.map((i) => {
-        // Apply conditional field nullification to ensure consistent null handling
-        const nullifiedData = updateConditionalFieldsAsNull(
-          template.sections,
-          i.data
-        );
-        return {
-          id: i.id,
-          status: i.completed ? "Completed" : "In Progress",
-          progress: i.progress,
-          createdAt: i.createdAt.toISOString(),
-          updatedAt: i.updatedAt.toISOString(),
-          lastSaved: i.lastSaved.toISOString(),
-          ...nullifiedData,
-        };
-      }),
-      ...submissions.map((s) => {
-        // Apply conditional field nullification to ensure consistent null handling
-        const nullifiedData = updateConditionalFieldsAsNull(
-          template.sections,
-          s.data
-        );
-        return {
-          id: s.id,
-          status: "Submitted",
-          progress: 100,
-          createdAt: s.submittedAt.toISOString(),
-          updatedAt: s.submittedAt.toISOString(),
-          lastSaved: s.submittedAt.toISOString(),
-          ...nullifiedData,
-        };
-      }),
-    ];
+    // Only export submitted forms, not draft instances or completed instances
+    // This prevents duplicate records from appearing in exports
+    const allData = submissions.map((s) => {
+      // Apply conditional field nullification to ensure consistent null handling
+      const nullifiedData = updateConditionalFieldsAsNull(
+        template.sections,
+        s.data
+      );
+      return {
+        id: s.id,
+        status: "Submitted",
+        progress: 100,
+        createdAt: s.submittedAt.toISOString(),
+        updatedAt: s.submittedAt.toISOString(),
+        lastSaved: s.submittedAt.toISOString(),
+        ...nullifiedData,
+      };
+    });
 
     if (allData.length === 0) return "";
 

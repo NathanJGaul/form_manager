@@ -617,9 +617,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     // Save the completed instance (this overwrites the draft)
     storageManager.saveInstance(submissionInstance);
 
-    // Create submission record
+    // Create submission record using the original form instance ID
     const submission = {
-      id: crypto.randomUUID(),
+      id: submissionInstance.id,
       formInstanceId: submissionInstance.id,
       templateId: template.id,
       templateName: template.name,
