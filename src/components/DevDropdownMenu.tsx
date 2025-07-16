@@ -1,28 +1,34 @@
-import React, { useState, useRef, useEffect } from 'react';
-import * as Icons from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import * as Icons from "lucide-react";
 
 interface DevDropdownMenuProps {
   onFillMockData: () => void;
   onFormDevTool: () => void;
 }
 
-export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({ onFillMockData, onFormDevTool }) => {
+export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({
+  onFillMockData,
+  onFormDevTool,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
@@ -40,7 +46,10 @@ export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({ onFillMockData
       >
         <Icons.Code2 size={16} />
         <span className="text-sm">Dev Tools</span>
-        <Icons.ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <Icons.ChevronDown
+          size={14}
+          className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && (
@@ -59,10 +68,12 @@ export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({ onFillMockData
               className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
               <Icons.TestTube size={16} />
-              Form Dev Tool
+              Data Validation Checker
             </button>
             <button
-              onClick={() => handleItemClick(() => console.log('Clear form data'))}
+              onClick={() =>
+                handleItemClick(() => console.log("Clear form data"))
+              }
               className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 opacity-50 cursor-not-allowed"
               disabled
             >

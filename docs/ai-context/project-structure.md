@@ -28,6 +28,7 @@ This document provides the complete technology stack and file tree structure for
 - **Playwright 1.53.2+** - End-to-end testing with browser automation
 - **PostCSS 8.4.35+** - CSS processing and Tailwind compilation
 - **Vite** - Build automation and development server
+- **@faker-js/faker 8.4.1+** - Realistic mock data generation for testing
 
 ### Testing & MCP Integration
 - **@playwright/test** - Comprehensive E2E testing suite
@@ -67,11 +68,17 @@ form_manager/
 │   ├── components/                     # React components
 │   │   ├── AppRouter.tsx               # Application routing component
 │   │   ├── Dashboard.tsx               # Main dashboard component
+│   │   ├── DevDropdownMenu.tsx         # Developer tools dropdown menu
 │   │   ├── ErrorBoundary.tsx           # Error boundary for error handling
 │   │   ├── FormBuilder.tsx             # Form template builder interface
 │   │   ├── FormRenderer.tsx            # Dynamic form rendering engine
-│   │   └── ProgrammaticImportModal.tsx # Template import modal
+│   │   ├── MockDataConfigModal.tsx     # Mock data configuration modal
+│   │   ├── ProgrammaticImportModal.tsx # Template import modal
+│   │   └── dev-tools/                  # Developer tools components
+│   │       ├── CSVIntegrityResults.tsx # CSV integrity check results display
+│   │       └── FormDevTool.tsx         # Form development tools interface
 │   ├── types/                          # TypeScript type definitions
+│   │   ├── conditional.ts              # Conditional logic type definitions
 │   │   ├── form.ts                     # Core form interfaces and types
 │   │   └── pdfExport.ts                # PDF export type definitions
 │   ├── routes/                         # Route components
@@ -80,14 +87,18 @@ form_manager/
 │   │   └── FormRoute.tsx               # Form route component
 │   ├── utils/                          # Utility functions
 │   │   ├── bundleAnalyzer.ts           # Bundle analysis utilities
+│   │   ├── csvIntegrityChecker.ts      # CSV export integrity validation
 │   │   ├── formLogic.ts                # Form validation and logic
+│   │   ├── formLogicEnhanced.ts        # Enhanced form logic with compound conditions
 │   │   ├── lazyExamples.ts             # Lazy loading examples
+│   │   ├── mockDataGenerator.ts        # Mock data generation for testing
 │   │   ├── pdfExport.ts                # PDF generation utilities
 │   │   └── storage.ts                  # LocalStorage management
 │   └── programmatic/                   # Programmatic template system
 │       ├── index.ts                    # Main programmatic API exports
 │       ├── types.ts                    # Programmatic system types
 │       ├── builder/                    # Template building utilities
+│       │   ├── CompoundConditionalBuilder.ts # Builder for compound conditional logic
 │       │   └── TemplateBuilder.ts      # Fluent API for template creation
 │       ├── control-flow/               # Conditional logic engine
 │       │   ├── ConditionEvaluator.ts   # Condition evaluation logic
@@ -109,9 +120,11 @@ form_manager/
 │   ├── conditionals_test.ts            # Conditional logic test template
 │   ├── empty_section_test.ts           # Empty section handling test
 │   ├── horizontal_grouping_demo.ts     # Horizontal field grouping demo
+│   ├── jcc2_data_collection_form_v1.ts # JCC2 data collection form v1
 │   ├── jcc2_questionnaire.ts           # JCC2 questionnaire v1
 │   ├── jcc2_questionnaire_v2.ts        # JCC2 questionnaire v2
-│   ├── jcc2_questionnaire_v3.ts        # JCC2 questionnaire v3 (current)
+│   ├── jcc2_questionnaire_v3.ts        # JCC2 questionnaire v3
+│   ├── jcc2_questionnaire_v4.ts        # JCC2 questionnaire v4 (current)
 │   ├── section_conditionals_test.ts    # Section conditional test
 │   ├── simple_conditionals_test.ts     # Simple conditional test
 │   ├── test_template.ts                # Basic test template
@@ -160,6 +173,9 @@ form_manager/
 │   ├── README-playwright.md            # Playwright testing guide
 │   ├── README.md                       # Documentation overview
 │   ├── SINGLE-HTML-IMPLEMENTATION.md   # Single HTML implementation guide
+│   ├── compound-conditionals-implementation.md # Compound conditional logic documentation
+│   ├── developer-tools-suite.md        # Developer tools documentation
+│   ├── na-section-functionality.md     # N/A section functionality documentation
 │   ├── open-issues/                    # Open issues documentation
 │   │   └── example-api-performance-issue.md # Performance issue tracking
 │   └── specs/                          # Technical specifications

@@ -1,5 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { FormTemplate, FormInstance, FormField, FormSection } from "../types/form";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import {
+  FormTemplate,
+  FormInstance,
+  FormField,
+  FormSection,
+} from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
   getVisibleSections,
@@ -29,7 +40,7 @@ interface GroupedField {
 
 // Type for section completeness
 interface SectionCompleteness {
-  status: 'complete' | 'incomplete' | 'partial';
+  status: "complete" | "incomplete" | "partial";
   progress: number;
 }
 
@@ -40,7 +51,7 @@ interface FormFieldWithIndex extends FormField {
 
 // Type for render elements
 interface RenderElement {
-  type: 'field' | 'group';
+  type: "field" | "group";
   originalIndex: number;
   content: FormFieldWithIndex | FormField[];
   groupKey?: string;
@@ -59,12 +70,20 @@ const renderFieldAsTable = (
   field: FormField,
   value: FormValue,
   error: string | undefined,
-  handleFieldChange: (fieldId: string, value: FormValue, sectionId?: string) => void,
+  handleFieldChange: (
+    fieldId: string,
+    value: FormValue,
+    sectionId?: string
+  ) => void,
   sectionId?: string
 ): JSX.Element => {
-  const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
-  if (!field.options || field.layout !== 'horizontal') {
-    throw new Error('renderFieldAsTable should only be used for horizontal checkbox/radio fields with options');
+  const tooltipContent = sectionId
+    ? `id: ${sectionId}.${field.id}`
+    : `id: ${field.id}`;
+  if (!field.options || field.layout !== "horizontal") {
+    throw new Error(
+      "renderFieldAsTable should only be used for horizontal checkbox/radio fields with options"
+    );
   }
 
   const optionCount = field.options.length;
@@ -76,74 +95,103 @@ const renderFieldAsTable = (
       <div className="space-y-2">
         <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
           <table className="w-full text-sm">
-          {/* Header row with options */}
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="text-left py-2 pr-2 text-sm font-medium text-gray-700 border-r border-gray-200" style={{ width: '35%' }}>
-                Question
-              </th>
-              {field.options.map((option: string) => (
-                <th key={option} className="text-center py-2 px-1 text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0" style={{ width: columnWidth }}>
-                  <div className="leading-tight break-words hyphens-auto text-center px-1">
-                    {option}
-                  </div>
+            {/* Header row with options */}
+            <thead className="bg-gray-100">
+              <tr>
+                <th
+                  className="text-left py-2 pr-2 text-sm font-medium text-gray-700 border-r border-gray-200"
+                  style={{ width: "35%" }}
+                >
+                  Question
                 </th>
-              ))}
-            </tr>
-          </thead>
-          
-          {/* Body row with field name and input controls */}
-          <tbody className="divide-y divide-gray-100">
-            <tr className="hover:bg-gray-25">
-              {/* Field name/label column */}
-              <td className="py-2 pr-2 text-sm text-gray-900 align-top border-r border-gray-200">
-                <div className="flex flex-col">
-                  <div className="flex items-start">
-                    <span className="leading-tight break-words hyphens-auto">
-                      {field.label}
-                    </span>
-                    {field.required && <span className="text-red-500 ml-1 flex-shrink-0">*</span>}
-                  </div>
-                  {error && (
-                    <div className="text-red-500 text-xs mt-1">{error}</div>
-                  )}
-                </div>
-              </td>
-              
-              {/* Option columns with input controls */}
-              {field.options.map((option: string) => (
-                <td key={option} className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0">
-                  <div className="flex justify-center items-center h-8">
-                    <input
-                      type={field.type}
-                      name={field.type === 'radio' ? field.id : undefined}
-                      value={option}
-                      checked={field.type === 'radio' 
-                        ? value === option 
-                        : Array.isArray(value) && value.includes(option)
-                      }
-                      onChange={(e) => {
-                        if (field.type === 'radio') {
-                          handleFieldChange(field.id, e.target.value, sectionId);
-                        } else {
-                          const currentValues = Array.isArray(value) ? value : [];
-                          if (e.target.checked) {
-                            handleFieldChange(field.id, [...currentValues, option], sectionId);
-                          } else {
-                            handleFieldChange(field.id, currentValues.filter((v) => v !== option), sectionId);
-                          }
-                        }
-                      }}
-                      className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-4 w-4"
-                    />
+                {field.options.map((option: string) => (
+                  <th
+                    key={option}
+                    className="text-center py-2 px-1 text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0"
+                    style={{ width: columnWidth }}
+                  >
+                    <div className="leading-tight break-words hyphens-auto text-center px-1">
+                      {option}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            {/* Body row with field name and input controls */}
+            <tbody className="divide-y divide-gray-100">
+              <tr className="hover:bg-gray-25">
+                {/* Field name/label column */}
+                <td className="py-2 pr-2 text-sm text-gray-900 align-top border-r border-gray-200">
+                  <div className="flex flex-col">
+                    <div className="flex items-start">
+                      <span className="leading-tight break-words hyphens-auto">
+                        {field.label}
+                      </span>
+                      {field.required && (
+                        <span className="text-red-500 ml-1 flex-shrink-0">
+                          *
+                        </span>
+                      )}
+                    </div>
+                    {error && (
+                      <div className="text-red-500 text-xs mt-1">{error}</div>
+                    )}
                   </div>
                 </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+
+                {/* Option columns with input controls */}
+                {field.options.map((option: string) => (
+                  <td
+                    key={option}
+                    className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0"
+                  >
+                    <div className="flex justify-center items-center h-8">
+                      <input
+                        type={field.type}
+                        name={field.type === "radio" ? field.id : undefined}
+                        value={option}
+                        checked={
+                          field.type === "radio"
+                            ? value === option
+                            : Array.isArray(value) && value.includes(option)
+                        }
+                        onChange={(e) => {
+                          if (field.type === "radio") {
+                            handleFieldChange(
+                              field.id,
+                              e.target.value,
+                              sectionId
+                            );
+                          } else {
+                            const currentValues = Array.isArray(value)
+                              ? value
+                              : [];
+                            if (e.target.checked) {
+                              handleFieldChange(
+                                field.id,
+                                [...currentValues, option],
+                                sectionId
+                              );
+                            } else {
+                              handleFieldChange(
+                                field.id,
+                                currentValues.filter((v) => v !== option),
+                                sectionId
+                              );
+                            }
+                          }
+                        }}
+                        className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-4 w-4"
+                      />
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
     </Tooltip>
   );
 };
@@ -160,16 +208,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     if (instance?.data && Object.keys(instance.data).length > 0) {
       return instance.data;
     }
-    
+
     const defaultData: FormData = {};
-    template.sections.forEach(section => {
-      section.fields.forEach(field => {
+    template.sections.forEach((section) => {
+      section.fields.forEach((field) => {
         if (field.defaultValue !== undefined) {
           defaultData[field.id] = field.defaultValue;
         }
       });
     });
-    
+
     return defaultData;
   };
 
@@ -180,19 +228,26 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [viewMode, setViewMode] = useState<'continuous' | 'section'>(() => storageManager.getViewMode());
+  const [viewMode, setViewMode] = useState<"continuous" | "section">(() =>
+    storageManager.getViewMode()
+  );
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [showMockDataModal, setShowMockDataModal] = useState(false);
   const [showFormDevTool, setShowFormDevTool] = useState(false);
-  const [csvIntegrityResults, setCsvIntegrityResults] = useState<CSVIntegrityResult | null>(null);
+  const [csvIntegrityResults, setCsvIntegrityResults] =
+    useState<CSVIntegrityResult | null>(null);
 
   // Refs for pagination scrolling
   const paginationContainerRef = useRef<HTMLDivElement>(null);
-  const sectionButtonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const sectionButtonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>(
+    {}
+  );
 
   // Memoize currentInstance to prevent recreation on every render
-  const currentInstance = useMemo(() => 
-    instance || storageManager.getOrCreateInstance(template.id, template.name), 
+  const currentInstance = useMemo(
+    () =>
+      instance ||
+      storageManager.getOrCreateInstance(template.id, template.name),
     [instance, template.id, template.name]
   );
 
@@ -209,10 +264,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   });
 
   const visibleSections = getVisibleSections(template.sections, formData);
-  const progress = calculateProgress(template.sections, formData, Array.from(visitedSections), Array.from(naSections));
-  
+  const progress = calculateProgress(
+    template.sections,
+    formData,
+    Array.from(visitedSections),
+    Array.from(naSections)
+  );
+
   // Filter sections for section-by-section view (exclude empty sections)
-  const filteredSections = visibleSections.filter(section => {
+  const filteredSections = visibleSections.filter((section) => {
     const visibleFields = getVisibleFields(section.fields, formData);
     return visibleFields.length > 0;
   });
@@ -221,8 +281,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     setSaveStatus("saving");
     try {
       // Apply conditional field nullification before saving
-      const nullifiedFormData = updateConditionalFieldsAsNull(template.sections, formData);
-      
+      const nullifiedFormData = updateConditionalFieldsAsNull(
+        template.sections,
+        formData
+      );
+
       const updatedInstance: FormInstance = {
         ...currentInstance,
         data: nullifiedFormData,
@@ -242,17 +305,28 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
     }
-  }, [formData, progress, visitedSections, naSections, onSave, template.sections, currentInstance]);
+  }, [
+    formData,
+    progress,
+    visitedSections,
+    naSections,
+    onSave,
+    template.sections,
+    currentInstance,
+  ]);
 
   // Auto-save functionality - debounced
   useEffect(() => {
     if (Object.keys(formData).length === 0) return;
-    
+
     const timer = setTimeout(() => {
       setSaveStatus("saving");
       try {
-        const nullifiedFormData = updateConditionalFieldsAsNull(template.sections, formData);
-        
+        const nullifiedFormData = updateConditionalFieldsAsNull(
+          template.sections,
+          formData
+        );
+
         const updatedInstance: FormInstance = {
           ...currentInstance,
           data: nullifiedFormData,
@@ -274,7 +348,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [formData, progress, visitedSections, template.sections, currentInstance, onSave]);
+  }, [
+    formData,
+    progress,
+    visitedSections,
+    template.sections,
+    currentInstance,
+    onSave,
+  ]);
 
   // Sticky header functionality
   useEffect(() => {
@@ -284,13 +365,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       setIsHeaderSticky(scrollTop > threshold);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Reset section index when switching to section view
   useEffect(() => {
-    if (viewMode === 'section') {
+    if (viewMode === "section") {
       setCurrentSectionIndex(0);
     }
   }, [viewMode]);
@@ -302,7 +383,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
   // Handle reactive section filtering - adjust current section index when sections change
   useEffect(() => {
-    if (viewMode === 'section' && filteredSections.length > 0) {
+    if (viewMode === "section" && filteredSections.length > 0) {
       // If current section index is out of bounds, adjust it
       if (currentSectionIndex >= filteredSections.length) {
         setCurrentSectionIndex(Math.max(0, filteredSections.length - 1));
@@ -312,10 +393,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
   // Track visited sections
   useEffect(() => {
-    if (viewMode === 'section' && filteredSections.length > 0) {
+    if (viewMode === "section" && filteredSections.length > 0) {
       const currentSection = filteredSections[currentSectionIndex];
       if (currentSection) {
-        setVisitedSections(prev => {
+        setVisitedSections((prev) => {
           if (prev.has(currentSection.id)) {
             return prev; // Return same instance if already visited to prevent re-render
           }
@@ -328,14 +409,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   // Save visited sections to form instance when they change (debounced)
   useEffect(() => {
     if (visitedSections.size === 0) return;
-    
+
     const timer = setTimeout(() => {
       const updatedInstance: FormInstance = {
         ...currentInstance,
         visitedSections: Array.from(visitedSections),
         updatedAt: new Date(),
       };
-      
+
       storageManager.saveInstance(updatedInstance);
     }, 500);
 
@@ -343,35 +424,42 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   }, [visitedSections, currentInstance]);
 
   // Determine which sections are accessible based on sequential navigation
-  const getSectionAccessibility = useCallback((sectionIndex: number) => {
-    // First section is always accessible
-    if (sectionIndex === 0) {
-      return { accessible: true, reason: '' };
-    }
-    
-    // Check if all previous sections have been visited
-    for (let i = 0; i < sectionIndex; i++) {
-      const previousSection = filteredSections[i];
-      if (previousSection && !visitedSections.has(previousSection.id)) {
-        return { 
-          accessible: false, 
-          reason: `Complete section ${i + 1} first` 
-        };
+  const getSectionAccessibility = useCallback(
+    (sectionIndex: number) => {
+      // First section is always accessible
+      if (sectionIndex === 0) {
+        return { accessible: true, reason: "" };
       }
-    }
-    
-    return { accessible: true, reason: '' };
-  }, [filteredSections, visitedSections]);
+
+      // Check if all previous sections have been visited
+      for (let i = 0; i < sectionIndex; i++) {
+        const previousSection = filteredSections[i];
+        if (previousSection && !visitedSections.has(previousSection.id)) {
+          return {
+            accessible: false,
+            reason: `Complete section ${i + 1} first`,
+          };
+        }
+      }
+
+      return { accessible: true, reason: "" };
+    },
+    [filteredSections, visitedSections]
+  );
 
   // Keyboard navigation for section view
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
-      if (viewMode === 'section') {
-        if (e.key === 'ArrowLeft' && currentSectionIndex > 0) {
+      if (viewMode === "section") {
+        if (e.key === "ArrowLeft" && currentSectionIndex > 0) {
           setCurrentSectionIndex(currentSectionIndex - 1);
-        } else if (e.key === 'ArrowRight' && currentSectionIndex < filteredSections.length - 1) {
+        } else if (
+          e.key === "ArrowRight" &&
+          currentSectionIndex < filteredSections.length - 1
+        ) {
           const nextSectionIndex = currentSectionIndex + 1;
-          const nextSectionAccessibility = getSectionAccessibility(nextSectionIndex);
+          const nextSectionAccessibility =
+            getSectionAccessibility(nextSectionIndex);
           if (nextSectionAccessibility.accessible) {
             setCurrentSectionIndex(nextSectionIndex);
           }
@@ -379,18 +467,24 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       }
     };
 
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  }, [viewMode, currentSectionIndex, filteredSections.length, visitedSections, getSectionAccessibility]);
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, [
+    viewMode,
+    currentSectionIndex,
+    filteredSections.length,
+    visitedSections,
+    getSectionAccessibility,
+  ]);
 
   // Auto-scroll active section into view in the pagination container only
   useEffect(() => {
-    if (viewMode === 'section' && filteredSections.length > 0) {
+    if (viewMode === "section" && filteredSections.length > 0) {
       const currentSection = filteredSections[currentSectionIndex];
       if (currentSection) {
         const buttonRef = sectionButtonRefs.current[currentSection.id];
         const containerRef = paginationContainerRef.current;
-        
+
         if (buttonRef && containerRef) {
           // Use a small delay to ensure DOM is updated
           setTimeout(() => {
@@ -399,24 +493,24 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             const buttonWidth = buttonRef.offsetWidth;
             const containerWidth = containerRef.clientWidth;
             const containerScrollLeft = containerRef.scrollLeft;
-            
+
             // Check if button is fully visible
             const buttonLeftEdge = buttonOffsetLeft;
             const buttonRightEdge = buttonOffsetLeft + buttonWidth;
             const visibleLeft = containerScrollLeft;
             const visibleRight = containerScrollLeft + containerWidth;
-            
-            const isFullyVisible = 
-              buttonLeftEdge >= visibleLeft && 
-              buttonRightEdge <= visibleRight;
-            
+
+            const isFullyVisible =
+              buttonLeftEdge >= visibleLeft && buttonRightEdge <= visibleRight;
+
             if (!isFullyVisible) {
               // Center the button in the container
-              const targetScrollLeft = buttonOffsetLeft - (containerWidth / 2) + (buttonWidth / 2);
-              
+              const targetScrollLeft =
+                buttonOffsetLeft - containerWidth / 2 + buttonWidth / 2;
+
               containerRef.scrollTo({
                 left: Math.max(0, targetScrollLeft),
-                behavior: 'smooth'
+                behavior: "smooth",
               });
             }
           }, 50); // Small delay to ensure DOM measurements are accurate
@@ -428,55 +522,69 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   // Calculate section completeness for visual indicators
   // Only considers required AND visible/enabled fields
   // Includes fields with default values as complete
-  const getSectionCompleteness = (section: FormSection): SectionCompleteness => {
+  const getSectionCompleteness = (
+    section: FormSection
+  ): SectionCompleteness => {
     const visibleFields = getVisibleFields(section.fields, formData);
-    const requiredVisibleFields = visibleFields.filter(field => field.required);
-    
+    const requiredVisibleFields = visibleFields.filter(
+      (field) => field.required
+    );
+
     // If no required fields are visible, section is considered complete
     if (requiredVisibleFields.length === 0) {
-      return { status: 'complete', progress: 100 };
+      return { status: "complete", progress: 100 };
     }
-    
-    const completedRequiredFields = requiredVisibleFields.filter(field => {
+
+    const completedRequiredFields = requiredVisibleFields.filter((field) => {
       const value = formData[field.id];
       const defaultValue = field.defaultValue;
-      
+
       // Check if field has a value (either from user input or default value)
       const hasValue = (() => {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           // User has provided a value
           if (Array.isArray(value)) {
             return value.length > 0;
           }
           return true;
         }
-        
+
         // Check if field has a default value
-        if (defaultValue !== undefined && defaultValue !== null && defaultValue !== '') {
+        if (
+          defaultValue !== undefined &&
+          defaultValue !== null &&
+          defaultValue !== ""
+        ) {
           if (Array.isArray(defaultValue)) {
             return defaultValue.length > 0;
           }
           return true;
         }
-        
+
         return false;
       })();
-      
+
       return hasValue;
     });
-    
-    const progress = Math.round((completedRequiredFields.length / requiredVisibleFields.length) * 100);
-    
+
+    const progress = Math.round(
+      (completedRequiredFields.length / requiredVisibleFields.length) * 100
+    );
+
     if (progress === 100) {
-      return { status: 'complete', progress };
+      return { status: "complete", progress };
     } else if (progress > 0) {
-      return { status: 'partial', progress };
+      return { status: "partial", progress };
     } else {
-      return { status: 'incomplete', progress };
+      return { status: "incomplete", progress };
     }
   };
 
-  const handleFieldChange = (fieldId: string, value: FormValue, sectionId?: string) => {
+  const handleFieldChange = (
+    fieldId: string,
+    value: FormValue,
+    sectionId?: string
+  ) => {
     setFormData((prev) => {
       const updated = {
         ...prev,
@@ -500,10 +608,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     // remove the section from naSections
     if (sectionId && naSections.has(sectionId)) {
       // Check if the new value is not N/A or Not Applicable
-      const isNotNaValue = value !== 'N/A' && value !== 'Not Applicable' && 
-                          !(Array.isArray(value) && value.length === 1 && 
-                            (value[0] === 'N/A' || value[0] === 'Not Applicable'));
-      
+      const isNotNaValue =
+        value !== "N/A" &&
+        value !== "Not Applicable" &&
+        !(
+          Array.isArray(value) &&
+          value.length === 1 &&
+          (value[0] === "N/A" || value[0] === "Not Applicable")
+        );
+
       if (isNotNaValue) {
         setNaSections((prev) => {
           const updated = new Set(prev);
@@ -527,21 +640,23 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
     // If checking N/A, set all visible fields in the section to appropriate N/A value
     if (checked) {
-      const section = template.sections.find(s => s.id === sectionId);
+      const section = template.sections.find((s) => s.id === sectionId);
       if (section) {
         const visibleFields = getVisibleFields(section.fields, formData);
         setFormData((prev) => {
           const updated = { ...prev };
-          visibleFields.forEach(field => {
+          visibleFields.forEach((field) => {
             // Check if field has "Not Applicable" as an option
             if (field.options && Array.isArray(field.options)) {
-              const naOption = field.options.find(opt => 
-                (typeof opt === 'string' && opt === "Not Applicable") ||
-                (typeof opt === 'object' && opt.label === "Not Applicable")
+              const naOption = field.options.find(
+                (opt) =>
+                  (typeof opt === "string" && opt === "Not Applicable") ||
+                  (typeof opt === "object" && opt.label === "Not Applicable")
               );
               if (naOption) {
                 // Set to "Not Applicable" if it's an option
-                updated[field.id] = typeof naOption === 'string' ? naOption : naOption.value;
+                updated[field.id] =
+                  typeof naOption === "string" ? naOption : naOption.value;
               } else {
                 // Otherwise set to "N/A"
                 updated[field.id] = "N/A";
@@ -555,21 +670,23 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         });
       }
     }
-    
+
     setHasUnsavedChanges(true);
   };
 
-  const handleFillMockData = (config: import('../utils/mockDataGenerator').MockDataConfig) => {
+  const handleFillMockData = (
+    config: import("../utils/mockDataGenerator").MockDataConfig
+  ) => {
     const generator = new MockDataGenerator(config);
     const mockData = generator.generateMockFormData(template, formData);
-    
+
     setFormData(mockData);
     setHasUnsavedChanges(true);
-    
+
     // Mark all visible sections as visited
-    const visibleSectionIds = visibleSections.map(s => s.id);
+    const visibleSectionIds = visibleSections.map((s) => s.id);
     setVisitedSections(new Set(visibleSectionIds));
-    
+
     // Save the instance
     const updatedInstance: FormInstance = {
       ...currentInstance,
@@ -578,7 +695,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       lastSaved: new Date(),
       updatedAt: new Date(),
     };
-    
+
     storageManager.saveInstance(updatedInstance);
   };
 
@@ -589,11 +706,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   const handleFormDevToolDataUpdate = (data: Record<string, FormValue>) => {
     setFormData(data);
     setHasUnsavedChanges(true);
-    
+
     // Mark all visible sections as visited
-    const visibleSectionIds = visibleSections.map(s => s.id);
+    const visibleSectionIds = visibleSections.map((s) => s.id);
     setVisitedSections(new Set(visibleSectionIds));
-    
+
     // Save the instance
     const updatedInstance: FormInstance = {
       ...currentInstance,
@@ -602,7 +719,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       lastSaved: new Date(),
       updatedAt: new Date(),
     };
-    
+
     storageManager.saveInstance(updatedInstance);
   };
 
@@ -620,7 +737,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       if (naSections.has(section.id)) {
         return;
       }
-      
+
       const visibleFields = getVisibleFields(section.fields, formData);
       visibleFields.forEach((field) => {
         const error = validateField(field, formData[field.id]);
@@ -636,8 +753,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     // Apply conditional field nullification before submission
-    const nullifiedFormData = updateConditionalFieldsAsNull(template.sections, formData);
-    
+    const nullifiedFormData = updateConditionalFieldsAsNull(
+      template.sections,
+      formData
+    );
+
     const submissionInstance: FormInstance = {
       ...currentInstance,
       data: nullifiedFormData,
@@ -670,7 +790,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       const shouldSave = window.confirm(
         "You have unsaved changes. Would you like to save them before exiting?"
       );
-      
+
       if (shouldSave) {
         await saveForm();
         onExit?.();
@@ -706,47 +826,66 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     return { grouped, ungrouped };
   };
 
-  const renderGroupedFields = (groupKey: string, fields: FormField[], sectionId?: string) => {
+  const renderGroupedFields = (
+    groupKey: string,
+    fields: FormField[],
+    sectionId?: string
+  ) => {
     if (fields.length === 0) return null;
 
     // Helper function to get group label
     const getGroupLabel = (groupKey: string, fields: FormField[]) => {
       const firstField = fields[0];
       // Use custom label if provided, otherwise transform groupKey
-      return firstField?.grouping?.label || groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, ' ');
+      return (
+        firstField?.grouping?.label ||
+        groupKey.charAt(0).toUpperCase() + groupKey.slice(1).replace(/_/g, " ")
+      );
     };
 
     // Check if all fields in group have the same options for horizontal grouping
     const firstField = fields[0];
-    const allHaveSameOptions = fields.every(field => 
-      field.options && firstField.options &&
-      JSON.stringify(field.options) === JSON.stringify(firstField.options) &&
-      field.layout === 'horizontal'
+    const allHaveSameOptions = fields.every(
+      (field) =>
+        field.options &&
+        firstField.options &&
+        JSON.stringify(field.options) === JSON.stringify(firstField.options) &&
+        field.layout === "horizontal"
     );
 
     // Check if all fields are text/input types with horizontal layout
-    const allHorizontalTextFields = fields.every(field => 
-      ['text', 'email', 'tel', 'number', 'date'].includes(field.type) &&
-      field.layout === 'horizontal'
+    const allHorizontalTextFields = fields.every(
+      (field) =>
+        ["text", "email", "tel", "number", "date"].includes(field.type) &&
+        field.layout === "horizontal"
     );
 
-    if (allHaveSameOptions && (firstField.type === 'radio' || firstField.type === 'checkbox')) {
+    if (
+      allHaveSameOptions &&
+      (firstField.type === "radio" || firstField.type === "checkbox")
+    ) {
       // Render as a table/matrix with field names on left axis and options on top axis
       return (
-        <div key={groupKey} className="space-y-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
+        <div
+          key={groupKey}
+          className="space-y-3 border border-gray-200 rounded-lg p-3 bg-gray-50"
+        >
           <Tooltip content={`group: ${groupKey}`} delay={500}>
             <h4 className="text-sm font-semibold text-gray-800 mb-2">
               {getGroupLabel(groupKey, fields)}
             </h4>
           </Tooltip>
-          
+
           {/* Table layout for matrix-style grouped fields */}
           <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm">
             <table className="w-full text-sm">
               {/* Header row with options */}
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="text-left py-2 pr-2 text-sm font-medium text-gray-700 border-r border-gray-200" style={{ width: '35%' }}>
+                  <th
+                    className="text-left py-2 pr-2 text-sm font-medium text-gray-700 border-r border-gray-200"
+                    style={{ width: "35%" }}
+                  >
                     Question
                   </th>
                   {firstField.options?.map((option: string) => {
@@ -754,23 +893,32 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                     const availableWidth = 65; // 100% - 35% for question column
                     const columnWidth = `${availableWidth / optionCount}%`;
                     return (
-                    <th key={option} className="text-center py-2 px-1 text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0" style={{ width: columnWidth }}>
-                      <div className="leading-tight break-words hyphens-auto text-center px-1">
-                        {option}
-                      </div>
-                    </th>
+                      <th
+                        key={option}
+                        className="text-center py-2 px-1 text-xs font-medium text-gray-700 border-r border-gray-200 last:border-r-0"
+                        style={{ width: columnWidth }}
+                      >
+                        <div className="leading-tight break-words hyphens-auto text-center px-1">
+                          {option}
+                        </div>
+                      </th>
                     );
                   })}
                 </tr>
               </thead>
-              
+
               {/* Body rows with field names and input controls */}
               <tbody className="divide-y divide-gray-100">
-                {fields.map(field => {
-                  const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
+                {fields.map((field) => {
+                  const value =
+                    formData[field.id] !== undefined
+                      ? formData[field.id]
+                      : field.defaultValue;
                   const error = errors[field.id];
-                  
-                  const fieldTooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
+
+                  const fieldTooltipContent = sectionId
+                    ? `id: ${sectionId}.${field.id}`
+                    : `id: ${field.id}`;
                   return (
                     <tr key={field.id} className="hover:bg-gray-25">
                       {/* Field name/label column */}
@@ -781,36 +929,63 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                               <span className="leading-tight break-words hyphens-auto">
                                 {field.label}
                               </span>
-                              {field.required && <span className="text-red-500 ml-1 flex-shrink-0">*</span>}
+                              {field.required && (
+                                <span className="text-red-500 ml-1 flex-shrink-0">
+                                  *
+                                </span>
+                              )}
                             </div>
                             {error && (
-                              <div className="text-red-500 text-xs mt-1">{error}</div>
+                              <div className="text-red-500 text-xs mt-1">
+                                {error}
+                              </div>
                             )}
                           </div>
                         </Tooltip>
                       </td>
-                      
+
                       {/* Option columns with input controls */}
                       {firstField.options?.map((option: string) => (
-                        <td key={option} className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0">
+                        <td
+                          key={option}
+                          className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0"
+                        >
                           <div className="flex justify-center items-center h-8">
                             <input
                               type={field.type}
-                              name={field.type === 'radio' ? field.id : undefined}
+                              name={
+                                field.type === "radio" ? field.id : undefined
+                              }
                               value={option}
-                              checked={field.type === 'radio' 
-                                ? value === option 
-                                : Array.isArray(value) && value.includes(option)
+                              checked={
+                                field.type === "radio"
+                                  ? value === option
+                                  : Array.isArray(value) &&
+                                    value.includes(option)
                               }
                               onChange={(e) => {
-                                if (field.type === 'radio') {
-                                  handleFieldChange(field.id, e.target.value, sectionId);
+                                if (field.type === "radio") {
+                                  handleFieldChange(
+                                    field.id,
+                                    e.target.value,
+                                    sectionId
+                                  );
                                 } else {
-                                  const currentValues = Array.isArray(value) ? value : [];
+                                  const currentValues = Array.isArray(value)
+                                    ? value
+                                    : [];
                                   if (e.target.checked) {
-                                    handleFieldChange(field.id, [...currentValues, option], sectionId);
+                                    handleFieldChange(
+                                      field.id,
+                                      [...currentValues, option],
+                                      sectionId
+                                    );
                                   } else {
-                                    handleFieldChange(field.id, currentValues.filter((v) => v !== option), sectionId);
+                                    handleFieldChange(
+                                      field.id,
+                                      currentValues.filter((v) => v !== option),
+                                      sectionId
+                                    );
                                   }
                                 }
                               }}
@@ -830,7 +1005,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     } else if (allHorizontalTextFields) {
       // Render text fields in horizontal layout
       return (
-        <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div
+          key={groupKey}
+          className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50"
+        >
           <Tooltip content={`group: ${groupKey}`} delay={500}>
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               {getGroupLabel(groupKey, fields)}
@@ -838,28 +1016,45 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           </Tooltip>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {fields.map((field) => {
-              const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
+              const value =
+                formData[field.id] !== undefined
+                  ? formData[field.id]
+                  : field.defaultValue;
               const error = errors[field.id];
               const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 error ? "border-red-500" : "border-gray-300"
               }`;
 
-              const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
+              const tooltipContent = sectionId
+                ? `id: ${sectionId}.${field.id}`
+                : `id: ${field.id}`;
               return (
                 <Tooltip key={field.id} content={tooltipContent} delay={500}>
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                      {field.required && (
+                        <span className="text-red-500 ml-1">*</span>
+                      )}
                     </label>
                     <input
                       type={field.type}
                       name={field.id}
                       value={value || ""}
-                      onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
+                      onChange={(e) =>
+                        handleFieldChange(field.id, e.target.value, sectionId)
+                      }
                       placeholder={field.placeholder || `Enter ${field.label}`}
-                      min={field.type === 'number' ? field.validation?.min : undefined}
-                      max={field.type === 'number' ? field.validation?.max : undefined}
+                      min={
+                        field.type === "number"
+                          ? field.validation?.min
+                          : undefined
+                      }
+                      max={
+                        field.type === "number"
+                          ? field.validation?.max
+                          : undefined
+                      }
                       className={baseInputClasses}
                     />
                     {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -873,32 +1068,44 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     } else {
       // Render fields individually but within a group container
       return (
-        <div key={groupKey} className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+        <div
+          key={groupKey}
+          className="space-y-4 border border-gray-200 rounded-lg p-4 bg-gray-50"
+        >
           <Tooltip content={`group: ${groupKey}`} delay={500}>
             <h4 className="text-sm font-medium text-gray-700 mb-3">
               {getGroupLabel(groupKey, fields)}
             </h4>
           </Tooltip>
           <div className="space-y-4">
-            {fields.map(field => renderField(field, sectionId))}
+            {fields.map((field) => renderField(field, sectionId))}
           </div>
         </div>
       );
     }
   };
 
-  const renderField = (field: FormField | FormFieldWithIndex, sectionId?: string) => {
-    const value = formData[field.id] !== undefined ? formData[field.id] : field.defaultValue;
+  const renderField = (
+    field: FormField | FormFieldWithIndex,
+    sectionId?: string
+  ) => {
+    const value =
+      formData[field.id] !== undefined
+        ? formData[field.id]
+        : field.defaultValue;
     const error = errors[field.id];
-    const tooltipContent = sectionId ? `id: ${sectionId}.${field.id}` : `id: ${field.id}`;
+    const tooltipContent = sectionId
+      ? `id: ${sectionId}.${field.id}`
+      : `id: ${field.id}`;
     const isNaSection = sectionId && naSections.has(sectionId);
-    
+
     // Determine the N/A display value for this field
     let naDisplayValue = "N/A";
     if (isNaSection && field.options && Array.isArray(field.options)) {
-      const naOption = field.options.find(opt => 
-        (typeof opt === 'string' && opt === "Not Applicable") ||
-        (typeof opt === 'object' && opt.label === "Not Applicable")
+      const naOption = field.options.find(
+        (opt) =>
+          (typeof opt === "string" && opt === "Not Applicable") ||
+          (typeof opt === "object" && opt.label === "Not Applicable")
       );
       if (naOption) {
         naDisplayValue = "Not Applicable";
@@ -913,17 +1120,31 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       case "text":
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
-            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+            <div
+              className={
+                field.layout === "horizontal"
+                  ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0"
+                  : "space-y-2"
+              }
+            >
+              <label
+                className={
+                  field.layout === "horizontal"
+                    ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
+                    : "block text-sm font-medium text-gray-700"
+                }
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
-              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
                   type="text"
                   name={field.id}
-                  value={isNaSection ? naDisplayValue : (value || "")}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
+                  value={isNaSection ? naDisplayValue : value || ""}
+                  onChange={(e) =>
+                    handleFieldChange(field.id, e.target.value, sectionId)
+                  }
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
                   disabled={isNaSection}
@@ -937,17 +1158,31 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       case "email":
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
-            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+            <div
+              className={
+                field.layout === "horizontal"
+                  ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0"
+                  : "space-y-2"
+              }
+            >
+              <label
+                className={
+                  field.layout === "horizontal"
+                    ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
+                    : "block text-sm font-medium text-gray-700"
+                }
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
-              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
                   type="email"
                   name={field.id}
                   value={value || ""}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
+                  onChange={(e) =>
+                    handleFieldChange(field.id, e.target.value, sectionId)
+                  }
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
                 />
@@ -960,17 +1195,31 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       case "tel":
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
-            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+            <div
+              className={
+                field.layout === "horizontal"
+                  ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0"
+                  : "space-y-2"
+              }
+            >
+              <label
+                className={
+                  field.layout === "horizontal"
+                    ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
+                    : "block text-sm font-medium text-gray-700"
+                }
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
-              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
                   type="tel"
                   name={field.id}
                   value={value || ""}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
+                  onChange={(e) =>
+                    handleFieldChange(field.id, e.target.value, sectionId)
+                  }
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
                 />
@@ -991,7 +1240,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               <textarea
                 name={field.id}
                 value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
+                onChange={(e) =>
+                  handleFieldChange(field.id, e.target.value, sectionId)
+                }
                 placeholder={field.placeholder || `Enter ${field.label}`}
                 rows={4}
                 className={baseInputClasses}
@@ -1012,7 +1263,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               <select
                 name={field.id}
                 value={value || ""}
-                onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
+                onChange={(e) =>
+                  handleFieldChange(field.id, e.target.value, sectionId)
+                }
                 className={baseInputClasses}
               >
                 <option value="">Select an option</option>
@@ -1029,10 +1282,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "radio":
         // Use table rendering for horizontal layout
-        if (field.layout === 'horizontal' && field.options) {
-          return renderFieldAsTable(field, value, error, handleFieldChange, sectionId);
+        if (field.layout === "horizontal" && field.options) {
+          return renderFieldAsTable(
+            field,
+            value,
+            error,
+            handleFieldChange,
+            sectionId
+          );
         }
-        
+
         // Use vertical layout (original implementation)
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
@@ -1068,10 +1327,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "checkbox":
         // Use table rendering for horizontal layout
-        if (field.layout === 'horizontal' && field.options) {
-          return renderFieldAsTable(field, value, error, handleFieldChange, sectionId);
+        if (field.layout === "horizontal" && field.options) {
+          return renderFieldAsTable(
+            field,
+            value,
+            error,
+            handleFieldChange,
+            sectionId
+          );
         }
-        
+
         // Use vertical layout (original implementation)
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
@@ -1094,7 +1359,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                       onChange={(e) => {
                         const currentValues = Array.isArray(value) ? value : [];
                         if (e.target.checked) {
-                          handleFieldChange(field.id, [...currentValues, option], sectionId);
+                          handleFieldChange(
+                            field.id,
+                            [...currentValues, option],
+                            sectionId
+                          );
                         } else {
                           handleFieldChange(
                             field.id,
@@ -1117,12 +1386,24 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       case "number":
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
-            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+            <div
+              className={
+                field.layout === "horizontal"
+                  ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0"
+                  : "space-y-2"
+              }
+            >
+              <label
+                className={
+                  field.layout === "horizontal"
+                    ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
+                    : "block text-sm font-medium text-gray-700"
+                }
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
-              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
                   type="number"
                   value={value || ""}
@@ -1147,17 +1428,31 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       case "date":
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
-            <div className={field.layout === 'horizontal' ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0" : "space-y-2"}>
-              <label className={field.layout === 'horizontal' ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0" : "block text-sm font-medium text-gray-700"}>
+            <div
+              className={
+                field.layout === "horizontal"
+                  ? "flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0"
+                  : "space-y-2"
+              }
+            >
+              <label
+                className={
+                  field.layout === "horizontal"
+                    ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
+                    : "block text-sm font-medium text-gray-700"
+                }
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
-              <div className={field.layout === 'horizontal' ? "flex-1" : ""}>
+              <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
                   type="date"
                   name={field.id}
                   value={value || ""}
-                  onChange={(e) => handleFieldChange(field.id, e.target.value, sectionId)}
+                  onChange={(e) =>
+                    handleFieldChange(field.id, e.target.value, sectionId)
+                  }
                   className={baseInputClasses}
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
@@ -1182,12 +1477,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   if (file) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                      handleFieldChange(field.id, {
-                        name: file.name,
-                        size: file.size,
-                        type: file.type,
-                        data: e.target?.result,
-                      }, sectionId);
+                      handleFieldChange(
+                        field.id,
+                        {
+                          name: file.name,
+                          size: file.size,
+                          type: file.type,
+                          data: e.target?.result,
+                        },
+                        sectionId
+                      );
                     };
                     reader.readAsDataURL(file);
                   }
@@ -1212,11 +1511,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <div className={`flex justify-between items-center mb-6 transition-all duration-300 ${
-          isHeaderSticky
-            ? 'fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b border-gray-200 px-6 py-4 mx-auto max-w-4xl'
-            : ''
-        }`}>
+        <div
+          className={`flex justify-between items-center mb-6 transition-all duration-300 ${
+            isHeaderSticky
+              ? "fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b border-gray-200 px-6 py-4 mx-auto max-w-4xl"
+              : ""
+          }`}
+        >
           <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -1240,23 +1541,33 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               )}
             </div>
             <div className="text-sm text-gray-600">Progress: {progress}%</div>
-            {process.env.NODE_ENV === 'development' && (
-              <DevDropdownMenu 
-                onFillMockData={() => setShowMockDataModal(true)} 
+            {process.env.NODE_ENV === "development" && (
+              <DevDropdownMenu
+                onFillMockData={() => setShowMockDataModal(true)}
                 onFormDevTool={handleShowFormDevTool}
               />
             )}
             <button
-              onClick={() => setViewMode(viewMode === 'continuous' ? 'section' : 'continuous')}
+              onClick={() =>
+                setViewMode(
+                  viewMode === "continuous" ? "section" : "continuous"
+                )
+              }
               className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-              title={viewMode === 'continuous' ? 'Switch to section view' : 'Switch to continuous view'}
+              title={
+                viewMode === "continuous"
+                  ? "Switch to section view"
+                  : "Switch to continuous view"
+              }
             >
-              {viewMode === 'continuous' ? (
+              {viewMode === "continuous" ? (
                 <Icons.List className="w-4 h-4" />
               ) : (
                 <Icons.ScrollText className="w-4 h-4" />
               )}
-              <span className="text-sm">{viewMode === 'continuous' ? 'Sections' : 'Continuous'}</span>
+              <span className="text-sm">
+                {viewMode === "continuous" ? "Sections" : "Continuous"}
+              </span>
             </button>
             {onExit && (
               <button
@@ -1283,269 +1594,336 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         </div>
 
         <div className="space-y-8">
-          {viewMode === 'continuous' ? (
-            visibleSections.map((section) => {
-            const visibleFields = getVisibleFields(section.fields, formData);
-            
-            // Don't render the section if it has no visible fields
-            if (visibleFields.length === 0) {
-              return null;
-            }
-            
-            const { grouped, ungrouped } = groupFields(visibleFields);
+          {viewMode === "continuous"
+            ? visibleSections.map((section) => {
+                const visibleFields = getVisibleFields(
+                  section.fields,
+                  formData
+                );
 
-            // Create a combined array of all elements (fields and groups) with their original positions
-            const allElements: RenderElement[] = [];
+                // Don't render the section if it has no visible fields
+                if (visibleFields.length === 0) {
+                  return null;
+                }
 
-            // Add ungrouped fields
-            ungrouped.forEach(field => {
-              allElements.push({
-                type: 'field',
-                originalIndex: field.originalIndex,
-                content: field
-              });
-            });
+                const { grouped, ungrouped } = groupFields(visibleFields);
 
-            // Add grouped fields (represented by their first field's position)
-            Object.entries(grouped).forEach(([groupKey, groupData]) => {
-              allElements.push({
-                type: 'group',
-                originalIndex: groupData.firstFieldIndex,
-                content: groupData.fields,
-                groupKey
-              });
-            });
+                // Create a combined array of all elements (fields and groups) with their original positions
+                const allElements: RenderElement[] = [];
 
-            // Sort by original index to maintain template creation order
-            allElements.sort((a, b) => a.originalIndex - b.originalIndex);
+                // Add ungrouped fields
+                ungrouped.forEach((field) => {
+                  allElements.push({
+                    type: "field",
+                    originalIndex: field.originalIndex,
+                    content: field,
+                  });
+                });
 
-            return (
-              <div key={section.id} className="border rounded-lg p-6">
-                <div className="mb-4">
-                  {section.naable && (
-                    <label className="flex items-center space-x-2 mb-2">
-                      <input
-                        type="checkbox"
-                        checked={naSections.has(section.id)}
-                        onChange={(e) => handleNaToggle(section.id, e.target.checked)}
-                        className="text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">Mark this section as N/A</span>
-                    </label>
-                  )}
-                  <Tooltip content={`id: ${section.id}`} delay={500}>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      {section.title}
-                    </h2>
-                  </Tooltip>
-                </div>
-                <div className="space-y-6">
-                  {allElements.map((element) => {
-                    if (element.type === 'field') {
-                      return renderField(element.content as FormFieldWithIndex, section.id);
-                    } else {
-                      return renderGroupedFields(element.groupKey!, element.content as FormField[], section.id);
-                    }
-                  })}
-                </div>
-              </div>
-            );
-          })
-          ) : (
-            // Section-by-section view
-            (() => {
-              const currentSection = filteredSections[currentSectionIndex];
-              if (!currentSection) {
+                // Add grouped fields (represented by their first field's position)
+                Object.entries(grouped).forEach(([groupKey, groupData]) => {
+                  allElements.push({
+                    type: "group",
+                    originalIndex: groupData.firstFieldIndex,
+                    content: groupData.fields,
+                    groupKey,
+                  });
+                });
+
+                // Sort by original index to maintain template creation order
+                allElements.sort((a, b) => a.originalIndex - b.originalIndex);
+
                 return (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No sections available</p>
+                  <div key={section.id} className="border rounded-lg p-6">
+                    <div className="mb-4">
+                      {section.naable && (
+                        <label className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={naSections.has(section.id)}
+                            onChange={(e) =>
+                              handleNaToggle(section.id, e.target.checked)
+                            }
+                            className="text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Mark this section as N/A
+                          </span>
+                        </label>
+                      )}
+                      <Tooltip content={`id: ${section.id}`} delay={500}>
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          {section.title}
+                        </h2>
+                      </Tooltip>
+                    </div>
+                    <div className="space-y-6">
+                      {allElements.map((element) => {
+                        if (element.type === "field") {
+                          return renderField(
+                            element.content as FormFieldWithIndex,
+                            section.id
+                          );
+                        } else {
+                          return renderGroupedFields(
+                            element.groupKey!,
+                            element.content as FormField[],
+                            section.id
+                          );
+                        }
+                      })}
+                    </div>
                   </div>
                 );
-              }
+              })
+            : // Section-by-section view
+              (() => {
+                const currentSection = filteredSections[currentSectionIndex];
+                if (!currentSection) {
+                  return (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No sections available</p>
+                    </div>
+                  );
+                }
 
-              const visibleFields = getVisibleFields(currentSection.fields, formData);
-              
-              const { grouped, ungrouped } = groupFields(visibleFields);
+                const visibleFields = getVisibleFields(
+                  currentSection.fields,
+                  formData
+                );
 
-              // Create a combined array of all elements (fields and groups) with their original positions
-              const allElements: RenderElement[] = [];
+                const { grouped, ungrouped } = groupFields(visibleFields);
 
-              // Add ungrouped fields
-              ungrouped.forEach(field => {
-                allElements.push({
-                  type: 'field',
-                  originalIndex: field.originalIndex,
-                  content: field
+                // Create a combined array of all elements (fields and groups) with their original positions
+                const allElements: RenderElement[] = [];
+
+                // Add ungrouped fields
+                ungrouped.forEach((field) => {
+                  allElements.push({
+                    type: "field",
+                    originalIndex: field.originalIndex,
+                    content: field,
+                  });
                 });
-              });
 
-              // Add grouped fields (represented by their first field's position)
-              Object.entries(grouped).forEach(([groupKey, groupData]) => {
-                allElements.push({
-                  type: 'group',
-                  originalIndex: groupData.firstFieldIndex,
-                  content: groupData.fields,
-                  groupKey
+                // Add grouped fields (represented by their first field's position)
+                Object.entries(grouped).forEach(([groupKey, groupData]) => {
+                  allElements.push({
+                    type: "group",
+                    originalIndex: groupData.firstFieldIndex,
+                    content: groupData.fields,
+                    groupKey,
+                  });
                 });
-              });
 
-              // Sort by original index to maintain template creation order
-              allElements.sort((a, b) => a.originalIndex - b.originalIndex);
+                // Sort by original index to maintain template creation order
+                allElements.sort((a, b) => a.originalIndex - b.originalIndex);
 
-              return (
-                <div key={currentSection.id} className="border rounded-lg p-6">
-                  <div className="mb-4">
-                    {currentSection.naable && (
-                      <label className="flex items-center space-x-2 mb-2">
-                        <input
-                          type="checkbox"
-                          checked={naSections.has(currentSection.id)}
-                          onChange={(e) => handleNaToggle(currentSection.id, e.target.checked)}
-                          className="text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">Mark this section as N/A</span>
-                      </label>
-                    )}
-                    <Tooltip content={`id: ${currentSection.id}`} delay={500}>
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        {currentSection.title}
-                      </h2>
-                    </Tooltip>
+                return (
+                  <div
+                    key={currentSection.id}
+                    className="border rounded-lg p-6"
+                  >
+                    <div className="mb-4">
+                      {currentSection.naable && (
+                        <label className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={naSections.has(currentSection.id)}
+                            onChange={(e) =>
+                              handleNaToggle(
+                                currentSection.id,
+                                e.target.checked
+                              )
+                            }
+                            className="text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Mark this section as N/A
+                          </span>
+                        </label>
+                      )}
+                      <Tooltip content={`id: ${currentSection.id}`} delay={500}>
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          {currentSection.title}
+                        </h2>
+                      </Tooltip>
+                    </div>
+                    <div className="space-y-6">
+                      {allElements.map((element) => {
+                        if (element.type === "field") {
+                          return renderField(
+                            element.content as FormFieldWithIndex,
+                            currentSection.id
+                          );
+                        } else {
+                          return renderGroupedFields(
+                            element.groupKey!,
+                            element.content as FormField[],
+                            currentSection.id
+                          );
+                        }
+                      })}
+                    </div>
                   </div>
-                  <div className="space-y-6">
-                    {allElements.map((element) => {
-                      if (element.type === 'field') {
-                        return renderField(element.content as FormFieldWithIndex, currentSection.id);
-                      } else {
-                        return renderGroupedFields(element.groupKey!, element.content as FormField[], currentSection.id);
-                      }
-                    })}
-                  </div>
-                </div>
-              );
-            })()
-          )}
+                );
+              })()}
         </div>
 
         {/* Navigation controls for section-by-section view */}
-        {viewMode === 'section' && filteredSections.length === 0 && (
+        {viewMode === "section" && filteredSections.length === 0 && (
           <div className="mt-6 text-center py-8">
-            <p className="text-gray-500">No sections available with current form data</p>
+            <p className="text-gray-500">
+              No sections available with current form data
+            </p>
           </div>
         )}
-        {viewMode === 'section' && filteredSections.length > 0 && (
+        {viewMode === "section" && filteredSections.length > 0 && (
           <div className="mt-6 bg-gray-50 rounded-lg p-4 border">
             {/* Section Navigator Header */}
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-2">
                 <Icons.Navigation className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">Section Navigator</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Section Navigator
+                </span>
               </div>
               <span className="text-sm text-gray-600">
                 {currentSectionIndex + 1} of {filteredSections.length}
               </span>
             </div>
-            
+
             {/* Progress Indicators */}
-            <div ref={paginationContainerRef} className="mb-4 overflow-x-auto scrollbar-thin">
+            <div
+              ref={paginationContainerRef}
+              className="mb-4 overflow-x-auto scrollbar-thin"
+            >
               <div className="flex justify-center items-center space-x-2 min-w-max px-4">
                 {filteredSections.map((section, index) => {
-                const completeness = getSectionCompleteness(section);
-                const isVisited = visitedSections.has(section.id);
-                const isCurrent = index === currentSectionIndex;
-                const accessibility = getSectionAccessibility(index);
-                const isAccessible = accessibility.accessible;
-                
-                let markerColor = 'bg-gray-300';
-                let borderColor = 'border-gray-300';
-                let statusIcon = null;
-                let buttonClasses = 'w-6 h-6 rounded-full border-2 transition-all duration-200 flex items-center justify-center';
-                
-                if (!isAccessible) {
-                  // Inaccessible sections - locked state
-                  markerColor = 'bg-gray-200';
-                  borderColor = 'border-gray-400';
-                  statusIcon = <Icons.Lock className="w-2 h-2 text-gray-500" />;
-                  buttonClasses += ' cursor-not-allowed opacity-50';
-                } else if (isCurrent) {
-                  markerColor = 'bg-blue-600';
-                  borderColor = 'border-blue-600';
-                  statusIcon = <Icons.Circle className="w-2 h-2 text-white" />;
-                  buttonClasses += ' hover:scale-110';
-                } else if (isVisited) {
-                  buttonClasses += ' hover:scale-110';
-                  switch (completeness.status) {
-                    case 'complete':
-                      markerColor = 'bg-green-500';
-                      borderColor = 'border-green-500';
-                      statusIcon = <Icons.Check className="w-2 h-2 text-white" />;
-                      break;
-                    case 'partial':
-                      markerColor = 'bg-yellow-500';
-                      borderColor = 'border-yellow-500';
-                      statusIcon = <Icons.Minus className="w-2 h-2 text-white" />;
-                      break;
-                    case 'incomplete':
-                      markerColor = 'bg-red-500';
-                      borderColor = 'border-red-500';
-                      statusIcon = <Icons.X className="w-2 h-2 text-white" />;
-                      break;
+                  const completeness = getSectionCompleteness(section);
+                  const isVisited = visitedSections.has(section.id);
+                  const isCurrent = index === currentSectionIndex;
+                  const accessibility = getSectionAccessibility(index);
+                  const isAccessible = accessibility.accessible;
+
+                  let markerColor = "bg-gray-300";
+                  let borderColor = "border-gray-300";
+                  let statusIcon = null;
+                  let buttonClasses =
+                    "w-6 h-6 rounded-full border-2 transition-all duration-200 flex items-center justify-center";
+
+                  if (!isAccessible) {
+                    // Inaccessible sections - locked state
+                    markerColor = "bg-gray-200";
+                    borderColor = "border-gray-400";
+                    statusIcon = (
+                      <Icons.Lock className="w-2 h-2 text-gray-500" />
+                    );
+                    buttonClasses += " cursor-not-allowed opacity-50";
+                  } else if (isCurrent) {
+                    markerColor = "bg-blue-600";
+                    borderColor = "border-blue-600";
+                    statusIcon = (
+                      <Icons.Circle className="w-2 h-2 text-white" />
+                    );
+                    buttonClasses += " hover:scale-110";
+                  } else if (isVisited) {
+                    buttonClasses += " hover:scale-110";
+                    switch (completeness.status) {
+                      case "complete":
+                        markerColor = "bg-green-500";
+                        borderColor = "border-green-500";
+                        statusIcon = (
+                          <Icons.Check className="w-2 h-2 text-white" />
+                        );
+                        break;
+                      case "partial":
+                        markerColor = "bg-yellow-500";
+                        borderColor = "border-yellow-500";
+                        statusIcon = (
+                          <Icons.Minus className="w-2 h-2 text-white" />
+                        );
+                        break;
+                      case "incomplete":
+                        markerColor = "bg-red-500";
+                        borderColor = "border-red-500";
+                        statusIcon = <Icons.X className="w-2 h-2 text-white" />;
+                        break;
+                    }
+                  } else {
+                    // Accessible but not visited
+                    buttonClasses += " hover:scale-110";
                   }
-                } else {
-                  // Accessible but not visited
-                  buttonClasses += ' hover:scale-110';
-                }
-                
-                return (
-                  <div key={section.id} className="flex flex-col items-center space-y-1">
-                    <button
-                      ref={(el) => { sectionButtonRefs.current[section.id] = el; }}
-                      onClick={() => {
-                        if (isAccessible) {
-                          setCurrentSectionIndex(index);
-                        }
-                      }}
-                      disabled={!isAccessible}
-                      className={`${buttonClasses} ${markerColor} ${borderColor}`}
-                      title={!isAccessible ? accessibility.reason : `${section.title} - ${isVisited ? `${completeness.progress}% complete` : 'Not visited'}`}
+
+                  return (
+                    <div
+                      key={section.id}
+                      className="flex flex-col items-center space-y-1"
                     >
-                      {statusIcon}
-                    </button>
-                    <span className="text-xs text-gray-500">{index + 1}</span>
-                  </div>
-                );
-              })}
+                      <button
+                        ref={(el) => {
+                          sectionButtonRefs.current[section.id] = el;
+                        }}
+                        onClick={() => {
+                          if (isAccessible) {
+                            setCurrentSectionIndex(index);
+                          }
+                        }}
+                        disabled={!isAccessible}
+                        className={`${buttonClasses} ${markerColor} ${borderColor}`}
+                        title={
+                          !isAccessible
+                            ? accessibility.reason
+                            : `${section.title} - ${
+                                isVisited
+                                  ? `${completeness.progress}% complete`
+                                  : "Not visited"
+                              }`
+                        }
+                      >
+                        {statusIcon}
+                      </button>
+                      <span className="text-xs text-gray-500">{index + 1}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            
+
             {/* Navigation Buttons */}
             <div className="flex justify-between items-center">
               <button
-                onClick={() => setCurrentSectionIndex(Math.max(0, currentSectionIndex - 1))}
+                onClick={() =>
+                  setCurrentSectionIndex(Math.max(0, currentSectionIndex - 1))
+                }
                 disabled={currentSectionIndex === 0}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border"
               >
                 <Icons.ChevronLeft className="w-4 h-4" />
                 <span>Previous</span>
               </button>
-              
+
               <div className="text-center">
                 <div className="text-sm font-medium text-gray-900">
                   {filteredSections[currentSectionIndex]?.title}
                 </div>
                 <div className="text-xs text-gray-500">
                   {(() => {
-                    const currentSection = filteredSections[currentSectionIndex];
+                    const currentSection =
+                      filteredSections[currentSectionIndex];
                     const completeness = getSectionCompleteness(currentSection);
                     return `${completeness.progress}% complete`;
                   })()}
                 </div>
               </div>
-              
+
               <button
                 onClick={() => {
                   const nextIndex = currentSectionIndex + 1;
-                  if (nextIndex < filteredSections.length && getSectionAccessibility(nextIndex).accessible) {
+                  if (
+                    nextIndex < filteredSections.length &&
+                    getSectionAccessibility(nextIndex).accessible
+                  ) {
                     setCurrentSectionIndex(nextIndex);
                   }
                 }}
@@ -1557,16 +1935,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border"
                 title={(() => {
                   const nextIndex = currentSectionIndex + 1;
-                  if (nextIndex >= filteredSections.length) return "Last section";
+                  if (nextIndex >= filteredSections.length)
+                    return "Last section";
                   const accessibility = getSectionAccessibility(nextIndex);
-                  return accessibility.accessible ? "Go to next section" : accessibility.reason;
+                  return accessibility.accessible
+                    ? "Go to next section"
+                    : accessibility.reason;
                 })()}
               >
                 <span>Next</span>
                 <Icons.ChevronRight className="w-4 h-4" />
               </button>
             </div>
-            
+
             {/* Legend */}
             <div className="mt-4 pt-3 border-t border-gray-200">
               <div className="flex flex-wrap justify-center gap-4 text-xs">
@@ -1616,7 +1997,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           </button>
         </div>
       </div>
-      
+
       {/* Mock Data Configuration Modal */}
       <MockDataConfigModal
         isOpen={showMockDataModal}
@@ -1629,7 +2010,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[60vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Form Dev Tool</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Data Validation Check
+              </h2>
               <button
                 onClick={() => setShowFormDevTool(false)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
