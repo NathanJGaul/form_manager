@@ -149,6 +149,7 @@ export class TDLConverter {
       id: options.preserveIds ? guiSection.id : this.generateId('section'),
       title: guiSection.title,
       fields: this.convertFieldsFromGUI(guiSection.fields, options),
+      content: guiSection.content, // Copy content array for text display
       conditional: guiSection.conditional,
       naable: guiSection.naable
     };
@@ -232,6 +233,7 @@ export class TDLConverter {
       id: options.preserveIds ? programmaticSection.id : this.generateId('section'),
       title: programmaticSection.title,
       fields: this.convertFieldsToGUI(programmaticSection.fields, options, errors, warnings),
+      content: programmaticSection.content, // Copy content array for text display
       conditional: programmaticSection.conditional,
       naable: programmaticSection.naable
     };

@@ -89,6 +89,7 @@ const FormBuilder: React.FC<FormBuilderProps> = ({
       required: false,
       optionsText: "",
       defaultValueText: "",
+      content: "", // Initialize content for text fields
     };
 
     setSections(
@@ -239,6 +240,7 @@ const FormBuilder: React.FC<FormBuilderProps> = ({
                   <option value="number">Number Input</option>
                   <option value="date">Date Picker</option>
                   <option value="file">File Upload</option>
+                  <option value="text">Text (Instructions)</option>
                 </select>
               </div>
             </div>
@@ -261,11 +263,36 @@ const FormBuilder: React.FC<FormBuilderProps> = ({
               </div>
             ) : null}
 
-            {/* Default Value Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Default Value
-              </label>
+            {field.type === "text" ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Text Content
+                </label>
+                <textarea
+                  value={field.content || ""}
+                  onChange={(e) =>
+                    updateField(sectionId, field.id, {
+                      content: e.target.value,
+                    })
+                  }
+                  onKeyDown={handleTextareaKeyDown}
+                  placeholder="Enter the text/instructions to display"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ resize: "vertical" }}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  This text will be displayed as instructions or information for the user.
+                </p>
+              </div>
+            ) : null}
+
+            {/* Default Value Field - Hidden for text fields */}
+            {field.type !== "text" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Default Value
+                </label>
               {field.type === "checkbox" ? (
                 <div>
                   <textarea
@@ -350,7 +377,8 @@ const FormBuilder: React.FC<FormBuilderProps> = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               )}
-            </div>
+              </div>
+            )}
 
             {(field.type === "select" ||
               field.type === "radio" ||
@@ -457,21 +485,23 @@ const FormBuilder: React.FC<FormBuilderProps> = ({
               </div>
             )}
 
-            <div className="space-y-2">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={field.required}
-                  onChange={(e) =>
-                    updateField(sectionId, field.id, {
-                      required: e.target.checked,
-                    })
-                  }
-                  className="text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">Required field</span>
-              </label>
-            </div>
+            {field.type !== "text" && (
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={field.required}
+                    onChange={(e) =>
+                      updateField(sectionId, field.id, {
+                        required: e.target.checked,
+                      })
+                    }
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Required field</span>
+                </label>
+              </div>
+            )}
 
             {availableFields.length > 0 && (
               <div className="border-t pt-4">

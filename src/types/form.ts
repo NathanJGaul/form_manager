@@ -25,12 +25,14 @@ export interface FormField {
   };
   conditional?: ConditionalLogic;
   defaultValue?: FormFieldValue;
+  content?: string; // For text type fields
 }
 
 export interface FormSection {
   id: string;
   title: string;
   fields: FormField[];
+  content?: string[]; // Array of text content for display-only sections
   conditional?: ConditionalLogic;
   naable?: boolean;
 }

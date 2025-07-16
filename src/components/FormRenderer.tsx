@@ -1656,6 +1656,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                           {section.title}
                         </h2>
                       </Tooltip>
+                      {/* Render section content */}
+                      {section.content && section.content.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          {section.content.map((contentItem, index) => (
+                            <div
+                              key={index}
+                              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                            >
+                              {contentItem}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-6">
                       {allElements.map((element) => {
@@ -1748,6 +1761,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                           {currentSection.title}
                         </h2>
                       </Tooltip>
+                      {/* Render section content */}
+                      {currentSection.content && currentSection.content.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          {currentSection.content.map((contentItem, index) => (
+                            <div
+                              key={index}
+                              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                            >
+                              {contentItem}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-6">
                       {allElements.map((element) => {

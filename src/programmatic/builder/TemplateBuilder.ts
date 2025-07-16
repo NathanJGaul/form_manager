@@ -181,6 +181,25 @@ export class TemplateBuilder {
   }
 
   /**
+   * Add text content for display purposes only (does not create a form field)
+   */
+  text(content: string): TemplateBuilder {
+    if (!this.context.currentSection) {
+      throw new Error('Cannot add text content without a section. Call section() first.');
+    }
+
+    // Initialize content array if it doesn't exist
+    if (!this.context.currentSection.content) {
+      this.context.currentSection.content = [];
+    }
+
+    // Add the text content to the section's content array
+    this.context.currentSection.content.push(content);
+    
+    return this;
+  }
+
+  /**
    * Conditional execution (if/else if/else)
    */
   if(condition: string | Condition): ConditionalBuilder {
@@ -437,6 +456,14 @@ export class SectionBuilder {
   }
 
   /**
+   * Add text content to this section
+   */
+  text(content: string): SectionBuilder {
+    this.parent.text(content);
+    return this;
+  }
+
+  /**
    * Set section conditional logic
    */
   conditional(dependsOn: string, operator: 'equals' | 'contains' | 'not_equals', values: string[]): SectionBuilder {
@@ -620,6 +647,14 @@ export class FieldBuilder {
    */
   defaultValue(value: FormFieldValue): FieldBuilder {
     this.field.defaultValue = value;
+    return this;
+  }
+
+  /**
+   * Set content for text fields
+   */
+  withContent(content: string): FieldBuilder {
+    this.field.content = content;
     return this;
   }
 

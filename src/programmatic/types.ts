@@ -143,12 +143,14 @@ export interface ProgrammaticField {
   variables?: Record<string, unknown>;
   dynamic?: boolean;
   defaultValue?: FormFieldValue;
+  content?: string; // For text type fields
 }
 
 export interface ProgrammaticSection {
   id: string;
   title: string;
   fields: ProgrammaticField[];
+  content?: string[]; // Array of text content for display-only sections
   conditional?: ConditionalLogic;
   controlFlow?: ControlFlowConfig;
   // Additional programmatic properties

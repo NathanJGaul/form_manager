@@ -4,9 +4,11 @@ import { TDLConverter } from "../programmatic/tdl/converter";
 import { JCC2UserQuestionnaire } from "../programmatic/examples/JCC2UserQuestionnaire";
 import { WorkingComprehensiveTemplate } from "../programmatic/examples/WorkingComprehensiveTemplate";
 import { DefaultValueExample } from "../programmatic/examples/DefaultValueExample";
+import { ParagraphFieldExample } from "../programmatic/examples/ParagraphFieldExample";
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
 import { HorizontalGroupingDemo } from "../../templates/horizontal_grouping_demo";
 import { SectionConditionalsTestTemplate } from "../../templates/section_conditionals_test";
+import { JCC2DataCollectionFormV2 } from "../../templates/jcc2_data_collection_form_v2";
 import { TemplateBuilder } from "../programmatic/builder/TemplateBuilder";
 import * as ProgrammaticModules from "../programmatic";
 import { FormTemplate, FormField } from "../types/form";
@@ -95,6 +97,7 @@ export const ProgrammaticImportModal: React.FC<
               validation: field.validation,
               conditional: field.conditional,
               defaultValue: field.defaultValue,
+              content: field.content, // Support content field for text type
             })),
           })),
           createdAt: new Date(),
@@ -156,11 +159,17 @@ export const ProgrammaticImportModal: React.FC<
         case "defaultValues":
           programmaticTemplate = DefaultValueExample.create();
           break;
+        case "textFields":
+          programmaticTemplate = ParagraphFieldExample;
+          break;
         case "horizontalGrouping":
           programmaticTemplate = HorizontalGroupingDemo.create();
           break;
         case "sectionConditionals":
           programmaticTemplate = SectionConditionalsTestTemplate.create();
+          break;
+        case "jcc2v2":
+          programmaticTemplate = JCC2DataCollectionFormV2.create();
           break;
         default:
           throw new Error("Unknown example template");
@@ -562,6 +571,20 @@ export const ProgrammaticImportModal: React.FC<
                   </div>
                   <div className="border rounded-lg p-4 hover:border-blue-300 transition-colors">
                     <h3 className="font-medium text-gray-900 mb-2">
+                      JCC2 Data Collection Form v2
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Enhanced JCC2 form with text fields for better instructions and formatting.
+                    </p>
+                    <button
+                      onClick={() => handleExampleImport("jcc2v2")}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Import Template
+                    </button>
+                  </div>
+                  <div className="border rounded-lg p-4 hover:border-blue-300 transition-colors">
+                    <h3 className="font-medium text-gray-900 mb-2">
                       Comprehensive Event Registration
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
@@ -632,6 +655,22 @@ export const ProgrammaticImportModal: React.FC<
                     <button
                       onClick={() => handleExampleImport("defaultValues")}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Import Template
+                    </button>
+                  </div>
+
+                  <div className="border rounded-lg p-4 hover:border-indigo-300 transition-colors">
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      Text Fields Example
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Template demonstrating text fields for instructions
+                      and informational text within forms
+                    </p>
+                    <button
+                      onClick={() => handleExampleImport("textFields")}
+                      className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
                     >
                       Import Template
                     </button>
