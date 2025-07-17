@@ -6,7 +6,7 @@
 import { deflate, inflate } from 'fflate';
 import { compress, decompress } from 'lz-string';
 import DOMPurify from 'dompurify';
-import { crc32 } from 'crc-32';
+import * as CRC32 from 'crc-32';
 import { FormTemplate, FormInstance, FormSubmission } from '../types/form';
 import { ProgrammaticTemplate } from '../programmatic/types';
 
@@ -468,7 +468,7 @@ export class FormDataSharing {
    * Calculate CRC32 checksum
    */
   private calculateChecksum(data: string): number {
-    return crc32(data);
+    return CRC32.str(data);
   }
 
   /**
