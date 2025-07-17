@@ -20,12 +20,36 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
   const [csvFilename, setCsvFilename] = useState(`${templateName}_submission`);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
+  const [showFallback, setShowFallback] = useState(false);
 
   if (!isOpen || !formInstance) return null;
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const handleDownloadCSV = () => {
+    try {
+      const csvData = storageManager.exportInstanceToCSV(formInstance.id);
+      if (!csvData) {
+        setError("Failed to generate CSV data");
+        return;
+      }
+
+      const blob = new Blob([csvData], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${csvFilename}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert("CSV downloaded successfully! You can now attach it to your email manually.");
+    } catch (err) {
+      console.error("Error downloading CSV:", err);
+      setError("Failed to download CSV. Please try again.");
+    }
   };
 
   const handleSend = async () => {
@@ -70,14 +94,56 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
       
       const mailtoLink = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
       
-      // Open mailto link
-      window.location.href = mailtoLink;
+      console.log('Email link generated:', {
+        recipientEmail,
+        subject: decodeURIComponent(subject),
+        bodyLength: body.length,
+        fullLinkLength: mailtoLink.length
+      });
       
-      // Show success message
+      // Open mailto link using a temporary anchor element
+      const link = document.createElement('a');
+      link.href = mailtoLink;
+      link.target = '_blank'; // Try to open in new tab/window
+      
+      // Check if mailto URL is too long (some browsers have limits)
+      if (mailtoLink.length > 2000) {
+        // For long URLs, try alternative approach
+        const shortBody = encodeURIComponent(
+          `Please find the form submission data below.\n\n` +
+          `Form: ${templateName}\n` +
+          `Submitted: ${new Date().toLocaleString()}\n\n` +
+          `Note: The CSV data was too large for email. Please use the Export CSV button to download it separately.`
+        );
+        link.href = `mailto:${recipientEmail}?subject=${subject}&body=${shortBody}`;
+        
+        alert("CSV data is too large for email. Please use the Export CSV button to download the file separately, then attach it manually to your email.");
+      }
+      
+      // Try multiple methods to open the mailto link
+      console.log('Attempting to open email client...');
+      
+      // Method 1: Try clicking the link
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Method 2: If that doesn't work, try window.open as fallback
       setTimeout(() => {
-        alert("Email client opened. Please send the email to complete the process.");
-        onClose();
+        if (!document.hidden) { // Check if we're still on the same page
+          console.log('Trying fallback method with window.open...');
+          try {
+            window.open(mailtoLink, '_self');
+          } catch (e) {
+            console.error('Window.open failed:', e);
+          }
+        }
       }, 100);
+      
+      // Show success message with a longer delay
+      setTimeout(() => {
+        setShowFallback(true);
+      }, 500);
       
     } catch (err) {
       console.error("Error sending email:", err);
@@ -91,6 +157,7 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
     setRecipientEmail("");
     setCsvFilename(`${templateName}_submission`);
     setError("");
+    setShowFallback(false);
     onClose();
   };
 
@@ -180,6 +247,23 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
               Your email client will open with the form data. You may need to manually attach the CSV file depending on your email client.
             </p>
           </div>
+
+          {/* Fallback Option */}
+          {showFallback && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+              <p className="text-sm text-yellow-800 mb-2">
+                <Icons.AlertTriangle size={16} className="inline mr-1" />
+                If your email client didn't open, you can download the CSV file and attach it manually.
+              </p>
+              <button
+                onClick={handleDownloadCSV}
+                className="px-3 py-1 text-sm font-medium text-yellow-900 bg-yellow-200 rounded-md hover:bg-yellow-300 transition-colors flex items-center gap-1"
+              >
+                <Icons.Download size={14} />
+                Download CSV
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
