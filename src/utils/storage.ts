@@ -500,6 +500,124 @@ class StorageManager {
       .join("\n\n");
   }
 
+  /**
+   * Export a single form instance or submission to CSV format
+   * @param instanceOrSubmissionId - The ID of the form instance or submission to export
+   * @param preserveOriginalData - If true, preserves original data without applying conditional field nullification
+   * @returns CSV string with headers, schema row, and single data row
+   */
+  exportInstanceToCSV(instanceOrSubmissionId: string, preserveOriginalData: boolean = false): string {
+    // First try to find as a submission
+    const submission = this.getSubmissions().find(s => s.id === instanceOrSubmissionId);
+    
+    if (submission) {
+      // Found as submission, export it
+      const template = this.getTemplates().find(t => t.id === submission.templateId);
+      if (!template) return "";
+
+      const dataToExport = preserveOriginalData 
+        ? submission.data 
+        : updateConditionalFieldsAsNull(template.sections, submission.data);
+
+      const rowData = {
+        id: submission.id,
+        status: "Submitted",
+        progress: 100,
+        createdAt: submission.submittedAt.toISOString(),
+        updatedAt: submission.submittedAt.toISOString(),
+        lastSaved: submission.submittedAt.toISOString(),
+        ...dataToExport,
+      };
+
+      return this.formatSingleRowCSV(template, rowData);
+    }
+
+    // If not found as submission, try to find as instance
+    const instance = this.getInstances().find(i => i.id === instanceOrSubmissionId);
+    
+    if (instance) {
+      const template = this.getTemplates().find(t => t.id === instance.templateId);
+      if (!template) return "";
+
+      const dataToExport = preserveOriginalData 
+        ? instance.data 
+        : updateConditionalFieldsAsNull(template.sections, instance.data);
+
+      const rowData = {
+        id: instance.id,
+        status: instance.completed ? "Completed" : "In Progress",
+        progress: instance.progress,
+        createdAt: instance.createdAt.toISOString(),
+        updatedAt: instance.updatedAt.toISOString(),
+        lastSaved: instance.lastSaved.toISOString(),
+        ...dataToExport,
+      };
+
+      return this.formatSingleRowCSV(template, rowData);
+    }
+
+    // Not found as either submission or instance
+    return "";
+  }
+
+  /**
+   * Helper method to format a single row of data as CSV
+   * @param template - The form template
+   * @param rowData - The data to format
+   * @returns CSV string with headers, schema row, and single data row
+   */
+  private formatSingleRowCSV(template: FormTemplate, rowData: any): string {
+    // Generate headers and field mapping
+    const { headers } = this.generateFieldHeaders(template);
+
+    // Generate schema row
+    const schemaRow = this.generateSchemaRow(template, headers);
+
+    // Map data to new header structure
+    const mappedRow: Record<string, FormFieldValue | null> = {};
+    headers.forEach((header) => {
+      // Check if it's a system field
+      if (['id', 'status', 'progress', 'created_at', 'updated_at', 'last_saved'].includes(header)) {
+        const systemKey = header === 'created_at' ? 'createdAt' : 
+                         header === 'updated_at' ? 'updatedAt' : 
+                         header === 'last_saved' ? 'lastSaved' : header;
+        mappedRow[header] = rowData[systemKey] !== undefined ? rowData[systemKey] : "";
+      } else {
+        // For dot notation headers, extract field ID
+        const parts = header.split(".");
+        if (parts.length === 2) {
+          const fieldKey = parts[1]; // Extract field ID from section.field format
+          const value = rowData[fieldKey];
+          mappedRow[header] = value !== undefined ? value : "";
+        } else {
+          mappedRow[header] = "";
+        }
+      }
+    });
+
+    // Format CSV content with proper escaping
+    const formatCsvValue = (
+      value: FormFieldValue | null | undefined
+    ): string => {
+      if (value === null) return "null";
+      if (value === undefined) return "";
+      const stringValue = String(value);
+      return stringValue.includes(",") ||
+        stringValue.includes('"') ||
+        stringValue.includes("\n")
+        ? `"${stringValue.replace(/"/g, '""')}"`
+        : stringValue;
+    };
+
+    const csvContent = [
+      headers.map(formatCsvValue).join(","),
+      schemaRow.map(formatCsvValue).join(","),
+      headers.map((header) => formatCsvValue(mappedRow[header])).join(",")
+    ].join("\n");
+
+    return csvContent;
+  }
+
   // View mode methods
   getViewMode(): "continuous" | "section" {
     const stored = localStorage.getItem(this.VIEW_MODE_KEY);

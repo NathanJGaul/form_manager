@@ -154,6 +154,23 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const handleExportInstance = (instanceId: string) => {
+    const csvData = storageManager.exportInstanceToCSV(instanceId);
+    if (!csvData) {
+      alert("No data to export for this form instance");
+      return;
+    }
+
+    const instance = instances.find((i) => i.id === instanceId);
+    const blob = new Blob([csvData], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${instance?.templateName || "form"}_instance_export.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleExportTemplateToPdf = async (template: FormTemplate) => {
     try {
       const result = await exportTemplateToPdf(template);
@@ -583,12 +600,21 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
                           <button
                             onClick={() => handleEditInstance(instance)}
                             className="text-blue-600 hover:text-blue-900 transition-colors"
+                            title="Edit form instance"
                           >
                             <Icons.Edit className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => handleExportInstance(instance.id)}
+                            className="text-green-600 hover:text-green-900 transition-colors"
+                            title="Export to CSV"
+                          >
+                            <Icons.Download className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => handleDeleteInstance(instance.id)}
                             className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Delete form instance"
                           >
                             <Icons.Trash2 className="w-4 h-4" />
                           </button>

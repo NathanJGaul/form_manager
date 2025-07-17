@@ -807,6 +807,22 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
   };
 
+  const handleExportCSV = () => {
+    const csvData = storageManager.exportInstanceToCSV(currentInstance.id);
+    if (!csvData) {
+      alert("No data to export for this form");
+      return;
+    }
+
+    const blob = new Blob([csvData], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${template.name}_${currentInstance.completed ? 'completed' : 'draft'}_export.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const groupFields = (fields: FormField[]) => {
     const grouped: { [key: string]: GroupedField } = {};
     const ungrouped: FormFieldWithIndex[] = [];
@@ -1568,6 +1584,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               <span className="text-sm">
                 {viewMode === "continuous" ? "Sections" : "Continuous"}
               </span>
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center space-x-2 px-3 py-2 text-green-600 hover:bg-green-100 rounded-md transition-colors"
+              title="Export current form data to CSV"
+            >
+              <Icons.Download className="w-4 h-4" />
+              <span className="text-sm">Export CSV</span>
             </button>
             {onExit && (
               <button
