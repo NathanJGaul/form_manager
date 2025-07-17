@@ -209,10 +209,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   
   // Initialize form data with default values if no instance data exists
   const initializeFormData = () => {
+    console.log("🔍 FormRenderer Init Debug - Instance prop:", instance);
+    console.log("🔍 FormRenderer Init Debug - Instance data:", instance?.data);
+    console.log("🔍 FormRenderer Init Debug - Instance data keys:", Object.keys(instance?.data || {}));
+    
     if (instance?.data && Object.keys(instance.data).length > 0) {
+      console.log("🔍 FormRenderer Init Debug - Using instance data");
       return instance.data;
     }
 
+    console.log("🔍 FormRenderer Init Debug - No instance data, using defaults");
     const defaultData: FormData = {};
     template.sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -360,6 +366,27 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     currentInstance,
     onSave,
   ]);
+
+  // Re-initialize form data when instance prop changes (for imported forms)
+  useEffect(() => {
+    console.log("🔍 FormRenderer Instance Change Debug - Instance prop changed:", instance);
+    console.log("🔍 FormRenderer Instance Change Debug - Instance data:", instance?.data);
+    console.log("🔍 FormRenderer Instance Change Debug - Current formData:", formData);
+    
+    if (instance?.data && Object.keys(instance.data).length > 0) {
+      console.log("🔍 FormRenderer Instance Change Debug - Reinitializing form data with instance data");
+      setFormData(instance.data);
+      setHasUnsavedChanges(false); // Reset unsaved changes flag
+      
+      // Also reinitialize visited sections and naSections from instance
+      if (instance.visitedSections) {
+        setVisitedSections(new Set(instance.visitedSections));
+      }
+      if (instance.naSections) {
+        setNaSections(new Set(instance.naSections));
+      }
+    }
+  }, [instance]);
 
   // Sticky header functionality
   useEffect(() => {
@@ -829,7 +856,22 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
   const handleShareForm = async () => {
     try {
-      const shareString = await encodeForSharing(currentInstance);
+      // Create an updated instance with current form data before sharing
+      const updatedInstance: FormInstance = {
+        ...currentInstance,
+        data: formData,
+        progress,
+        visitedSections: Array.from(visitedSections),
+        naSections: Array.from(naSections),
+        updatedAt: new Date(),
+      };
+      
+      // Debug logging to understand what's being shared
+      console.log("🔍 Form Share Debug - Current form data:", formData);
+      console.log("🔍 Form Share Debug - Current instance data:", currentInstance.data);
+      console.log("🔍 Form Share Debug - Updated instance data:", updatedInstance.data);
+      
+      const shareString = await encodeForSharing(updatedInstance);
       await navigator.clipboard.writeText(shareString);
       showSuccess("Form shared successfully!", "Share string copied to clipboard");
     } catch (error) {

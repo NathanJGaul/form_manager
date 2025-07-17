@@ -109,6 +109,10 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
   };
 
   const handleEditInstance = (instance: FormInstance) => {
+    console.log("🔍 Dashboard Edit Instance Debug - Instance:", instance);
+    console.log("🔍 Dashboard Edit Instance Debug - Instance data:", instance.data);
+    console.log("🔍 Dashboard Edit Instance Debug - Instance data keys:", Object.keys(instance.data || {}));
+    
     const template = templates.find((t) => t.id === instance.templateId);
     if (template) {
       if (onNavigateToForm) {
@@ -247,7 +251,40 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
     if (type === 'template') {
       showSuccess("Template imported successfully!", "Template has been added to your dashboard");
     } else {
-      showSuccess("Form instance imported successfully!", "Form instance has been added to your dashboard");
+      const instance = data as FormInstance;
+      console.log('🐛 DEBUG: Imported instance successfully:', instance);
+      console.log('🐛 DEBUG: Instance data:', instance.data);
+      console.log('🐛 DEBUG: Instance progress:', instance.progress);
+      console.log('🐛 DEBUG: Instance templateId:', instance.templateId);
+      
+      // Auto-navigate to the imported instance
+      // First check current templates array
+      let template = templates.find(t => t.id === instance.templateId);
+      
+      if (!template) {
+        // Template might not be loaded yet, refresh and try again
+        console.log('🐛 DEBUG: Template not found in current array, refreshing...');
+        setTimeout(() => {
+          const updatedTemplates = storageManager.getTemplates();
+          template = updatedTemplates.find(t => t.id === instance.templateId);
+          if (template) {
+            console.log('🐛 DEBUG: Auto-navigating to imported instance with template after refresh:', template);
+            setSelectedTemplate(template);
+            setSelectedInstance(instance);
+            setCurrentView("form");
+          } else {
+            console.log('🐛 DEBUG: Template still not found after refresh');
+            showError("Template not found", "The template for this form instance is not available");
+          }
+        }, 100);
+      } else {
+        console.log('🐛 DEBUG: Auto-navigating to imported instance with template:', template);
+        setSelectedTemplate(template);
+        setSelectedInstance(instance);
+        setCurrentView("form");
+      }
+      
+      showSuccess("Form instance imported successfully!", "Form instance has been loaded for editing");
     }
   };
 

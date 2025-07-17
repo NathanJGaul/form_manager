@@ -36,6 +36,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
     try {
       // Decode the share string
       const decodedData = await decodeFromSharing(shareString.trim());
+      
+      // DEBUG: Log decoded data structure
+      console.log('🐛 DEBUG: Decoded data structure:', JSON.stringify(decodedData, null, 2));
 
       // Determine the type of data and process accordingly
       if (isFormTemplate(decodedData)) {
@@ -84,6 +87,14 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
         
       } else if (isFormInstance(decodedData)) {
         // Handle form instance import
+        console.log('🐛 DEBUG: Form instance detected. Type guard checks:');
+        console.log('  - Has templateId:', 'templateId' in decodedData);
+        console.log('  - Has data:', 'data' in decodedData);
+        console.log('  - Has progress:', 'progress' in decodedData);
+        console.log('  - Data object:', decodedData.data);
+        console.log('  - Data keys:', Object.keys(decodedData.data || {}));
+        console.log('  - Data values:', Object.values(decodedData.data || {}));
+        
         const instanceId = `imported-${Date.now()}`;
         const instance: FormInstance = {
           ...decodedData,
@@ -92,6 +103,8 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
           updatedAt: new Date()
         };
 
+        console.log('🐛 DEBUG: Created instance:', JSON.stringify(instance, null, 2));
+        
         storageManager.saveInstance(instance);
         showSuccess("Form instance imported successfully!", "Form instance has been added to your dashboard");
         onImportSuccess('instance', instance);
