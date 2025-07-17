@@ -6,6 +6,8 @@ import React, { useState, useEffect, Suspense, lazy } from "react";
 import { FormTemplate, FormInstance } from "../types/form";
 import { storageManager } from "../utils/storage";
 import { exportTemplateToPdf, downloadPdf } from "../utils/pdfExport";
+import { encodeForSharing } from "../utils/dataSharing";
+import { useToast } from "../contexts/ToastContext";
 import * as Icons from "lucide-react";
 import {
   ErrorBoundary,
@@ -37,6 +39,7 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
   onNavigateToForm,
 }) => {
   console.log("🚀 Dashboard component is rendering!");
+  const { showSuccess, showError } = useToast();
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
   const [instances, setInstances] = useState<FormInstance[]>([]);
   const [currentView, setCurrentView] = useState<
@@ -211,6 +214,28 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
     // Reload the data which will trigger default template loading
     loadData();
     console.log("✅ Templates refreshed!");
+  };
+
+  const handleShareTemplate = async (template: FormTemplate) => {
+    try {
+      const shareString = await encodeForSharing(template);
+      await navigator.clipboard.writeText(shareString);
+      showSuccess("Template shared successfully!", "Share string copied to clipboard");
+    } catch (error) {
+      console.error("Failed to share template:", error);
+      showError("Failed to share template", "Please try again or check console for details");
+    }
+  };
+
+  const handleShareInstance = async (instance: FormInstance) => {
+    try {
+      const shareString = await encodeForSharing(instance);
+      await navigator.clipboard.writeText(shareString);
+      showSuccess("Form instance shared successfully!", "Share string copied to clipboard");
+    } catch (error) {
+      console.error("Failed to share form instance:", error);
+      showError("Failed to share form instance", "Please try again or check console for details");
+    }
   };
 
   const filteredTemplates = templates.filter(
@@ -499,6 +524,13 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
 
                       <div className="flex space-x-2">
                         <button
+                          onClick={() => handleShareTemplate(template)}
+                          className="p-1 text-purple-500 hover:text-purple-700 transition-colors"
+                          title="Share template"
+                        >
+                          <Icons.Share className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleExportTemplate(template.id)}
                           className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
                           title="Export as CSV"
@@ -603,6 +635,13 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
                             title="Edit form instance"
                           >
                             <Icons.Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleShareInstance(instance)}
+                            className="text-purple-600 hover:text-purple-900 transition-colors"
+                            title="Share form instance"
+                          >
+                            <Icons.Share className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleExportInstance(instance.id)}

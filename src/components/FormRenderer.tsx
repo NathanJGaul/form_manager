@@ -19,6 +19,8 @@ import {
   validateField,
   updateConditionalFieldsAsNull,
 } from "../utils/formLogic";
+import { encodeForSharing } from "../utils/dataSharing";
+import { useToast } from "../contexts/ToastContext";
 import * as Icons from "lucide-react";
 import Tooltip from "./Tooltip";
 import { DevDropdownMenu } from "./DevDropdownMenu";
@@ -203,6 +205,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   onSubmit,
   onExit,
 }) => {
+  const { showSuccess, showError } = useToast();
+  
   // Initialize form data with default values if no instance data exists
   const initializeFormData = () => {
     if (instance?.data && Object.keys(instance.data).length > 0) {
@@ -821,6 +825,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     a.download = `${template.name}_${currentInstance.completed ? 'completed' : 'draft'}_export.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleShareForm = async () => {
+    try {
+      const shareString = await encodeForSharing(currentInstance);
+      await navigator.clipboard.writeText(shareString);
+      showSuccess("Form shared successfully!", "Share string copied to clipboard");
+    } catch (error) {
+      console.error("Failed to share form:", error);
+      showError("Failed to share form", "Please try again or check console for details");
+    }
   };
 
   const groupFields = (fields: FormField[]) => {
@@ -1592,6 +1607,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             >
               <Icons.Download className="w-4 h-4" />
               <span className="text-sm">Export CSV</span>
+            </button>
+            <button
+              onClick={handleShareForm}
+              className="flex items-center space-x-2 px-3 py-2 text-purple-600 hover:bg-purple-100 rounded-md transition-colors"
+              title="Share form instance"
+            >
+              <Icons.Share className="w-4 h-4" />
+              <span className="text-sm">Share Form</span>
             </button>
             {onExit && (
               <button
