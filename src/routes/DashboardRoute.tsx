@@ -18,6 +18,7 @@ import {
 // Lazy load heavy components for better performance
 const FormBuilder = lazy(() => import("../components/FormBuilder"));
 const FormRenderer = lazy(() => import("../components/FormRenderer"));
+const ImportModal = lazy(() => import("../components/ImportModal"));
 
 interface DashboardRouteProps {
   onNavigateToBuilder?: (template?: FormTemplate) => void;
@@ -55,6 +56,7 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
   const [filterStatus, setFilterStatus] = useState<
     "all" | "completed" | "in-progress"
   >("all");
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -238,6 +240,17 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
     }
   };
 
+  const handleImportSuccess = (type: 'template' | 'instance', data: FormTemplate | FormInstance) => {
+    // Refresh data to show imported items
+    loadData();
+    
+    if (type === 'template') {
+      showSuccess("Template imported successfully!", "Template has been added to your dashboard");
+    } else {
+      showSuccess("Form instance imported successfully!", "Form instance has been added to your dashboard");
+    }
+  };
+
   const filteredTemplates = templates.filter(
     (template) =>
       template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -320,6 +333,15 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
               >
                 <Icons.RefreshCw className="w-4 h-4" />
                 <span>Refresh Templates</span>
+              </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                title="Import form or template from share string"
+                data-testid="import-button"
+              >
+                <Icons.Upload className="w-4 h-4" />
+                <span>Import</span>
               </button>
               <button
                 onClick={handleExportAll}
@@ -667,6 +689,17 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
           )}
         </div>
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-4 rounded-lg">Loading...</div></div>}>
+          <ImportModal
+            isOpen={showImportModal}
+            onClose={() => setShowImportModal(false)}
+            onImportSuccess={handleImportSuccess}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
