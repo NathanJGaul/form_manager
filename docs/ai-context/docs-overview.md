@@ -34,6 +34,7 @@ This hierarchy allows AI agents to load targeted context efficiently while maint
 
 ### Features & Functionality
 - **[CSV Export System](/docs/CSV_EXPORT_IMPROVEMENTS.md)** - *Export functionality.* CSV generation, data formatting, and integrity validation
+- **[Email Export Feature](/docs/features/email-export.md)** - *Email integration.* Post-submission email prompt with CSV data sharing
 - **[Default Values](/docs/DEFAULT_VALUES_IMPLEMENTATION.md)** - *Default value patterns.* Implementation strategy and usage patterns
 - **[N/A Section Functionality](/docs/na-section-functionality.md)** - *Section management.* N/A status handling and user experience patterns
 - **[Developer Tools Suite](/docs/developer-tools-suite.md)** - *Development utilities.* Mock data generation, CSV integrity checking, and debugging tools

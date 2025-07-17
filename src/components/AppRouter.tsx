@@ -6,6 +6,7 @@ import React, { useState, Suspense, lazy } from 'react';
 import { FormTemplate, FormInstance } from '../types/form';
 import { storageManager } from '../utils/storage';
 import * as Icons from 'lucide-react';
+import EmailPromptModal from './EmailPromptModal';
 
 // Lazy load route components for better code splitting
 const DashboardRoute = lazy(() => import('../routes/DashboardRoute'));
@@ -29,6 +30,9 @@ type Route =
 
 export const AppRouter: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<Route>({ type: 'dashboard' });
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [submittedInstance, setSubmittedInstance] = useState<FormInstance | null>(null);
+  const [submittedTemplateName, setSubmittedTemplateName] = useState('');
 
   // Navigation handlers
   const navigateToDashboard = () => {
@@ -56,7 +60,21 @@ export const AppRouter: React.FC = () => {
   const handleSubmitInstance = (instance: FormInstance) => {
     const completedInstance = { ...instance, completed: true, submittedAt: new Date() };
     storageManager.saveInstance(completedInstance);
-    alert('Form submitted successfully!');
+    
+    // Get template name for the modal
+    const template = storageManager.getTemplates().find(t => t.id === instance.templateId);
+    const templateName = template?.name || instance.templateName || 'Form';
+    
+    // Show email modal instead of alert
+    setSubmittedInstance(completedInstance);
+    setSubmittedTemplateName(templateName);
+    setShowEmailModal(true);
+  };
+  
+  const handleEmailModalClose = () => {
+    setShowEmailModal(false);
+    setSubmittedInstance(null);
+    setSubmittedTemplateName('');
     navigateToDashboard();
   };
 
@@ -97,8 +115,17 @@ export const AppRouter: React.FC = () => {
   };
 
   return (
-    <Suspense fallback={<RouteLoadingSpinner />}>
-      {renderCurrentRoute()}
-    </Suspense>
+    <>
+      <Suspense fallback={<RouteLoadingSpinner />}>
+        {renderCurrentRoute()}
+      </Suspense>
+      
+      <EmailPromptModal
+        isOpen={showEmailModal}
+        onClose={handleEmailModalClose}
+        formInstance={submittedInstance}
+        templateName={submittedTemplateName}
+      />
+    </>
   );
 };
