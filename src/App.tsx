@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { AppRouter } from './components/AppRouter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
+import { Footer } from './components/Footer';
 import { storageManager } from './utils/storage';
 import { bundleAnalyzer, estimateBundleImpact } from './utils/bundleAnalyzer';
 import { FormTemplate } from './types/form';
@@ -204,8 +205,9 @@ function App() {
       }}
     >
       <ToastProvider>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 pb-12">
           <AppRouter />
+          <Footer />
         </div>
       </ToastProvider>
     </ErrorBoundary>
