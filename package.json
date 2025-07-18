@@ -16,7 +16,11 @@
     "test:debug": "playwright test --debug"
   },
   "dependencies": {
+    "crc-32": "^1.2.2",
+    "dompurify": "^3.2.6",
+    "fflate": "^0.8.2",
     "lucide-react": "^0.344.0",
+    "lz-string": "^1.5.0",
     "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -26,6 +30,7 @@
     "@faker-js/faker": "^9.9.0",
     "@playwright/mcp": "^0.0.29",
     "@playwright/test": "^1.53.2",
+    "@types/dompurify": "^3.0.5",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { FormTemplate, FormFieldValue } from '../../types/form';
+import { FormTemplate, FormFieldValue, FormInstance } from '../../types/form';
 import { MockDataGenerator, MockDataConfig } from '../../utils/mockDataGenerator';
 import { storageManager } from '../../utils/storage';
 import { validateCSVIntegrity, CSVIntegrityResult } from '../../utils/csvIntegrityChecker';
+import { encodeForSharing, decodeFromSharing } from '../../utils/dataSharing';
 import * as Icons from 'lucide-react';
 
 interface FormDevToolProps {
@@ -20,6 +21,7 @@ export const FormDevTool: React.FC<FormDevToolProps> = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastGeneratedData, setLastGeneratedData] = useState<Record<string, FormFieldValue> | null>(null);
+  const [exportImportValidated, setExportImportValidated] = useState(false);
 
   const handleFillMockData = async () => {
     setIsProcessing(true);
@@ -107,6 +109,73 @@ export const FormDevTool: React.FC<FormDevToolProps> = ({
     }
   };
 
+  const handleTestExportImport = async () => {
+    if (!lastGeneratedData) {
+      alert('Please generate mock data first before testing export/import.');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Create a temporary form instance with the mock data
+      const tempInstance: FormInstance = {
+        id: `temp-${Date.now()}`,
+        templateId: template.id,
+        templateName: template.name,
+        data: lastGeneratedData,
+        progress: 100,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        completed: false,
+        visitedSections: template.sections.map(s => s.id),
+        naSections: []
+      };
+
+      // Encode the form instance
+      const encodedString = await encodeForSharing(tempInstance);
+      console.log('Encoded string length:', encodedString.length);
+
+      // Decode it back
+      const decodedData = await decodeFromSharing(encodedString) as FormInstance;
+
+      // Compare the data
+      const originalDataStr = JSON.stringify(tempInstance.data, null, 2);
+      const decodedDataStr = JSON.stringify(decodedData.data, null, 2);
+      
+      const isIdentical = originalDataStr === decodedDataStr;
+      
+      if (isIdentical) {
+        setExportImportValidated(true);
+        alert('✅ Export/Import validation successful! The form data survived the encoding/decoding process intact.');
+      } else {
+        // Find differences
+        const differences: string[] = [];
+        for (const key in tempInstance.data) {
+          if (JSON.stringify(tempInstance.data[key]) !== JSON.stringify(decodedData.data[key])) {
+            differences.push(`Field "${key}": Original=${JSON.stringify(tempInstance.data[key])}, Decoded=${JSON.stringify(decodedData.data[key])}`);
+          }
+        }
+        
+        alert(`❌ Export/Import validation failed! Found ${differences.length} differences:\n\n${differences.slice(0, 5).join('\n')}\n${differences.length > 5 ? `\n... and ${differences.length - 5} more differences` : ''}`);
+      }
+
+      // Also log to console for debugging
+      console.log('Export/Import Test Results:', {
+        success: isIdentical,
+        originalDataSize: originalDataStr.length,
+        decodedDataSize: decodedDataStr.length,
+        encodedStringSize: encodedString.length,
+        compressionRatio: (encodedString.length / originalDataStr.length).toFixed(2)
+      });
+
+    } catch (error) {
+      console.error('Error during export/import test:', error);
+      alert(`Export/Import test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="text-sm font-medium text-gray-700 mb-2">
@@ -131,9 +200,23 @@ export const FormDevTool: React.FC<FormDevToolProps> = ({
         {isProcessing ? 'Processing...' : 'Export & Validate CSV'}
       </button>
 
+      <button
+        onClick={handleTestExportImport}
+        disabled={isProcessing || !lastGeneratedData}
+        className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 rounded-md border border-gray-200 disabled:opacity-50"
+      >
+        <Icons.Share2 size={16} />
+        {isProcessing ? 'Testing...' : 'Test Form Export/Import'}
+      </button>
+
       {lastGeneratedData && (
         <div className="text-xs text-gray-500 mt-2">
-          ✓ Mock data generated. Ready for export validation.
+          ✓ Mock data generated. Ready for validation tests.
+          {exportImportValidated && (
+            <div className="text-green-600 mt-1">
+              ✓ Export/Import validation passed
+            </div>
+          )}
         </div>
       )}
     </div>

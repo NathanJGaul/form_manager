@@ -6,6 +6,8 @@ import React, { useState, useEffect, Suspense, lazy } from "react";
 import { FormTemplate, FormInstance } from "../types/form";
 import { storageManager } from "../utils/storage";
 import { exportTemplateToPdf, downloadPdf } from "../utils/pdfExport";
+import { encodeForSharing } from "../utils/dataSharing";
+import { useToast } from "../contexts/ToastContext";
 import * as Icons from "lucide-react";
 import {
   ErrorBoundary,
@@ -16,6 +18,7 @@ import {
 // Lazy load heavy components for better performance
 const FormBuilder = lazy(() => import("../components/FormBuilder"));
 const FormRenderer = lazy(() => import("../components/FormRenderer"));
+const ImportModal = lazy(() => import("../components/ImportModal"));
 
 interface DashboardRouteProps {
   onNavigateToBuilder?: (template?: FormTemplate) => void;
@@ -37,6 +40,7 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
   onNavigateToForm,
 }) => {
   console.log("🚀 Dashboard component is rendering!");
+  const { showSuccess, showError } = useToast();
   const [templates, setTemplates] = useState<FormTemplate[]>([]);
   const [instances, setInstances] = useState<FormInstance[]>([]);
   const [currentView, setCurrentView] = useState<
@@ -52,6 +56,7 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
   const [filterStatus, setFilterStatus] = useState<
     "all" | "completed" | "in-progress"
   >("all");
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -104,6 +109,10 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
   };
 
   const handleEditInstance = (instance: FormInstance) => {
+    console.log("🔍 Dashboard Edit Instance Debug - Instance:", instance);
+    console.log("🔍 Dashboard Edit Instance Debug - Instance data:", instance.data);
+    console.log("🔍 Dashboard Edit Instance Debug - Instance data keys:", Object.keys(instance.data || {}));
+    
     const template = templates.find((t) => t.id === instance.templateId);
     if (template) {
       if (onNavigateToForm) {
@@ -113,6 +122,12 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
         setSelectedInstance(instance);
         setCurrentView("form");
       }
+    } else {
+      // Template not found - show error
+      showError(
+        "Template not found",
+        "The template for this form instance is not available. Please import the form template first."
+      );
     }
   };
 
@@ -213,6 +228,72 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
     console.log("✅ Templates refreshed!");
   };
 
+  const handleShareTemplate = async (template: FormTemplate) => {
+    try {
+      const shareString = await encodeForSharing(template);
+      await navigator.clipboard.writeText(shareString);
+      showSuccess("Template shared successfully!", "Share string copied to clipboard");
+    } catch (error) {
+      console.error("Failed to share template:", error);
+      showError("Failed to share template", "Please try again or check console for details");
+    }
+  };
+
+  const handleShareInstance = async (instance: FormInstance) => {
+    try {
+      const shareString = await encodeForSharing(instance);
+      await navigator.clipboard.writeText(shareString);
+      showSuccess("Form instance shared successfully!", "Share string copied to clipboard");
+    } catch (error) {
+      console.error("Failed to share form instance:", error);
+      showError("Failed to share form instance", "Please try again or check console for details");
+    }
+  };
+
+  const handleImportSuccess = (type: 'template' | 'instance', data: FormTemplate | FormInstance) => {
+    // Refresh data to show imported items
+    loadData();
+    
+    if (type === 'template') {
+      showSuccess("Template imported successfully!", "Template has been added to your dashboard");
+    } else {
+      const instance = data as FormInstance;
+      console.log('🐛 DEBUG: Imported instance successfully:', instance);
+      console.log('🐛 DEBUG: Instance data:', instance.data);
+      console.log('🐛 DEBUG: Instance progress:', instance.progress);
+      console.log('🐛 DEBUG: Instance templateId:', instance.templateId);
+      
+      // Auto-navigate to the imported instance
+      // First check current templates array
+      let template = templates.find(t => t.id === instance.templateId);
+      
+      if (!template) {
+        // Template might not be loaded yet, refresh and try again
+        console.log('🐛 DEBUG: Template not found in current array, refreshing...');
+        setTimeout(() => {
+          const updatedTemplates = storageManager.getTemplates();
+          template = updatedTemplates.find(t => t.id === instance.templateId);
+          if (template) {
+            console.log('🐛 DEBUG: Auto-navigating to imported instance with template after refresh:', template);
+            setSelectedTemplate(template);
+            setSelectedInstance(instance);
+            setCurrentView("form");
+          } else {
+            console.log('🐛 DEBUG: Template still not found after refresh');
+            showError("Template not found", "The template for this form instance is not available");
+          }
+        }, 100);
+      } else {
+        console.log('🐛 DEBUG: Auto-navigating to imported instance with template:', template);
+        setSelectedTemplate(template);
+        setSelectedInstance(instance);
+        setCurrentView("form");
+      }
+      
+      showSuccess("Form instance imported successfully!", "Form instance has been loaded for editing");
+    }
+  };
+
   const filteredTemplates = templates.filter(
     (template) =>
       template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -295,6 +376,15 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
               >
                 <Icons.RefreshCw className="w-4 h-4" />
                 <span>Refresh Templates</span>
+              </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                title="Import form or template from share string"
+                data-testid="import-button"
+              >
+                <Icons.Upload className="w-4 h-4" />
+                <span>Import</span>
               </button>
               <button
                 onClick={handleExportAll}
@@ -499,6 +589,13 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
 
                       <div className="flex space-x-2">
                         <button
+                          onClick={() => handleShareTemplate(template)}
+                          className="p-1 text-purple-500 hover:text-purple-700 transition-colors"
+                          title="Share template"
+                        >
+                          <Icons.Share className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleExportTemplate(template.id)}
                           className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
                           title="Export as CSV"
@@ -605,6 +702,13 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
                             <Icons.Edit className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => handleShareInstance(instance)}
+                            className="text-purple-600 hover:text-purple-900 transition-colors"
+                            title="Share form instance"
+                          >
+                            <Icons.Share className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => handleExportInstance(instance.id)}
                             className="text-green-600 hover:text-green-900 transition-colors"
                             title="Export to CSV"
@@ -628,6 +732,17 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
           )}
         </div>
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <Suspense fallback={<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"><div className="bg-white p-4 rounded-lg">Loading...</div></div>}>
+          <ImportModal
+            isOpen={showImportModal}
+            onClose={() => setShowImportModal(false)}
+            onImportSuccess={handleImportSuccess}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

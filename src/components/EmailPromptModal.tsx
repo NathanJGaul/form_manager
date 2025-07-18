@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import * as Icons from "lucide-react";
 import { FormInstance } from "../types/form";
-import { storageManager } from "../utils/storage";
+import { encodeForSharing } from "../utils/dataSharing";
 
 interface EmailPromptModalProps {
   isOpen: boolean;
@@ -17,10 +17,9 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
   templateName,
 }) => {
   const [recipientEmail, setRecipientEmail] = useState("");
-  const [csvFilename, setCsvFilename] = useState(`${templateName}_submission`);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
-  const [showFallback, setShowFallback] = useState(false);
+  const [shareString, setShareString] = useState("");
 
   if (!isOpen || !formInstance) return null;
 
@@ -29,26 +28,15 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
     return emailRegex.test(email);
   };
 
-  const handleDownloadCSV = () => {
+  const generateShareString = async () => {
     try {
-      const csvData = storageManager.exportInstanceToCSV(formInstance.id);
-      if (!csvData) {
-        setError("Failed to generate CSV data");
-        return;
-      }
-
-      const blob = new Blob([csvData], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${csvFilename}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      alert("CSV downloaded successfully! You can now attach it to your email manually.");
+      const shareStr = await encodeForSharing(formInstance);
+      setShareString(shareStr);
+      return shareStr;
     } catch (err) {
-      console.error("Error downloading CSV:", err);
-      setError("Failed to download CSV. Please try again.");
+      console.error("Error generating share string:", err);
+      setError("Failed to generate share string. Please try again.");
+      return null;
     }
   };
 
@@ -64,32 +52,30 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
       return;
     }
 
-    if (!csvFilename.trim()) {
-      setError("Please enter a filename");
-      return;
-    }
-
     setError("");
     setIsSending(true);
 
     try {
-      // Generate CSV data
-      const csvData = storageManager.exportInstanceToCSV(formInstance.id);
+      // Generate share string
+      const shareStr = await generateShareString();
       
-      if (!csvData) {
-        throw new Error("Failed to generate CSV data");
+      if (!shareStr) {
+        throw new Error("Failed to generate share string");
       }
 
-      // For now, we'll use a mailto link as a fallback
-      // This can be replaced with EmailJS or backend service later
+      // Create email with share string
       const subject = encodeURIComponent(`Form Submission: ${templateName}`);
       const body = encodeURIComponent(
-        `Please find the form submission data attached.\n\n` +
+        `Please find the form submission share string below.\n\n` +
         `Form: ${templateName}\n` +
         `Submitted: ${new Date().toLocaleString()}\n\n` +
-        `Note: Due to browser limitations, the CSV data is included below. ` +
-        `Please copy and save it as ${csvFilename}.csv\n\n` +
-        `--- CSV DATA START ---\n${csvData}\n--- CSV DATA END ---`
+        `Share String (copy and import this into Form Manager):\n\n` +
+        `${shareStr}\n\n` +
+        `To import this form:\n` +
+        `1. Open Form Manager\n` +
+        `2. Click the Import button in the dashboard\n` +
+        `3. Paste the share string above\n` +
+        `4. Click Import`
       );
       
       const mailtoLink = `mailto:${recipientEmail}?subject=${subject}&body=${body}`;
@@ -105,20 +91,6 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
       const link = document.createElement('a');
       link.href = mailtoLink;
       link.target = '_blank'; // Try to open in new tab/window
-      
-      // Check if mailto URL is too long (some browsers have limits)
-      if (mailtoLink.length > 2000) {
-        // For long URLs, try alternative approach
-        const shortBody = encodeURIComponent(
-          `Please find the form submission data below.\n\n` +
-          `Form: ${templateName}\n` +
-          `Submitted: ${new Date().toLocaleString()}\n\n` +
-          `Note: The CSV data was too large for email. Please use the Export CSV button to download it separately.`
-        );
-        link.href = `mailto:${recipientEmail}?subject=${subject}&body=${shortBody}`;
-        
-        alert("CSV data is too large for email. Please use the Export CSV button to download the file separately, then attach it manually to your email.");
-      }
       
       // Try multiple methods to open the mailto link
       console.log('Attempting to open email client...');
@@ -140,9 +112,9 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
         }
       }, 100);
       
-      // Show success message with a longer delay
+      // Show success message
       setTimeout(() => {
-        setShowFallback(true);
+        alert("Email client opened. The share string has been included in the email body.");
       }, 500);
       
     } catch (err) {
@@ -155,9 +127,8 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
 
   const handleClose = () => {
     setRecipientEmail("");
-    setCsvFilename(`${templateName}_submission`);
     setError("");
-    setShowFallback(false);
+    setShareString("");
     onClose();
   };
 
@@ -168,7 +139,7 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
             <Icons.Mail size={20} />
-            Email Form Data
+            Email Form Share String
           </h2>
           <button
             onClick={handleClose}
@@ -182,7 +153,7 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
         <div className="px-6 py-4 space-y-4">
           <div>
             <p className="text-gray-600 mb-4">
-              Would you like to email the form submission data? Enter the recipient's email address and filename below.
+              Would you like to email the form submission share string? Enter the recipient's email address below.
             </p>
           </div>
 
@@ -207,30 +178,6 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
             />
           </div>
 
-          {/* Filename Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              CSV Filename <span className="text-red-500">*</span>
-            </label>
-            <div className="flex items-center">
-              <input
-                type="text"
-                value={csvFilename}
-                onChange={(e) => {
-                  setCsvFilename(e.target.value);
-                  setError("");
-                }}
-                placeholder="form_submission"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="px-3 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-md text-gray-600">
-                .csv
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-gray-500">
-              The name for the CSV file attachment
-            </p>
-          </div>
 
           {/* Error Message */}
           {error && (
@@ -244,26 +191,10 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
           <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
             <p className="text-sm text-blue-800">
               <Icons.Info size={16} className="inline mr-1" />
-              Your email client will open with the form data. You may need to manually attach the CSV file depending on your email client.
+              Your email client will open with the form share string. The recipient can import this string to view the complete form submission.
             </p>
           </div>
 
-          {/* Fallback Option */}
-          {showFallback && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-              <p className="text-sm text-yellow-800 mb-2">
-                <Icons.AlertTriangle size={16} className="inline mr-1" />
-                If your email client didn't open, you can download the CSV file and attach it manually.
-              </p>
-              <button
-                onClick={handleDownloadCSV}
-                className="px-3 py-1 text-sm font-medium text-yellow-900 bg-yellow-200 rounded-md hover:bg-yellow-300 transition-colors flex items-center gap-1"
-              >
-                <Icons.Download size={14} />
-                Download CSV
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
@@ -276,7 +207,7 @@ const EmailPromptModal: React.FC<EmailPromptModalProps> = ({
           </button>
           <button
             onClick={handleSend}
-            disabled={isSending || !recipientEmail || !csvFilename}
+            disabled={isSending || !recipientEmail}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSending ? (

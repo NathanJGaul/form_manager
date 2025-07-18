@@ -1,14 +1,16 @@
 import { TemplateBuilder } from '../builder/TemplateBuilder';
 import { ProgrammaticTemplate } from '../types';
 
-export const ParagraphFieldExample: ProgrammaticTemplate = new TemplateBuilder()
-  .metadata({
-    name: 'Paragraph Field Example',
-    version: '1.0.0',
-    description: 'Demonstrates the use of text fields for instructions and information',
-    author: 'Form System',
-    tags: ['example', 'text', 'instructions'],
-  })
+export class ParagraphFieldExample {
+  static create(): ProgrammaticTemplate {
+    return new TemplateBuilder()
+      .metadata({
+        name: 'Paragraph Field Example',
+        version: '1.0.0',
+        description: 'Demonstrates the use of text fields for instructions and information',
+        author: 'Form System',
+        tags: ['example', 'text', 'instructions'],
+      })
   .section('personal-info', 'Personal Information')
     .field('text', 'Instructions')
       .id('instructions')
@@ -59,3 +61,5 @@ Your responses will be anonymized and aggregated with other participants' respon
       .end()
     .end()
   .build();
+  }
+}

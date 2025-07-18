@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import * as Icons from "lucide-react";
 import { TDLConverter } from "../programmatic/tdl/converter";
 import { JCC2UserQuestionnaire } from "../programmatic/examples/JCC2UserQuestionnaire";
+import { decodeFromSharing } from "../utils/dataSharing";
+import { useToast } from "../contexts/ToastContext";
 import { WorkingComprehensiveTemplate } from "../programmatic/examples/WorkingComprehensiveTemplate";
 import { DefaultValueExample } from "../programmatic/examples/DefaultValueExample";
 import { ParagraphFieldExample } from "../programmatic/examples/ParagraphFieldExample";
@@ -30,10 +32,12 @@ interface ConversionResult {
 export const ProgrammaticImportModal: React.FC<
   ProgrammaticImportModalProps
 > = ({ isOpen, onClose, onImport }) => {
-  const [activeTab, setActiveTab] = useState<"file" | "examples" | "code">(
+  const { showSuccess } = useToast();
+  const [activeTab, setActiveTab] = useState<"file" | "examples" | "code" | "share">(
     "examples"
   );
   const [codeInput, setCodeInput] = useState("");
+  const [shareInput, setShareInput] = useState("");
   const [conversionResult, setConversionResult] =
     useState<ConversionResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -160,7 +164,7 @@ export const ProgrammaticImportModal: React.FC<
           programmaticTemplate = DefaultValueExample.create();
           break;
         case "textFields":
-          programmaticTemplate = ParagraphFieldExample;
+          programmaticTemplate = ParagraphFieldExample.create();
           break;
         case "horizontalGrouping":
           programmaticTemplate = HorizontalGroupingDemo.create();
@@ -204,6 +208,34 @@ export const ProgrammaticImportModal: React.FC<
         success: false,
         errors: [
           `Failed to parse code: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+        ],
+      });
+    }
+  };
+
+  const handleShareImport = async () => {
+    try {
+      const decodedData = await decodeFromSharing(shareInput.trim());
+      
+      // Check if the decoded data is a FormTemplate (can be imported directly)
+      if (decodedData && typeof decodedData === 'object' && 'sections' in decodedData && 'createdAt' in decodedData) {
+        // This is already a FormTemplate, use it directly
+        setConversionResult({
+          success: true,
+          template: decodedData as FormTemplate,
+        });
+      } else {
+        // This might be a ProgrammaticTemplate, try to convert it
+        const result = convertProgrammaticTemplate(decodedData as ProgrammaticTemplate);
+        setConversionResult(result);
+      }
+    } catch (error) {
+      setConversionResult({
+        success: false,
+        errors: [
+          `Failed to decode share string: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
         ],
@@ -483,10 +515,12 @@ export const ProgrammaticImportModal: React.FC<
   const handleImport = () => {
     if (conversionResult?.success && conversionResult.template) {
       onImport(conversionResult.template);
+      showSuccess("Template imported successfully!", "Template has been added to your dashboard");
       onClose();
       // Reset state
       setConversionResult(null);
       setCodeInput("");
+      setShareInput("");
       setSelectedFile(null);
     }
   };
@@ -543,6 +577,17 @@ export const ProgrammaticImportModal: React.FC<
             >
               <Icons.Code className="w-4 h-4 inline mr-2" />
               Paste Code
+            </button>
+            <button
+              onClick={() => setActiveTab("share")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === "share"
+                  ? "bg-white text-blue-700 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <Icons.Share className="w-4 h-4 inline mr-2" />
+              Import from Share
             </button>
           </div>
 
@@ -818,6 +863,46 @@ export const ProgrammaticImportModal: React.FC<
                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     Convert Template
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "share" && (
+              <div className="space-y-4">
+                <p className="text-gray-600 mb-4">
+                  Import templates or form instances from share strings:
+                </p>
+
+                <div className="space-y-4">
+                  <div className="text-sm text-gray-600 mb-2">
+                    <p className="mb-2">Share strings contain:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Complete form templates with all sections and fields</li>
+                      <li>Form instances with filled data</li>
+                      <li>Compressed and encoded data for easy sharing</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Share String:
+                    </label>
+                    <textarea
+                      value={shareInput}
+                      onChange={(e) => setShareInput(e.target.value)}
+                      placeholder="Paste your share string here (starts with 'fm:')
+Example: fm:1:br:b64u:a1b2c3d4:eyJtZXRhZGF0YSI6eyJuYW1lIjoi..."
+                      className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md font-mono text-sm"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleShareImport}
+                    disabled={!shareInput.trim()}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Import from Share String
                   </button>
                 </div>
               </div>

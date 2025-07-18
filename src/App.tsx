@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { AppRouter } from './components/AppRouter';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastProvider } from './contexts/ToastContext';
 import { storageManager } from './utils/storage';
 import { bundleAnalyzer, estimateBundleImpact } from './utils/bundleAnalyzer';
 import { FormTemplate } from './types/form';
@@ -202,9 +203,11 @@ function App() {
         console.error('Application error:', error, errorInfo);
       }}
     >
-      <div className="min-h-screen bg-gray-50">
-        <AppRouter />
-      </div>
+      <ToastProvider>
+        <div className="min-h-screen bg-gray-50">
+          <AppRouter />
+        </div>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }

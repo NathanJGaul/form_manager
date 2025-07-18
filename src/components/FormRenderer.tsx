@@ -10,6 +10,7 @@ import {
   FormInstance,
   FormField,
   FormSection,
+  ExportableFormInstance,
 } from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
@@ -19,6 +20,8 @@ import {
   validateField,
   updateConditionalFieldsAsNull,
 } from "../utils/formLogic";
+import { encodeForSharing } from "../utils/dataSharing";
+import { useToast } from "../contexts/ToastContext";
 import * as Icons from "lucide-react";
 import Tooltip from "./Tooltip";
 import { DevDropdownMenu } from "./DevDropdownMenu";
@@ -27,6 +30,7 @@ import { MockDataGenerator } from "../utils/mockDataGenerator";
 import { FormDevTool } from "./dev-tools/FormDevTool";
 import { CSVIntegrityResults } from "./dev-tools/CSVIntegrityResults";
 import { CSVIntegrityResult } from "../utils/csvIntegrityChecker";
+import HamburgerDropdown from "./HamburgerDropdown";
 
 // Type definitions for form values
 type FormValue = string | number | boolean | string[] | File | null | undefined;
@@ -203,12 +207,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   onSubmit,
   onExit,
 }) => {
+  const { showSuccess, showError } = useToast();
+  
   // Initialize form data with default values if no instance data exists
   const initializeFormData = () => {
+    console.log("🔍 FormRenderer Init Debug - Instance prop:", instance);
+    console.log("🔍 FormRenderer Init Debug - Instance data:", instance?.data);
+    console.log("🔍 FormRenderer Init Debug - Instance data keys:", Object.keys(instance?.data || {}));
+    
     if (instance?.data && Object.keys(instance.data).length > 0) {
+      console.log("🔍 FormRenderer Init Debug - Using instance data");
       return instance.data;
     }
 
+    console.log("🔍 FormRenderer Init Debug - No instance data, using defaults");
     const defaultData: FormData = {};
     template.sections.forEach((section) => {
       section.fields.forEach((field) => {
@@ -356,6 +368,27 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     currentInstance,
     onSave,
   ]);
+
+  // Re-initialize form data when instance prop changes (for imported forms)
+  useEffect(() => {
+    console.log("🔍 FormRenderer Instance Change Debug - Instance prop changed:", instance);
+    console.log("🔍 FormRenderer Instance Change Debug - Instance data:", instance?.data);
+    console.log("🔍 FormRenderer Instance Change Debug - Current formData:", formData);
+    
+    if (instance?.data && Object.keys(instance.data).length > 0) {
+      console.log("🔍 FormRenderer Instance Change Debug - Reinitializing form data with instance data");
+      setFormData(instance.data);
+      setHasUnsavedChanges(false); // Reset unsaved changes flag
+      
+      // Also reinitialize visited sections and naSections from instance
+      if (instance.visitedSections) {
+        setVisitedSections(new Set(instance.visitedSections));
+      }
+      if (instance.naSections) {
+        setNaSections(new Set(instance.naSections));
+      }
+    }
+  }, [instance]);
 
   // Sticky header functionality
   useEffect(() => {
@@ -821,6 +854,39 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     a.download = `${template.name}_${currentInstance.completed ? 'completed' : 'draft'}_export.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleShareForm = async () => {
+    try {
+      // Create an updated instance with current form data before sharing
+      const updatedInstance: FormInstance = {
+        ...currentInstance,
+        data: formData,
+        progress,
+        visitedSections: Array.from(visitedSections),
+        naSections: Array.from(naSections),
+        updatedAt: new Date(),
+      };
+      
+      // Create an exportable instance that includes the template
+      const exportableInstance: ExportableFormInstance = {
+        ...updatedInstance,
+        embeddedTemplate: template,
+      };
+      
+      // Debug logging to understand what's being shared
+      console.log("🔍 Form Share Debug - Current form data:", formData);
+      console.log("🔍 Form Share Debug - Current instance data:", currentInstance.data);
+      console.log("🔍 Form Share Debug - Updated instance data:", updatedInstance.data);
+      console.log("🔍 Form Share Debug - Embedded template:", template);
+      
+      const shareString = await encodeForSharing(exportableInstance);
+      await navigator.clipboard.writeText(shareString);
+      showSuccess("Form shared successfully!", "Share string copied to clipboard");
+    } catch (error) {
+      console.error("Failed to share form:", error);
+      showError("Failed to share form", "Please try again or check console for details");
+    }
   };
 
   const groupFields = (fields: FormField[]) => {
@@ -1557,42 +1623,25 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               )}
             </div>
             <div className="text-sm text-gray-600">Progress: {progress}%</div>
-            {process.env.NODE_ENV === "development" && (
-              <DevDropdownMenu
-                onFillMockData={() => setShowMockDataModal(true)}
-                onFormDevTool={handleShowFormDevTool}
-              />
-            )}
-            <button
-              onClick={() =>
+            <HamburgerDropdown
+              showDevTools={process.env.NODE_ENV === "development"}
+              viewMode={viewMode}
+              onViewModeToggle={() =>
                 setViewMode(
                   viewMode === "continuous" ? "section" : "continuous"
                 )
               }
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-              title={
-                viewMode === "continuous"
-                  ? "Switch to section view"
-                  : "Switch to continuous view"
+              onExportCSV={handleExportCSV}
+              onShareForm={handleShareForm}
+              devDropdownComponent={
+                process.env.NODE_ENV === "development" ? (
+                  <DevDropdownMenu
+                    onFillMockData={() => setShowMockDataModal(true)}
+                    onFormDevTool={handleShowFormDevTool}
+                  />
+                ) : undefined
               }
-            >
-              {viewMode === "continuous" ? (
-                <Icons.List className="w-4 h-4" />
-              ) : (
-                <Icons.ScrollText className="w-4 h-4" />
-              )}
-              <span className="text-sm">
-                {viewMode === "continuous" ? "Sections" : "Continuous"}
-              </span>
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center space-x-2 px-3 py-2 text-green-600 hover:bg-green-100 rounded-md transition-colors"
-              title="Export current form data to CSV"
-            >
-              <Icons.Download className="w-4 h-4" />
-              <span className="text-sm">Export CSV</span>
-            </button>
+            />
             {onExit && (
               <button
                 onClick={handleExit}
