@@ -6,7 +6,7 @@
 import React, { useState } from "react";
 import * as Icons from "lucide-react";
 import { useToast } from "../contexts/ToastContext";
-import { FormTemplate, FormInstance } from "../types/form";
+import { FormTemplate, FormInstance, ExportableFormInstance } from "../types/form";
 import { ProgrammaticTemplate } from "../programmatic/types";
 import { decodeFromSharing, DataSharingError, ShareDataError } from "../utils/dataSharing";
 import { storageManager } from "../utils/storage";
@@ -91,13 +91,38 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
         console.log('  - Has templateId:', 'templateId' in decodedData);
         console.log('  - Has data:', 'data' in decodedData);
         console.log('  - Has progress:', 'progress' in decodedData);
+        console.log('  - Has embeddedTemplate:', 'embeddedTemplate' in decodedData);
         console.log('  - Data object:', decodedData.data);
         console.log('  - Data keys:', Object.keys(decodedData.data || {}));
         console.log('  - Data values:', Object.values(decodedData.data || {}));
         
+        // Check if this is an ExportableFormInstance with embedded template
+        if ('embeddedTemplate' in decodedData && decodedData.embeddedTemplate) {
+          console.log('🐛 DEBUG: Found embedded template in form instance');
+          const embeddedTemplate = decodedData.embeddedTemplate as FormTemplate;
+          
+          // Check if template already exists
+          const existingTemplate = storageManager.getTemplates().find(t => t.id === embeddedTemplate.id);
+          
+          if (!existingTemplate) {
+            // Save the embedded template
+            console.log('🐛 DEBUG: Saving embedded template:', embeddedTemplate.id);
+            storageManager.saveTemplate({
+              ...embeddedTemplate,
+              createdAt: new Date(embeddedTemplate.createdAt),
+              updatedAt: new Date(embeddedTemplate.updatedAt)
+            });
+            showSuccess("Template extracted from form instance", "The form template has been saved to your dashboard");
+          } else {
+            console.log('🐛 DEBUG: Template already exists:', embeddedTemplate.id);
+          }
+        }
+        
         const instanceId = `imported-${Date.now()}`;
+        // Create instance without embedded template (to avoid storage bloat)
+        const { embeddedTemplate: _, ...instanceData } = decodedData as ExportableFormInstance;
         const instance: FormInstance = {
-          ...decodedData,
+          ...instanceData,
           id: instanceId,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -164,22 +189,25 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImp
   };
 
   // Type guard functions
-  const isFormTemplate = (data: any): data is FormTemplate => {
-    return data && typeof data === 'object' && 
+  const isFormTemplate = (data: unknown): data is FormTemplate => {
+    return data !== null && 
+           typeof data === 'object' && 
            'sections' in data && 
            'createdAt' in data && 
            !('metadata' in data);
   };
 
-  const isProgrammaticTemplate = (data: any): data is ProgrammaticTemplate => {
-    return data && typeof data === 'object' && 
+  const isProgrammaticTemplate = (data: unknown): data is ProgrammaticTemplate => {
+    return data !== null && 
+           typeof data === 'object' && 
            'metadata' in data && 
            'sections' in data && 
            'schema' in data;
   };
 
-  const isFormInstance = (data: any): data is FormInstance => {
-    return data && typeof data === 'object' && 
+  const isFormInstance = (data: unknown): data is FormInstance => {
+    return data !== null && 
+           typeof data === 'object' && 
            'templateId' in data && 
            'data' in data && 
            'progress' in data;

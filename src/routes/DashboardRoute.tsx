@@ -122,6 +122,12 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
         setSelectedInstance(instance);
         setCurrentView("form");
       }
+    } else {
+      // Template not found - show error
+      showError(
+        "Template not found",
+        "The template for this form instance is not available. Please import the form template first."
+      );
     }
   };
 

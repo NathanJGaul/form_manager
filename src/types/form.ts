@@ -68,3 +68,7 @@ export interface FormSubmission {
   data: Record<string, FormFieldValue>;
   submittedAt: Date;
 }
+
+export interface ExportableFormInstance extends FormInstance {
+  embeddedTemplate?: FormTemplate;
+}

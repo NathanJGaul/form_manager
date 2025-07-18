@@ -10,6 +10,7 @@ import {
   FormInstance,
   FormField,
   FormSection,
+  ExportableFormInstance,
 } from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
@@ -867,12 +868,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         updatedAt: new Date(),
       };
       
+      // Create an exportable instance that includes the template
+      const exportableInstance: ExportableFormInstance = {
+        ...updatedInstance,
+        embeddedTemplate: template,
+      };
+      
       // Debug logging to understand what's being shared
       console.log("🔍 Form Share Debug - Current form data:", formData);
       console.log("🔍 Form Share Debug - Current instance data:", currentInstance.data);
       console.log("🔍 Form Share Debug - Updated instance data:", updatedInstance.data);
+      console.log("🔍 Form Share Debug - Embedded template:", template);
       
-      const shareString = await encodeForSharing(updatedInstance);
+      const shareString = await encodeForSharing(exportableInstance);
       await navigator.clipboard.writeText(shareString);
       showSuccess("Form shared successfully!", "Share string copied to clipboard");
     } catch (error) {
