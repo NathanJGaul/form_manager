@@ -164,7 +164,7 @@ export const ProgrammaticImportModal: React.FC<
           programmaticTemplate = DefaultValueExample.create();
           break;
         case "textFields":
-          programmaticTemplate = ParagraphFieldExample;
+          programmaticTemplate = ParagraphFieldExample.create();
           break;
         case "horizontalGrouping":
           programmaticTemplate = HorizontalGroupingDemo.create();
