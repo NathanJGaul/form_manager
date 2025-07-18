@@ -1,11 +1,13 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "form-manager",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite ",
+    "dev": "vite",
     "build": "vite build",
+    "build:production": "vite build --mode production",
+    "build:github-pages": "vite build --config vite.config.github.ts",
     "build:single": "vite build --config vite.config.inline.ts",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -13,7 +15,8 @@
     "test:jcc2": "playwright test tests/jcc2-dashboard-form-e2e-working.spec.ts",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
-    "test:debug": "playwright test --debug"
+    "test:debug": "playwright test --debug",
+    "build-info": "node scripts/get-build-info.js"
   },
   "dependencies": {
     "crc-32": "^1.2.2",

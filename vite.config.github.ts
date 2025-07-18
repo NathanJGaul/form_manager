@@ -4,9 +4,10 @@ import { getBuildInfo } from "./scripts/get-build-info.js";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const buildInfo = getBuildInfo(mode === 'production' ? 'production' : 'development');
+  const buildInfo = getBuildInfo('github-pages');
   
   return {
+    base: '/form_manager/',
     plugins: [react()],
     optimizeDeps: {
       exclude: ["lucide-react"],
