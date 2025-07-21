@@ -11,6 +11,7 @@ import {
   FormField,
   FormSection,
   ExportableFormInstance,
+  DataTableValue,
 } from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
@@ -25,6 +26,7 @@ import { useToast } from "../contexts/ToastContext";
 import * as Icons from "lucide-react";
 import Tooltip from "./Tooltip";
 import { DevDropdownMenu } from "./DevDropdownMenu";
+import DataTableField from "./fields/DataTableField";
 import { MockDataConfigModal } from "./MockDataConfigModal";
 import { MockDataGenerator } from "../utils/mockDataGenerator";
 import { FormDevTool } from "./dev-tools/FormDevTool";
@@ -1592,6 +1594,18 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
           </Tooltip>
+        );
+
+      case "datatable":
+        return (
+          <DataTableField
+            key={field.id}
+            field={field}
+            value={value as DataTableValue}
+            onChange={(newValue) => handleFieldChange(field.id, newValue, sectionId)}
+            error={error}
+            disabled={isNaSection}
+          />
         );
 
       default:

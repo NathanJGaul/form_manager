@@ -2,7 +2,7 @@ import { TemplateBuilder } from "../builder/TemplateBuilder";
 import { ProgrammaticTemplate } from "../types";
 import { JCC2UserQuestionnaireV3 } from "../../../templates/jcc2_questionnaire_v3";
 import { JCC2UserQuestionnaireV4 } from "../../../templates/jcc2_questionnaire_v4";
-import { JCC2DataCollectionFormV2 } from "../../../templates/jcc2_data_collection_form_v2";
+import { JCC2DataCollectionFormV3 } from "../../../templates/jcc2_data_collection_form_v3";
 
 /**
  * Library of common template patterns and pre-built templates
@@ -231,7 +231,7 @@ export class CommonTemplates {
    * Create JCC2 Data Collection and Interview Form template
    */
   static createJCC2DataCollectionForm(): ProgrammaticTemplate {
-    return JCC2DataCollectionFormV2.create();
+    return JCC2DataCollectionFormV3.create();
   }
 
   /**

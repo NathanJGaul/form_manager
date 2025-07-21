@@ -4,6 +4,7 @@ import {
   FormSubmission,
   FormField,
   FormFieldValue,
+  DataTableValue,
 } from "../types/form";
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
 import { TDLConverter } from "../programmatic/tdl/converter";
@@ -382,6 +383,20 @@ class StorageManager {
       if (field.conditional) {
         schemaParts.push(`depends_on:${field.conditional.dependsOn}`);
       }
+      
+      // DataTable specific schema
+      if (field.type === 'datatable') {
+        if (field.columns) {
+          schemaParts.push(`columns:${field.columns.length}`);
+          // Include column types
+          const columnTypes = field.columns.map(col => `${col.id}:${col.type}`).join('|');
+          schemaParts.push(`column_types:${columnTypes}`);
+        }
+        if (field.minRows !== undefined) schemaParts.push(`minRows:${field.minRows}`);
+        if (field.maxRows !== undefined) schemaParts.push(`maxRows:${field.maxRows}`);
+        if (field.allowAddRows !== undefined) schemaParts.push(`allowAddRows:${field.allowAddRows}`);
+        if (field.allowDeleteRows !== undefined) schemaParts.push(`allowDeleteRows:${field.allowDeleteRows}`);
+      }
 
       schemaRow.push(schemaParts.join("|"));
     });
@@ -468,6 +483,22 @@ class StorageManager {
     ): string => {
       if (value === null) return "null";
       if (value === undefined) return "";
+      
+      // Handle DataTable values
+      if (typeof value === 'object' && 'columns' in value && 'rows' in value) {
+        const dataTableValue = value as DataTableValue;
+        // Serialize DataTable as JSON for CSV export
+        // This preserves the complete structure and can be parsed back
+        const jsonString = JSON.stringify(dataTableValue);
+        // Escape quotes for CSV
+        return `"${jsonString.replace(/"/g, '""')}"`;
+      }
+      
+      // Handle arrays
+      if (Array.isArray(value)) {
+        return value.join('; '); // Use semicolon as array delimiter
+      }
+      
       const stringValue = String(value);
       return stringValue.includes(",") ||
         stringValue.includes('"') ||
@@ -601,6 +632,22 @@ class StorageManager {
     ): string => {
       if (value === null) return "null";
       if (value === undefined) return "";
+      
+      // Handle DataTable values
+      if (typeof value === 'object' && 'columns' in value && 'rows' in value) {
+        const dataTableValue = value as DataTableValue;
+        // Serialize DataTable as JSON for CSV export
+        // This preserves the complete structure and can be parsed back
+        const jsonString = JSON.stringify(dataTableValue);
+        // Escape quotes for CSV
+        return `"${jsonString.replace(/"/g, '""')}"`;
+      }
+      
+      // Handle arrays
+      if (Array.isArray(value)) {
+        return value.join('; '); // Use semicolon as array delimiter
+      }
+      
       const stringValue = String(value);
       return stringValue.includes(",") ||
         stringValue.includes('"') ||

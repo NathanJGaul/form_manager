@@ -1,5 +1,5 @@
 // Core types for the Programmatic Template System
-import { FormFieldValue } from '../types/form';
+import { FormFieldValue, DataTableColumn } from '../types/form';
 import { ConditionalLogic } from '../types/conditional';
 export interface TemplateMetadata {
   name: string;
@@ -25,6 +25,8 @@ export interface ValidationRules {
   maxLength?: number;
   pattern?: string;
   custom?: (value: unknown) => boolean | string;
+  minRows?: number; // For datatable
+  maxRows?: number; // For datatable
 }
 
 export interface StylingConfig {
@@ -124,7 +126,7 @@ export interface ControlFlowConfig {
 // Extended field and section types with control flow
 export interface ProgrammaticField {
   id: string;
-  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'email' | 'tel' | 'range';
+  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'date' | 'file' | 'email' | 'tel' | 'range' | 'datatable';
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -144,6 +146,13 @@ export interface ProgrammaticField {
   dynamic?: boolean;
   defaultValue?: FormFieldValue;
   content?: string; // For text type fields
+  
+  // DataTable specific properties
+  columns?: DataTableColumn[]; // Column definitions for datatable
+  allowAddRows?: boolean; // Whether users can add new rows (default: true)
+  allowDeleteRows?: boolean; // Whether users can delete rows (default: true)
+  minRows?: number; // Minimum number of rows required
+  maxRows?: number; // Maximum number of rows allowed
 }
 
 export interface ProgrammaticSection {
