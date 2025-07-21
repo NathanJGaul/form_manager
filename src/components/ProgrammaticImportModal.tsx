@@ -85,6 +85,9 @@ export const ProgrammaticImportModal: React.FC<
           id: crypto.randomUUID(),
           name: programmaticTemplate.metadata.name,
           description: programmaticTemplate.metadata.description || "",
+          version: programmaticTemplate.metadata.version || "1.0.0",
+          author: programmaticTemplate.metadata.author,
+          tags: programmaticTemplate.metadata.tags,
           sections: conversionResult.result.sections.map((section) => ({
             id: section.id,
             title: section.title,

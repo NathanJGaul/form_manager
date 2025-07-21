@@ -136,8 +136,8 @@ export class JCC2DataCollectionFormV3 {
 
     // Header Section - Test Participant Information
     builder
-      .section("Test Participant Information")
-      .id("test_participant_info")
+      .section("Basic Info")
+      .id("basic_info")
       .field("text", "Test Participant Rank/Full Name")
       .id("participant_name")
       .required()
@@ -149,15 +149,29 @@ export class JCC2DataCollectionFormV3 {
 
     // Header Section - Test Team Member Information
     builder
-      .section("Test Team Member Information")
-      .id("test_team_info")
-      .field("text", "Event/Date/Time")
-      .id("event_datetime")
+      // .section("Test Team Member Information")
+      // .id("test_team_info")
+      .field("date", "Event/Date/Time")
+      .id("date")
       .required()
       .end()
-      .field("text", "Tester Team Member")
+      // .field("text", "Tester Team Member")
+      .field("select", "Test Team Member")
       .id("tester_name")
+      .options([
+        "Andres Lopez",
+        "Michelle Crawford",
+        "Walter Roof",
+        "Sonia Venegas",
+        "Lauren Bobee",
+        "Nathan Gaul",
+        "Other",
+      ])
       .required()
+      .end()
+      .field("text", "Other Test Team Member")
+      .id("tester_name_other")
+      .conditional("tester_name", "equals", ["Other"])
       .end();
 
     // Applications Used Section
@@ -165,133 +179,90 @@ export class JCC2DataCollectionFormV3 {
       .section("Applications Used by Test Participant")
       .id("applications_used");
 
-    // Add instructional note using text field
-    builder.text(
-      "*Note: The Test Team designed the following scenarios to be general and broadly applicable across the diverse range of JCC2 applications and user roles. We understand that JCC2 is a versatile suite, and the goal is to assess its core capabilities and workflows. If the scenarios presented do not align exactly with your experience and role, attempt to adapt the scenario to fit your work role and day-to-day use of the JCC2 applications, focusing on the underlying functionalities and data integration capabilities of JCC2 rather than specific task-oriented procedures you might typically employ.*"
-    );
-
     jcc2Applications.forEach((app) => {
       const appId = toId(app.name);
       builder
-        .field("checkbox", `${app.name}`)
-        .id(`app_${appId}`)
+        .field("radio", `${app.name}`)
+        .id(`exp_app_${appId}`)
         .multiple()
         .options(["Yes", "No"])
-        .defaultValue(["No"])
+        .defaultValue("No")
         .layout("horizontal")
         .grouping(true, "applications_table")
         .end();
     });
 
-    // All Applications checkbox
-    builder
-      .field("checkbox", "All Applications")
-      .id("app_all_applications")
-      .multiple()
-      .options(["Yes", "No"])
-      .defaultValue(["No"])
-      .layout("horizontal")
-      .grouping(true, "applications_table")
-      .end();
-
-    // Applicable Pages checklist
-    builder.section("Applicable Pages").id("applicable_pages");
-
-    // Create checkboxes for pages 1-40
-    for (let i = 1; i <= 40; i++) {
-      builder
-        .field("checkbox", `Page ${i}`)
-        .id(`page_${i}`)
-        .multiple()
-        .options(["Selected"])
-        .layout("horizontal")
-        .grouping(true, `pages_group_${Math.ceil(i / 10)}`)
-        .end();
-    }
-
     // MOP 1.1.1: Integrate intelligence and operational data
     builder
       .section("MOP 1.1.1: Integrate intelligence and operational data")
       .id("mop_1_1_1")
-      .field("checkbox", "Aligns to Test Participant's Role and Duties")
-      .id("mop_1_1_1_aligns")
-      .multiple()
-      .options(["Yes", "No"])
-      .layout("horizontal")
-      .end();
+      .naable();
 
-    builder.text(
-      "**JCC2 task:** Data available to the end user is adequate for decision making and analysis."
-    );
-
-    builder
-      .field("text", "")
-      .id("mop_1_1_1_apps")
-      .withContent(
-        "**Applicable application(s):** Unity (search), Threat Hub (threat database integrated with Unity), Codex (single screen threat profile), and Crucible (threat prioritization)."
-      )
-      .end();
-
-    builder
-      .field("text", "")
-      .id("mop_1_1_1_scenario")
-      .withContent(
-        "**Example scenario:** Analyzing a Reported Service Disruption\n\nA service disruption has been reported affecting a critical DoD network. The disruption is impacting user access to a key mission-essential application. Your task is to use JCC2 to:\n\n1. Gather comprehensive data related to a real-world reported service disruption.\n2. Assess the potential impact of the service disruption.\n3. Prioritize investigative efforts based on the assessed impact."
-      )
-      .end();
+    // builder.text(
+    //   "**JCC2 task:** Data available to the end user is adequate for decision making and analysis."
+    // );
 
     // MOP 1.1.1 Observation runs - Using DataTable
     builder
       .field("datatable", "MOP 1.1.1 Observation Runs")
-      .id("mop_1_1_1_runs")
+      .id("data")
       .columns([
         {
           id: "run",
           label: "Run",
           type: "number",
           required: true,
-          validation: { min: 1 }
+          validation: { min: 1 },
         },
         {
           id: "application_used",
           label: "Application Used",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "data_gathering_supported",
           label: "Data Gathering Supported",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "impact_assessment_supported",
           label: "Impact Assessment Supported",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "prioritization_supported",
           label: "Prioritization Supported",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "data_sufficiency",
           label: "Data Sufficiency",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
-        }
+          options: ["Yes", "No", "NA"],
+        },
       ])
       .minRows(1)
       .maxRows(10)
       .defaultValue({
         columns: [],
-        rows: [{ run: "1", application_used: "", data_gathering_supported: "", impact_assessment_supported: "", prioritization_supported: "", data_sufficiency: "" }]
+        rows: [
+          {
+            run: "1",
+            application_used: "",
+            data_gathering_supported: "",
+            impact_assessment_supported: "",
+            prioritization_supported: "",
+            data_sufficiency: "",
+          },
+        ],
       })
       .end();
 
@@ -340,41 +311,49 @@ export class JCC2DataCollectionFormV3 {
           label: "Run",
           type: "number",
           required: true,
-          validation: { min: 1 }
+          validation: { min: 1 },
         },
         {
           id: "application_used",
           label: "Application Used",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "tagging_execution",
           label: "Tagging Execution",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "cross_application_correlation",
           label: "Cross-Application Correlation",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "tag_consistency",
           label: "Tag Consistency",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
-        }
+          options: ["Yes", "No", "NA"],
+        },
       ])
       .minRows(1)
       .maxRows(10)
       .defaultValue({
         columns: [],
-        rows: [{ run: "1", application_used: "", tagging_execution: "", cross_application_correlation: "", tag_consistency: "" }]
+        rows: [
+          {
+            run: "1",
+            application_used: "",
+            tagging_execution: "",
+            cross_application_correlation: "",
+            tag_consistency: "",
+          },
+        ],
       })
       .end();
 
@@ -415,48 +394,57 @@ export class JCC2DataCollectionFormV3 {
           label: "Run",
           type: "number",
           required: true,
-          validation: { min: 1 }
+          validation: { min: 1 },
         },
         {
           id: "application_used",
           label: "Application Used",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "status_change_visibility",
           label: "Status Change Visibility",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "detailed_information_access",
           label: "Detailed Information Access",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "asi_incident_correlation",
           label: "ASI/Incident Correlation",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "event_creation_capability",
           label: "Event Creation Capability",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
-        }
+          options: ["Yes", "No", "NA"],
+        },
       ])
       .minRows(1)
       .maxRows(10)
       .defaultValue({
         columns: [],
-        rows: [{ run: "1", application_used: "", status_change_visibility: "", detailed_information_access: "", asi_incident_correlation: "", event_creation_capability: "" }]
+        rows: [
+          {
+            run: "1",
+            application_used: "",
+            status_change_visibility: "",
+            detailed_information_access: "",
+            asi_incident_correlation: "",
+            event_creation_capability: "",
+          },
+        ],
       })
       .end();
 
@@ -497,48 +485,57 @@ export class JCC2DataCollectionFormV3 {
           label: "Run #",
           type: "number",
           required: true,
-          validation: { min: 1 }
+          validation: { min: 1 },
         },
         {
           id: "application_used",
           label: "Application Used",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "report_created",
           label: "Report Created",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "useful",
           label: "Useful",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "accurate",
           label: "Accurate",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
+          options: ["Yes", "No", "NA"],
         },
         {
           id: "exportable",
           label: "Exportable",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
-        }
+          options: ["Yes", "No", "NA"],
+        },
       ])
       .minRows(1)
       .maxRows(10)
       .defaultValue({
         columns: [],
-        rows: [{ run: "1", application_used: "", report_created: "", useful: "", accurate: "", exportable: "" }]
+        rows: [
+          {
+            run: "1",
+            application_used: "",
+            report_created: "",
+            useful: "",
+            accurate: "",
+            exportable: "",
+          },
+        ],
       })
       .end();
 
@@ -581,45 +578,54 @@ export class JCC2DataCollectionFormV3 {
           label: "Run #",
           type: "number",
           required: true,
-          validation: { min: 1 }
+          validation: { min: 1 },
         },
         {
           id: "application_used",
           label: "Application Used",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "data_origin",
           label: "Data Origin",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "data_destination",
           label: "Data Destination",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "reason",
           label: "Reason",
           type: "text",
-          required: true
+          required: true,
         },
         {
           id: "successful",
           label: "Successful",
           type: "radio",
           required: true,
-          options: ["Yes", "No", "NA"]
-        }
+          options: ["Yes", "No", "NA"],
+        },
       ])
       .minRows(1)
       .maxRows(10)
       .defaultValue({
         columns: [],
-        rows: [{ run: "1", application_used: "", data_origin: "", data_destination: "", reason: "", successful: "" }]
+        rows: [
+          {
+            run: "1",
+            application_used: "",
+            data_origin: "",
+            data_destination: "",
+            reason: "",
+            successful: "",
+          },
+        ],
       })
       .end();
 
@@ -634,11 +640,11 @@ export class JCC2DataCollectionFormV3 {
       )
       .text(
         "**Benefits of DataTable Implementation:**\n" +
-        "• Reduced form complexity - from hundreds of individual fields to organized tables\n" +
-        "• Better matches the visual layout shown in the PDF screenshots\n" +
-        "• Dynamic row addition - users can add runs as needed\n" +
-        "• Improved CSV export - data is properly structured in tabular format\n" +
-        "• Enhanced user experience - familiar table interface for data entry"
+          "• Reduced form complexity - from hundreds of individual fields to organized tables\n" +
+          "• Better matches the visual layout shown in the PDF screenshots\n" +
+          "• Dynamic row addition - users can add runs as needed\n" +
+          "• Improved CSV export - data is properly structured in tabular format\n" +
+          "• Enhanced user experience - familiar table interface for data entry"
       );
 
     // Test Participant Interview Section (keeping original format)

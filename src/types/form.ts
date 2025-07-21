@@ -79,12 +79,17 @@ export interface FormTemplate {
   sections: FormSection[];
   createdAt: Date;
   updatedAt: Date;
+  // Version tracking
+  version?: string;
+  author?: string;
+  tags?: string[];
 }
 
 export interface FormInstance {
   id: string;
   templateId: string;
   templateName: string;
+  templateVersion?: string; // Version of template used when creating instance
   data: Record<string, FormFieldValue>;
   progress: number;
   completed: boolean;
@@ -100,6 +105,7 @@ export interface FormSubmission {
   formInstanceId: string;
   templateId: string;
   templateName: string;
+  templateVersion?: string; // Version of template used when submitting
   data: Record<string, FormFieldValue>;
   submittedAt: Date;
 }

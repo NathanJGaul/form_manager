@@ -47,6 +47,97 @@ class StorageManager {
   private readonly SUBMISSIONS_KEY = "form_submissions";
   private readonly DEFAULT_TEMPLATES_LOADED_KEY = "default_templates_loaded";
   private readonly VIEW_MODE_KEY = "form_view_mode";
+  private readonly MIGRATION_VERSION_KEY = "storage_migration_version";
+  private readonly CURRENT_MIGRATION_VERSION = 1;
+
+  constructor() {
+    this.runMigrations();
+  }
+
+  private runMigrations(): void {
+    const currentVersion = this.getMigrationVersion();
+    
+    if (currentVersion < 1) {
+      console.log("🔄 Running migration to v1: Adding template versioning...");
+      this.migrateToV1();
+    }
+  }
+
+  private getMigrationVersion(): number {
+    const version = localStorage.getItem(this.MIGRATION_VERSION_KEY);
+    return version ? parseInt(version, 10) : 0;
+  }
+
+  private setMigrationVersion(version: number): void {
+    localStorage.setItem(this.MIGRATION_VERSION_KEY, version.toString());
+  }
+
+  private migrateToV1(): void {
+    try {
+      // Migrate templates
+      const templatesData = localStorage.getItem(this.TEMPLATES_KEY);
+      if (templatesData) {
+        const templates = JSON.parse(templatesData);
+        const migratedTemplates = templates.map((template: any) => {
+          if (!template.version) {
+            // Detect version from template name if possible
+            const versionMatch = template.name.match(/[Vv](\d+)/);
+            const version = versionMatch ? `${versionMatch[1]}.0.0` : "1.0.0";
+            
+            return {
+              ...template,
+              version,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return template;
+        });
+        localStorage.setItem(this.TEMPLATES_KEY, JSON.stringify(migratedTemplates));
+      }
+
+      // Migrate instances
+      const instancesData = localStorage.getItem(this.INSTANCES_KEY);
+      if (instancesData) {
+        const instances = JSON.parse(instancesData);
+        const migratedInstances = instances.map((instance: any) => {
+          if (!instance.templateVersion) {
+            // Try to find the template version
+            const templatesData = localStorage.getItem(this.TEMPLATES_KEY);
+            const templates = templatesData ? JSON.parse(templatesData) : [];
+            const template = templates.find((t: any) => t.id === instance.templateId);
+            
+            return {
+              ...instance,
+              templateVersion: template?.version || "1.0.0"
+            };
+          }
+          return instance;
+        });
+        localStorage.setItem(this.INSTANCES_KEY, JSON.stringify(migratedInstances));
+      }
+
+      // Migrate submissions
+      const submissionsData = localStorage.getItem(this.SUBMISSIONS_KEY);
+      if (submissionsData) {
+        const submissions = JSON.parse(submissionsData);
+        const migratedSubmissions = submissions.map((submission: any) => {
+          if (!submission.templateVersion) {
+            return {
+              ...submission,
+              templateVersion: "1.0.0"
+            };
+          }
+          return submission;
+        });
+        localStorage.setItem(this.SUBMISSIONS_KEY, JSON.stringify(migratedSubmissions));
+      }
+
+      this.setMigrationVersion(1);
+      console.log("✅ Migration to v1 completed successfully");
+    } catch (error) {
+      console.error("❌ Migration to v1 failed:", error);
+    }
+  }
 
   // Template methods
   getTemplates(): FormTemplate[] {
@@ -220,11 +311,17 @@ class StorageManager {
       return existingDraft;
     }
 
+    // Find the template to get its version
+    const templates = this.getTemplates();
+    const template = templates.find(t => t.id === templateId);
+    const templateVersion = template?.version || "1.0.0";
+
     // Create new instance if no draft exists
     const newInstance: FormInstance = {
       id: crypto.randomUUID(),
       templateId,
       templateName,
+      templateVersion,
       data: {},
       progress: 0,
       completed: false,

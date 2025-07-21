@@ -558,14 +558,21 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
                         <p className="text-sm text-gray-600 mb-2">
                           {template.description}
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {template.sections.length} sections •
-                          {template.sections.reduce(
-                            (acc, s) => acc + s.fields.length,
-                            0
-                          )}{" "}
-                          fields
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-500">
+                            {template.sections.length} sections •
+                            {template.sections.reduce(
+                              (acc, s) => acc + s.fields.length,
+                              0
+                            )}{" "}
+                            fields
+                          </p>
+                          {template.version && (
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                              v{template.version}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -644,6 +651,9 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
                       Form Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Version
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -664,6 +674,11 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
                         <div className="text-sm font-medium text-gray-900">
                           {instance.templateName}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-500">
+                          v{instance.templateVersion || "1.0.0"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span

@@ -214,7 +214,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   initialSectionIndex,
   initialViewMode,
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showWarning } = useToast();
   const { replaceUrlParams } = useFormHistory();
   
   // Initialize form data with default values if no instance data exists
@@ -350,6 +350,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     template.sections,
     currentInstance,
   ]);
+
+  // Check version mismatch on mount
+  useEffect(() => {
+    if (instance && instance.templateVersion && template.version) {
+      if (instance.templateVersion !== template.version) {
+        showWarning(
+          `This form was created with template version ${instance.templateVersion}, but you are viewing it with version ${template.version}. Some fields may not display correctly.`
+        );
+      }
+    }
+  }, [instance?.templateVersion, template.version, showWarning]);
 
   // Auto-save functionality - debounced
   useEffect(() => {
@@ -1671,7 +1682,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               : ""
           }`}
         >
-          <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
+            {instance?.templateVersion && template.version && instance.templateVersion !== template.version && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                <Icons.AlertTriangle className="w-3 h-3 mr-1" />
+                Version mismatch
+              </span>
+            )}
+          </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               {saveStatus === "saving" && (
