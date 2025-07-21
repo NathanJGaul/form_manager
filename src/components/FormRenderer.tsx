@@ -222,6 +222,22 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     console.log("🔍 FormRenderer Init Debug - Instance prop:", instance);
     console.log("🔍 FormRenderer Init Debug - Instance data:", instance?.data);
     console.log("🔍 FormRenderer Init Debug - Instance data keys:", Object.keys(instance?.data || {}));
+    console.log("🔍 FormRenderer Init Debug - Template:", {
+      templateId: template.id,
+      templateName: template.name,
+      templateVersion: template.version,
+      sectionsCount: template.sections.length
+    });
+    
+    // Check for datatable fields in template
+    const datatableFields = template.sections.flatMap(s => 
+      s.fields.filter(f => f.type === 'datatable')
+    );
+    console.log("🔍 FormRenderer Init Debug - DataTable fields in template:", datatableFields.map(f => ({
+      id: f.id,
+      label: f.label,
+      type: f.type
+    })));
     
     if (instance?.data && Object.keys(instance.data).length > 0) {
       console.log("🔍 FormRenderer Init Debug - Using instance data");
@@ -1209,8 +1225,29 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       error ? "border-red-500" : "border-gray-300"
     } ${isNaSection ? "bg-gray-100 cursor-not-allowed" : ""}`;
 
+    // Debug logging for field type issues
+    if (field.id === "mop_1_1_3_runs" || (field.label && field.label.includes("MOP 1.1.3 Observation Runs"))) {
+      console.warn("🔍 DEBUG - MOP 1.1.3 field rendering:", {
+        fieldId: field.id,
+        fieldType: field.type,
+        fieldLabel: field.label,
+        value: value,
+        valueType: typeof value,
+        isDataTableValue: value && typeof value === 'object' && 'columns' in value && 'rows' in value
+      });
+    }
+
     switch (field.type) {
       case "text":
+        // Check if this is a static content field (no label, has content)
+        if (field.content && !field.label) {
+          return (
+            <div key={field.id} className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {field.content}
+            </div>
+          );
+        }
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1234,15 +1271,26 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                 <input
                   type="text"
                   name={field.id}
-                  value={isNaSection ? naDisplayValue : value || ""}
+                  value={
+                    isNaSection 
+                      ? naDisplayValue 
+                      : (value && typeof value === 'object' && 'columns' in value && 'rows' in value)
+                        ? '[DataTable - Please use correct template version]'
+                        : value || ""
+                  }
                   onChange={(e) =>
                     handleFieldChange(field.id, e.target.value, sectionId)
                   }
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
-                  disabled={isNaSection}
+                  disabled={isNaSection || (value && typeof value === 'object' && 'columns' in value && 'rows' in value)}
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                {value && typeof value === 'object' && 'columns' in value && 'rows' in value && (
+                  <p className="text-amber-600 text-sm mt-1">
+                    ⚠️ This field contains table data but is displayed as text. This form may have been created with a different template version. Please use JCC2 Data Collection Form v3 for proper table display.
+                  </p>
+                )}
               </div>
             </div>
           </Tooltip>
@@ -1755,14 +1803,26 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                       {/* Render section content */}
                       {section.content && section.content.length > 0 && (
                         <div className="mt-4 space-y-2">
-                          {section.content.map((contentItem, index) => (
-                            <div
-                              key={index}
-                              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
-                            >
-                              {contentItem}
-                            </div>
-                          ))}
+                          {section.content.map((contentItem, index) => {
+                            // Debug logging to identify the issue
+                            if (typeof contentItem !== 'string') {
+                              console.warn('Non-string content found in section:', section.title, 'at index:', index, 'content:', contentItem);
+                            }
+                            
+                            // Handle objects in content array - convert to string
+                            const displayContent = typeof contentItem === 'string' 
+                              ? contentItem 
+                              : JSON.stringify(contentItem, null, 2);
+                            
+                            return (
+                              <div
+                                key={index}
+                                className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                              >
+                                {displayContent}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
