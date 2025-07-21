@@ -77,6 +77,10 @@ form_manager/
 │   │   └── dev-tools/                  # Developer tools components
 │   │       ├── CSVIntegrityResults.tsx # CSV integrity check results display
 │   │       └── FormDevTool.tsx         # Form development tools interface
+│   ├── hooks/                          # Custom React hooks
+│   │   ├── index.ts                    # Barrel export for hooks
+│   │   ├── useFormHistory.ts           # Browser history API integration hook
+│   │   └── CONTEXT.md                  # Hooks documentation and patterns
 │   ├── types/                          # TypeScript type definitions
 │   │   ├── conditional.ts              # Conditional logic type definitions
 │   │   ├── form.ts                     # Core form interfaces and types

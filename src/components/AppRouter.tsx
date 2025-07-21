@@ -1,6 +1,13 @@
 /**
  * Simple client-side router for code splitting and navigation
  * Provides route-based lazy loading without external dependencies
+ * 
+ * Features:
+ * - Browser history integration with back/forward support
+ * - URL-based state restoration and deep linking
+ * - Lazy loading of route components with Suspense
+ * - Bookmarkable URLs for all application states
+ * - Seamless navigation between dashboard, builder, and form routes
  */
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { FormTemplate, FormInstance } from '../types/form';
