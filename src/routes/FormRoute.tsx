@@ -33,6 +33,8 @@ interface FormRouteProps {
   onSave: (instance: FormInstance) => void;
   onSubmit: (instance: FormInstance) => void;
   onExit: () => void;
+  initialSectionIndex?: number;
+  initialViewMode?: 'continuous' | 'section';
 }
 
 const FormRoute: React.FC<FormRouteProps> = ({
@@ -40,7 +42,9 @@ const FormRoute: React.FC<FormRouteProps> = ({
   instance,
   onSave,
   onSubmit,
-  onExit
+  onExit,
+  initialSectionIndex,
+  initialViewMode
 }) => {
   return (
     <FormErrorBoundary formName={template.name}>
@@ -51,6 +55,8 @@ const FormRoute: React.FC<FormRouteProps> = ({
           onSave={onSave}
           onSubmit={onSubmit}
           onExit={onExit}
+          initialSectionIndex={initialSectionIndex}
+          initialViewMode={initialViewMode}
         />
       </Suspense>
     </FormErrorBoundary>

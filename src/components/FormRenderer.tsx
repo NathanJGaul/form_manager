@@ -31,6 +31,7 @@ import { FormDevTool } from "./dev-tools/FormDevTool";
 import { CSVIntegrityResults } from "./dev-tools/CSVIntegrityResults";
 import { CSVIntegrityResult } from "../utils/csvIntegrityChecker";
 import HamburgerDropdown from "./HamburgerDropdown";
+import { useFormHistory } from "../hooks/useFormHistory";
 
 // Type definitions for form values
 type FormValue = string | number | boolean | string[] | File | null | undefined;
@@ -67,6 +68,8 @@ interface FormRendererProps {
   onSave?: (instance: FormInstance) => void;
   onSubmit?: (instance: FormInstance) => void;
   onExit?: () => void;
+  initialSectionIndex?: number;
+  initialViewMode?: 'continuous' | 'section';
 }
 
 // Utility function to render individual checkbox/radio fields as table when horizontal layout
@@ -206,8 +209,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   onSave,
   onSubmit,
   onExit,
+  initialSectionIndex,
+  initialViewMode,
 }) => {
   const { showSuccess, showError } = useToast();
+  const { replaceUrlParams } = useFormHistory();
   
   // Initialize form data with default values if no instance data exists
   const initializeFormData = () => {
@@ -241,9 +247,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [viewMode, setViewMode] = useState<"continuous" | "section">(() =>
-    storageManager.getViewMode()
+    initialViewMode || storageManager.getViewMode()
   );
-  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(initialSectionIndex || 0);
   const [showMockDataModal, setShowMockDataModal] = useState(false);
   const [showFormDevTool, setShowFormDevTool] = useState(false);
   const [csvIntegrityResults, setCsvIntegrityResults] =
@@ -409,10 +415,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [viewMode]);
 
-  // Save view mode to localStorage when it changes
+  // Save view mode to localStorage and update URL when it changes
   useEffect(() => {
     storageManager.saveViewMode(viewMode);
-  }, [viewMode]);
+    replaceUrlParams({ viewMode });
+  }, [viewMode, replaceUrlParams]);
 
   // Handle reactive section filtering - adjust current section index when sections change
   useEffect(() => {
@@ -424,7 +431,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [filteredSections.length, currentSectionIndex, viewMode]);
 
-  // Track visited sections
+  // Track visited sections and update URL
   useEffect(() => {
     if (viewMode === "section" && filteredSections.length > 0) {
       const currentSection = filteredSections[currentSectionIndex];
@@ -436,8 +443,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           return new Set([...prev, currentSection.id]);
         });
       }
+      // Update URL with current section index
+      replaceUrlParams({ sectionIndex: currentSectionIndex });
     }
-  }, [currentSectionIndex, viewMode, filteredSections]);
+  }, [currentSectionIndex, viewMode, filteredSections, replaceUrlParams]);
 
   // Save visited sections to form instance when they change (debounced)
   useEffect(() => {
