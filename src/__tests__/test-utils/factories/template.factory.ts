@@ -48,9 +48,10 @@ export const templateFactory = {
           id: 'section-1',
           title: 'Basic Information',
           fields: [
-            fieldFactory.text({ label: 'Full Name', required: true }),
-            fieldFactory.email({ label: 'Email Address', required: true }),
+            fieldFactory.text({ id: 'Full Name', label: 'Full Name', required: true }),
+            fieldFactory.email({ id: 'Email Address', label: 'Email Address', required: true }),
             fieldFactory.select({
+              id: 'Department',
               label: 'Department',
               options: ['Sales', 'Engineering', 'Marketing'],
               required: true,
@@ -61,14 +62,15 @@ export const templateFactory = {
           id: 'section-2',
           title: 'Additional Details',
           fields: [
-            fieldFactory.textarea({ label: 'Comments' }),
+            fieldFactory.textarea({ id: 'Comments', label: 'Comments' }),
             fieldFactory.checkbox({
+              id: 'Subscribe to newsletter',
               label: 'Subscribe to newsletter',
               defaultValue: true,
             }),
           ],
           conditional: {
-            dependsOn: 'department',
+            dependsOn: 'Department',
             values: ['Marketing'],
             operator: 'equals',
           },
