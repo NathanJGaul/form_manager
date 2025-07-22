@@ -186,7 +186,13 @@ export class TDLConverter {
       grouping: guiField.grouping,
       validation: guiField.validation,
       conditional: guiField.conditional,
-      defaultValue: guiField.defaultValue
+      defaultValue: guiField.defaultValue,
+      // DataTable specific properties
+      columns: guiField.columns,
+      allowAddRows: guiField.allowAddRows,
+      allowDeleteRows: guiField.allowDeleteRows,
+      minRows: guiField.minRows,
+      maxRows: guiField.maxRows
     };
 
     return programmaticField;
@@ -288,7 +294,13 @@ export class TDLConverter {
       grouping: programmaticField.grouping,
       validation: programmaticField.validation,
       conditional: programmaticField.conditional,
-      defaultValue: programmaticField.defaultValue
+      defaultValue: programmaticField.defaultValue,
+      // DataTable specific properties
+      columns: programmaticField.columns,
+      allowAddRows: programmaticField.allowAddRows,
+      allowDeleteRows: programmaticField.allowDeleteRows,
+      minRows: programmaticField.minRows,
+      maxRows: programmaticField.maxRows
     };
 
     return guiField;
@@ -302,7 +314,7 @@ export class TDLConverter {
     if (guiType === 'text' || guiType === 'textarea' || guiType === 'select' || 
         guiType === 'radio' || guiType === 'checkbox' || guiType === 'number' || 
         guiType === 'date' || guiType === 'file' || guiType === 'email' || 
-        guiType === 'tel') {
+        guiType === 'tel' || guiType === 'datatable') {
       return guiType;
     }
     
@@ -324,7 +336,8 @@ export class TDLConverter {
         programmaticType === 'select' || programmaticType === 'radio' || 
         programmaticType === 'checkbox' || programmaticType === 'number' || 
         programmaticType === 'date' || programmaticType === 'file' ||
-        programmaticType === 'email' || programmaticType === 'tel') {
+        programmaticType === 'email' || programmaticType === 'tel' ||
+        programmaticType === 'datatable') {
       return programmaticType;
     }
     

@@ -72,11 +72,11 @@ function toId(str: string) {
  */
 function addStandardTaskQuestions(builder: TemplateBuilder, sectionId: string) {
   // Add a divider for visual separation
-  builder
-    .field("text", "")
-    .id(`${sectionId}_task_questions_divider`)
-    .withContent("---")
-    .end();
+  // builder
+  //   .field("text", "")
+  //   .id(`${sectionId}_task_questions_divider`)
+  //   .withContent("---")
+  //   .end();
 
   standardTaskQuestions.forEach((question) => {
     builder
@@ -213,12 +213,14 @@ export class JCC2DataCollectionFormV3 {
           type: "number",
           required: true,
           validation: { min: 1 },
+          autoIndex: true,
         },
         {
           id: "application_used",
           label: "Application Used",
-          type: "text",
+          type: "select",
           required: true,
+          options: jcc2Applications.map((app) => app.name),
         },
         {
           id: "data_gathering_supported",
@@ -312,6 +314,7 @@ export class JCC2DataCollectionFormV3 {
           type: "number",
           required: true,
           validation: { min: 1 },
+          autoIndex: true,
         },
         {
           id: "application_used",
@@ -395,6 +398,7 @@ export class JCC2DataCollectionFormV3 {
           type: "number",
           required: true,
           validation: { min: 1 },
+          autoIndex: true,
         },
         {
           id: "application_used",
@@ -486,6 +490,7 @@ export class JCC2DataCollectionFormV3 {
           type: "number",
           required: true,
           validation: { min: 1 },
+          autoIndex: true,
         },
         {
           id: "application_used",
@@ -579,6 +584,7 @@ export class JCC2DataCollectionFormV3 {
           type: "number",
           required: true,
           validation: { min: 1 },
+          autoIndex: true,
         },
         {
           id: "application_used",
