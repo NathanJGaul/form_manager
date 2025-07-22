@@ -11,6 +11,7 @@ import {
   FormField,
   FormSection,
   ExportableFormInstance,
+  DataTableValue,
 } from "../types/form";
 import { storageManager } from "../utils/storage";
 import {
@@ -25,6 +26,7 @@ import { useToast } from "../contexts/ToastContext";
 import * as Icons from "lucide-react";
 import Tooltip from "./Tooltip";
 import { DevDropdownMenu } from "./DevDropdownMenu";
+import DataTableField from "./fields/DataTableField";
 import { MockDataConfigModal } from "./MockDataConfigModal";
 import { MockDataGenerator } from "../utils/mockDataGenerator";
 import { FormDevTool } from "./dev-tools/FormDevTool";
@@ -71,6 +73,14 @@ interface FormRendererProps {
   initialSectionIndex?: number;
   initialViewMode?: 'continuous' | 'section';
 }
+
+// Utility function to generate unique field IDs for label-input associations
+const generateFieldId = (fieldId: string, sectionId?: string, suffix?: string): string => {
+  // Sanitize the fieldId to ensure it's a valid HTML ID (no spaces, special chars)
+  const sanitizedFieldId = fieldId.replace(/[^a-zA-Z0-9-_]/g, '-').replace(/--+/g, '-');
+  const parts = ['field', sectionId, sanitizedFieldId, suffix].filter(Boolean);
+  return parts.join('-');
+};
 
 // Utility function to render individual checkbox/radio fields as table when horizontal layout
 const renderFieldAsTable = (
@@ -148,52 +158,56 @@ const renderFieldAsTable = (
                 </td>
 
                 {/* Option columns with input controls */}
-                {field.options.map((option: string) => (
-                  <td
-                    key={option}
-                    className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0"
-                  >
-                    <div className="flex justify-center items-center h-8">
-                      <input
-                        type={field.type}
-                        name={field.type === "radio" ? field.id : undefined}
-                        value={option}
-                        checked={
-                          field.type === "radio"
-                            ? value === option
-                            : Array.isArray(value) && value.includes(option)
-                        }
-                        onChange={(e) => {
-                          if (field.type === "radio") {
-                            handleFieldChange(
-                              field.id,
-                              e.target.value,
-                              sectionId
-                            );
-                          } else {
-                            const currentValues = Array.isArray(value)
-                              ? value
-                              : [];
-                            if (e.target.checked) {
+                {field.options.map((option: string, index: number) => {
+                  const optionId = generateFieldId(field.id, sectionId, `table-option-${index}`);
+                  return (
+                    <td
+                      key={option}
+                      className="py-2 px-1 text-center align-middle border-r border-gray-200 last:border-r-0"
+                    >
+                      <div className="flex justify-center items-center h-8">
+                        <input
+                          id={optionId}
+                          type={field.type}
+                          name={field.type === "radio" ? field.id : undefined}
+                          value={option}
+                          checked={
+                            field.type === "radio"
+                              ? value === option
+                              : Array.isArray(value) && value.includes(option)
+                          }
+                          onChange={(e) => {
+                            if (field.type === "radio") {
                               handleFieldChange(
                                 field.id,
-                                [...currentValues, option],
+                                e.target.value,
                                 sectionId
                               );
                             } else {
-                              handleFieldChange(
-                                field.id,
-                                currentValues.filter((v) => v !== option),
-                                sectionId
-                              );
+                              const currentValues = Array.isArray(value)
+                                ? value
+                                : [];
+                              if (e.target.checked) {
+                                handleFieldChange(
+                                  field.id,
+                                  [...currentValues, option],
+                                  sectionId
+                                );
+                              } else {
+                                handleFieldChange(
+                                  field.id,
+                                  currentValues.filter((v) => v !== option),
+                                  sectionId
+                                );
+                              }
                             }
-                          }
-                        }}
-                        className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-4 w-4"
-                      />
-                    </div>
-                  </td>
-                ))}
+                          }}
+                          className="text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-4 w-4"
+                        />
+                      </div>
+                    </td>
+                  );
+                })}
               </tr>
             </tbody>
           </table>
@@ -212,7 +226,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   initialSectionIndex,
   initialViewMode,
 }) => {
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showWarning } = useToast();
   const { replaceUrlParams } = useFormHistory();
   
   // Initialize form data with default values if no instance data exists
@@ -220,6 +234,22 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     console.log("🔍 FormRenderer Init Debug - Instance prop:", instance);
     console.log("🔍 FormRenderer Init Debug - Instance data:", instance?.data);
     console.log("🔍 FormRenderer Init Debug - Instance data keys:", Object.keys(instance?.data || {}));
+    console.log("🔍 FormRenderer Init Debug - Template:", {
+      templateId: template.id,
+      templateName: template.name,
+      templateVersion: template.version,
+      sectionsCount: template.sections.length
+    });
+    
+    // Check for datatable fields in template
+    const datatableFields = template.sections.flatMap(s => 
+      s.fields.filter(f => f.type === 'datatable')
+    );
+    console.log("🔍 FormRenderer Init Debug - DataTable fields in template:", datatableFields.map(f => ({
+      id: f.id,
+      label: f.label,
+      type: f.type
+    })));
     
     if (instance?.data && Object.keys(instance.data).length > 0) {
       console.log("🔍 FormRenderer Init Debug - Using instance data");
@@ -319,9 +349,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       setHasUnsavedChanges(false);
 
       setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch {
+    } catch (error) {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
+      
+      // Check for quota errors
+      if (error instanceof Error && 
+          (error.message.includes('QuotaExceededError') || 
+           error.name === 'QuotaExceededError')) {
+        showError("Storage quota exceeded", "Unable to save form data. Please clear some browser storage and try again.");
+      }
     }
   }, [
     formData,
@@ -332,6 +369,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     template.sections,
     currentInstance,
   ]);
+
+  // Check version mismatch on mount
+  useEffect(() => {
+    if (instance && instance.templateVersion && template.version) {
+      if (instance.templateVersion !== template.version) {
+        showWarning(
+          `This form was created with template version ${instance.templateVersion}, but you are viewing it with version ${template.version}. Some fields may not display correctly.`
+        );
+      }
+    }
+  }, [instance?.templateVersion, template.version, showWarning]);
 
   // Auto-save functionality - debounced
   useEffect(() => {
@@ -359,9 +407,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         setHasUnsavedChanges(false);
 
         setTimeout(() => setSaveStatus("idle"), 2000);
-      } catch {
+      } catch (error) {
         setSaveStatus("error");
         setTimeout(() => setSaveStatus("idle"), 2000);
+        
+        // Check for quota errors
+        if (error instanceof Error && 
+            (error.message.includes('QuotaExceededError') || 
+             error.name === 'QuotaExceededError')) {
+          showError("Storage quota exceeded", "Unable to save form data. Please clear some browser storage and try again.");
+        }
       }
     }, 1000);
 
@@ -1207,8 +1262,31 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       error ? "border-red-500" : "border-gray-300"
     } ${isNaSection ? "bg-gray-100 cursor-not-allowed" : ""}`;
 
+    // Debug logging for field type issues
+    if (field.id === "mop_1_1_3_runs" || (field.label && field.label.includes("MOP 1.1.3 Observation Runs"))) {
+      console.warn("🔍 DEBUG - MOP 1.1.3 field rendering:", {
+        fieldId: field.id,
+        fieldType: field.type,
+        fieldLabel: field.label,
+        value: value,
+        valueType: typeof value,
+        isDataTableValue: value && typeof value === 'object' && 'columns' in value && 'rows' in value
+      });
+    }
+
     switch (field.type) {
-      case "text":
+      case "text": {
+        // Check if this is a static content field (no label, has content)
+        if (field.content && !field.label) {
+          return (
+            <div key={field.id} className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {field.content}
+            </div>
+          );
+        }
+        
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1219,6 +1297,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               }
             >
               <label
+                htmlFor={fieldId}
                 className={
                   field.layout === "horizontal"
                     ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
@@ -1230,23 +1309,38 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               </label>
               <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
+                  id={fieldId}
                   type="text"
                   name={field.id}
-                  value={isNaSection ? naDisplayValue : value || ""}
+                  value={
+                    isNaSection 
+                      ? naDisplayValue 
+                      : (value && typeof value === 'object' && 'columns' in value && 'rows' in value)
+                        ? '[DataTable - Please use correct template version]'
+                        : value || ""
+                  }
                   onChange={(e) =>
                     handleFieldChange(field.id, e.target.value, sectionId)
                   }
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
-                  disabled={isNaSection}
+                  disabled={isNaSection || (value && typeof value === 'object' && 'columns' in value && 'rows' in value)}
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                {value && typeof value === 'object' && 'columns' in value && 'rows' in value && (
+                  <p className="text-amber-600 text-sm mt-1">
+                    ⚠️ This field contains table data but is displayed as text. This form may have been created with a different template version. Please use JCC2 Data Collection Form v3 for proper table display.
+                  </p>
+                )}
               </div>
             </div>
           </Tooltip>
         );
+      }
 
-      case "email":
+      case "email": {
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1257,6 +1351,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               }
             >
               <label
+                htmlFor={fieldId}
                 className={
                   field.layout === "horizontal"
                     ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
@@ -1268,6 +1363,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               </label>
               <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
+                  id={fieldId}
                   type="email"
                   name={field.id}
                   value={value || ""}
@@ -1282,8 +1378,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
           </Tooltip>
         );
+      }
 
-      case "tel":
+      case "tel": {
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1294,6 +1393,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               }
             >
               <label
+                htmlFor={fieldId}
                 className={
                   field.layout === "horizontal"
                     ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
@@ -1305,6 +1405,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               </label>
               <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
+                  id={fieldId}
                   type="tel"
                   name={field.id}
                   value={value || ""}
@@ -1319,16 +1420,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
           </Tooltip>
         );
+      }
 
-      case "textarea":
+      case "textarea": {
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
               <textarea
+                id={fieldId}
                 name={field.id}
                 value={value || ""}
                 onChange={(e) =>
@@ -1342,16 +1447,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
           </Tooltip>
         );
+      }
 
-      case "select":
+      case "select": {
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
               <select
+                id={fieldId}
                 name={field.id}
                 value={value || ""}
                 onChange={(e) =>
@@ -1370,8 +1479,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
           </Tooltip>
         );
+      }
 
-      case "radio":
+      case "radio": {
         // Use table rendering for horizontal layout
         if (field.layout === "horizontal" && field.options) {
           return renderFieldAsTable(
@@ -1387,94 +1497,141 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <div className="block text-sm font-medium text-gray-700">
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
-              <div className="space-y-2">
-                {field.options?.map((option: string) => (
-                  <label
-                    key={option}
-                    className="flex items-center space-x-2 cursor-pointer"
-                  >
-                    <input
-                      type="radio"
-                      name={field.id}
-                      value={option}
-                      checked={value === option}
-                      onChange={(e) =>
-                        handleFieldChange(field.id, e.target.value, sectionId)
-                      }
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{option}</span>
-                  </label>
-                ))}
               </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-            </div>
-          </Tooltip>
-        );
-
-      case "checkbox":
-        // Use table rendering for horizontal layout
-        if (field.layout === "horizontal" && field.options) {
-          return renderFieldAsTable(
-            field,
-            value,
-            error,
-            handleFieldChange,
-            sectionId
-          );
-        }
-
-        // Use vertical layout (original implementation)
-        return (
-          <Tooltip key={field.id} content={tooltipContent} delay={500}>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
               <div className="space-y-2">
-                {field.options?.map((option: string) => (
-                  <label
-                    key={option}
-                    className="flex items-center space-x-2 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      name={field.id}
-                      value={option}
-                      checked={Array.isArray(value) && value.includes(option)}
-                      onChange={(e) => {
-                        const currentValues = Array.isArray(value) ? value : [];
-                        if (e.target.checked) {
-                          handleFieldChange(
-                            field.id,
-                            [...currentValues, option],
-                            sectionId
-                          );
-                        } else {
-                          handleFieldChange(
-                            field.id,
-                            currentValues.filter((v) => v !== option),
-                            sectionId
-                          );
+                {field.options?.map((option: string, index: number) => {
+                  const optionId = generateFieldId(field.id, sectionId, `option-${index}`);
+                  return (
+                    <label
+                      key={option}
+                      htmlFor={optionId}
+                      className="flex items-center space-x-2 cursor-pointer"
+                    >
+                      <input
+                        id={optionId}
+                        type="radio"
+                        name={field.id}
+                        value={option}
+                        checked={value === option}
+                        onChange={(e) =>
+                          handleFieldChange(field.id, e.target.value, sectionId)
                         }
-                      }}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{option}</span>
-                  </label>
-                ))}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">{option}</span>
+                    </label>
+                  );
+                })}
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
           </Tooltip>
         );
+      }
 
-      case "number":
+      case "checkbox": {
+        // Use table rendering for horizontal layout
+        if (field.layout === "horizontal" && field.options) {
+          return renderFieldAsTable(
+            field,
+            value,
+            error,
+            handleFieldChange,
+            sectionId
+          );
+        }
+
+        // Use vertical layout (original implementation)
+        const fieldId = generateFieldId(field.id, sectionId);
+        
+        // If no options, render a single checkbox
+        if (!field.options || field.options.length === 0) {
+          return (
+            <Tooltip key={field.id} content={tooltipContent} delay={500}>
+              <div className="space-y-2">
+                <label
+                  htmlFor={fieldId}
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
+                  <input
+                    id={fieldId}
+                    type="checkbox"
+                    name={field.id}
+                    checked={value === true}
+                    onChange={(e) =>
+                      handleFieldChange(field.id, e.target.checked, sectionId)
+                    }
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </span>
+                </label>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+              </div>
+            </Tooltip>
+          );
+        }
+        
+        // Multiple options - render checkbox group
+        return (
+          <Tooltip key={field.id} content={tooltipContent} delay={500}>
+            <div className="space-y-2">
+              <div className="block text-sm font-medium text-gray-700">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </div>
+              <div className="space-y-2">
+                {field.options.map((option: string, index: number) => {
+                  const optionId = generateFieldId(field.id, sectionId, `option-${index}`);
+                  return (
+                    <label
+                      key={option}
+                      htmlFor={optionId}
+                      className="flex items-center space-x-2 cursor-pointer"
+                    >
+                      <input
+                        id={optionId}
+                        type="checkbox"
+                        name={field.id}
+                        value={option}
+                        checked={Array.isArray(value) && value.includes(option)}
+                        onChange={(e) => {
+                          const currentValues = Array.isArray(value) ? value : [];
+                          if (e.target.checked) {
+                            handleFieldChange(
+                              field.id,
+                              [...currentValues, option],
+                              sectionId
+                            );
+                          } else {
+                            handleFieldChange(
+                              field.id,
+                              currentValues.filter((v) => v !== option),
+                              sectionId
+                            );
+                          }
+                        }}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">{option}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+            </div>
+          </Tooltip>
+        );
+      }
+
+      case "number": {
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1485,6 +1642,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               }
             >
               <label
+                htmlFor={fieldId}
                 className={
                   field.layout === "horizontal"
                     ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
@@ -1496,6 +1654,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               </label>
               <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
+                  id={fieldId}
                   type="number"
                   value={value || ""}
                   onChange={(e) =>
@@ -1515,8 +1674,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
           </Tooltip>
         );
+      }
 
-      case "date":
+      case "date": {
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1527,6 +1689,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               }
             >
               <label
+                htmlFor={fieldId}
                 className={
                   field.layout === "horizontal"
                     ? "block text-sm font-medium text-gray-700 sm:w-1/3 sm:flex-shrink-0"
@@ -1538,6 +1701,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               </label>
               <div className={field.layout === "horizontal" ? "flex-1" : ""}>
                 <input
+                  id={fieldId}
                   type="date"
                   name={field.id}
                   value={value || ""}
@@ -1551,16 +1715,20 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
           </Tooltip>
         );
+      }
 
-      case "file":
+      case "file": {
+        const fieldId = generateFieldId(field.id, sectionId);
+        
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
               <input
+                id={fieldId}
                 type="file"
                 accept="image/*"
                 onChange={(e) => {
@@ -1593,6 +1761,19 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </div>
           </Tooltip>
         );
+      }
+
+      case "datatable":
+        return (
+          <DataTableField
+            key={field.id}
+            field={field}
+            value={value as DataTableValue}
+            onChange={(newValue) => handleFieldChange(field.id, newValue, sectionId)}
+            error={error}
+            disabled={isNaSection}
+          />
+        );
 
       default:
         return null;
@@ -1609,7 +1790,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               : ""
           }`}
         >
-          <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
+            {instance?.templateVersion && template.version && instance.templateVersion !== template.version && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                <Icons.AlertTriangle className="w-3 h-3 mr-1" />
+                Version mismatch
+              </span>
+            )}
+          </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               {saveStatus === "saving" && (
@@ -1741,14 +1930,26 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                       {/* Render section content */}
                       {section.content && section.content.length > 0 && (
                         <div className="mt-4 space-y-2">
-                          {section.content.map((contentItem, index) => (
-                            <div
-                              key={index}
-                              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
-                            >
-                              {contentItem}
-                            </div>
-                          ))}
+                          {section.content.map((contentItem, index) => {
+                            // Debug logging to identify the issue
+                            if (typeof contentItem !== 'string') {
+                              console.warn('Non-string content found in section:', section.title, 'at index:', index, 'content:', contentItem);
+                            }
+                            
+                            // Handle objects in content array - convert to string
+                            const displayContent = typeof contentItem === 'string' 
+                              ? contentItem 
+                              : JSON.stringify(contentItem, null, 2);
+                            
+                            return (
+                              <div
+                                key={index}
+                                className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                              >
+                                {displayContent}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

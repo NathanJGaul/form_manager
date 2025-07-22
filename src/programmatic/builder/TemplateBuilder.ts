@@ -688,6 +688,66 @@ export class FieldBuilder {
     return this;
   }
 
+  // DataTable specific methods
+  /**
+   * Set columns for DataTable field
+   */
+  columns(columns: import('../../types/form').DataTableColumn[]): FieldBuilder {
+    if (this.field.type !== 'datatable') {
+      throw new Error('columns() can only be used with datatable fields');
+    }
+    this.field.columns = columns;
+    return this;
+  }
+  
+  /**
+   * Set minimum rows for DataTable
+   */
+  minRows(minRows: number): FieldBuilder {
+    if (this.field.type !== 'datatable') {
+      throw new Error('minRows() can only be used with datatable fields');
+    }
+    this.field.minRows = minRows;
+    if (!this.field.validation) this.field.validation = {};
+    this.field.validation.minRows = minRows;
+    return this;
+  }
+  
+  /**
+   * Set maximum rows for DataTable
+   */
+  maxRows(maxRows: number): FieldBuilder {
+    if (this.field.type !== 'datatable') {
+      throw new Error('maxRows() can only be used with datatable fields');
+    }
+    this.field.maxRows = maxRows;
+    if (!this.field.validation) this.field.validation = {};
+    this.field.validation.maxRows = maxRows;
+    return this;
+  }
+  
+  /**
+   * Set whether users can add rows
+   */
+  allowAddRows(allow: boolean): FieldBuilder {
+    if (this.field.type !== 'datatable') {
+      throw new Error('allowAddRows() can only be used with datatable fields');
+    }
+    this.field.allowAddRows = allow;
+    return this;
+  }
+  
+  /**
+   * Set whether users can delete rows
+   */
+  allowDeleteRows(allow: boolean): FieldBuilder {
+    if (this.field.type !== 'datatable') {
+      throw new Error('allowDeleteRows() can only be used with datatable fields');
+    }
+    this.field.allowDeleteRows = allow;
+    return this;
+  }
+
   /**
    * Return to parent builder
    */

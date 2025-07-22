@@ -144,7 +144,7 @@ export class JCC2UserQuestionnaireV4 {
       .field("date", "Date")
       .id("date")
       .required()
-      .defaultValue(new Date().toISOString().split("T")[0])
+      // .defaultValue(new Date().toISOString().split("T")[0])
       .end()
       .field("text", "Rank/Name")
       .id("rank_name")

@@ -2,7 +2,7 @@ import { TemplateBuilder } from "../builder/TemplateBuilder";
 import { ProgrammaticTemplate } from "../types";
 import { JCC2UserQuestionnaireV3 } from "../../../templates/jcc2_questionnaire_v3";
 import { JCC2UserQuestionnaireV4 } from "../../../templates/jcc2_questionnaire_v4";
-import { JCC2DataCollectionFormV2 } from "../../../templates/jcc2_data_collection_form_v2";
+import { JCC2DataCollectionFormV3 } from "../../../templates/jcc2_data_collection_form_v3";
 
 /**
  * Library of common template patterns and pre-built templates
@@ -15,6 +15,7 @@ export class CommonTemplates {
     return new TemplateBuilder()
       .create("Contact Form")
       .description("Basic contact form with name, email, and message")
+      .version("1.0.0")
       .tags("contact", "basic", "common")
       .section("Contact Information")
       .field("text", "Full Name")
@@ -54,6 +55,7 @@ export class CommonTemplates {
     return new TemplateBuilder()
       .create("Customer Satisfaction Survey")
       .description("Multi-category customer satisfaction survey")
+      .version("1.0.0")
       .tags("survey", "satisfaction", "rating")
       .variables({ categories })
       .section("User Information")
@@ -100,6 +102,7 @@ export class CommonTemplates {
     return new TemplateBuilder()
       .create("User Registration Form")
       .description("Complete user registration with account details")
+      .version("1.0.0")
       .tags("registration", "user", "account")
       .section("Personal Information")
       .field("text", "First Name")
@@ -231,7 +234,7 @@ export class CommonTemplates {
    * Create JCC2 Data Collection and Interview Form template
    */
   static createJCC2DataCollectionForm(): ProgrammaticTemplate {
-    return JCC2DataCollectionFormV2.create();
+    return JCC2DataCollectionFormV3.create();
   }
 
   /**

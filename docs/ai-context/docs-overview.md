@@ -33,6 +33,7 @@ This hierarchy allows AI agents to load targeted context efficiently while maint
 - **[Compound Conditionals](/docs/compound-conditionals-implementation.md)** - *Advanced conditional logic.* AND/OR operators, nested conditions, and evaluation patterns
 
 ### Features & Functionality
+- **[Browser History Navigation](/docs/browser-history-navigation.md)** - *Navigation system.* URL-based routing, browser history integration, and deep linking
 - **[CSV Export System](/docs/CSV_EXPORT_IMPROVEMENTS.md)** - *Export functionality.* CSV generation, data formatting, and integrity validation
 - **[Email Export Feature](/docs/features/email-export.md)** - *Email integration.* Post-submission email prompt with CSV data sharing
 - **[Default Values](/docs/DEFAULT_VALUES_IMPLEMENTATION.md)** - *Default value patterns.* Implementation strategy and usage patterns
@@ -56,6 +57,9 @@ This hierarchy allows AI agents to load targeted context efficiently while maint
 ### Component Context Templates
 - **[Component Template](/docs/CONTEXT-tier2-component.md)** - *Template for component docs.* Structure for creating new component documentation
 - **[Feature Template](/docs/CONTEXT-tier3-feature.md)** - *Template for feature docs.* Structure for creating new feature documentation
+
+### Feature-Specific Documentation
+- **[Hooks Context](/src/hooks/CONTEXT.md)** - *Custom React hooks.* Browser history integration, state management patterns, and hook conventions
 
 ### Planned Feature Documentation
 Future granular CONTEXT.md files will be created as components grow:

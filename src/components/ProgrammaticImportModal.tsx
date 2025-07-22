@@ -10,7 +10,7 @@ import { ParagraphFieldExample } from "../programmatic/examples/ParagraphFieldEx
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
 import { HorizontalGroupingDemo } from "../../templates/horizontal_grouping_demo";
 import { SectionConditionalsTestTemplate } from "../../templates/section_conditionals_test";
-import { JCC2DataCollectionFormV2 } from "../../templates/jcc2_data_collection_form_v2";
+import { JCC2DataCollectionFormV3 } from "../../templates/jcc2_data_collection_form_v3";
 import { TemplateBuilder } from "../programmatic/builder/TemplateBuilder";
 import * as ProgrammaticModules from "../programmatic";
 import { FormTemplate, FormField } from "../types/form";
@@ -33,9 +33,9 @@ export const ProgrammaticImportModal: React.FC<
   ProgrammaticImportModalProps
 > = ({ isOpen, onClose, onImport }) => {
   const { showSuccess } = useToast();
-  const [activeTab, setActiveTab] = useState<"file" | "examples" | "code" | "share">(
-    "examples"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "file" | "examples" | "code" | "share"
+  >("examples");
   const [codeInput, setCodeInput] = useState("");
   const [shareInput, setShareInput] = useState("");
   const [conversionResult, setConversionResult] =
@@ -85,12 +85,15 @@ export const ProgrammaticImportModal: React.FC<
           id: crypto.randomUUID(),
           name: programmaticTemplate.metadata.name,
           description: programmaticTemplate.metadata.description || "",
+          version: programmaticTemplate.metadata.version || "1.0.0",
+          author: programmaticTemplate.metadata.author,
+          tags: programmaticTemplate.metadata.tags,
           sections: conversionResult.result.sections.map((section) => ({
             id: section.id,
             title: section.title,
             fields: section.fields.map((field) => ({
               id: field.id,
-              type: field.type as FormField['type'],
+              type: field.type as FormField["type"],
               label: field.label,
               placeholder: field.placeholder,
               required: field.required || false,
@@ -172,8 +175,8 @@ export const ProgrammaticImportModal: React.FC<
         case "sectionConditionals":
           programmaticTemplate = SectionConditionalsTestTemplate.create();
           break;
-        case "jcc2v2":
-          programmaticTemplate = JCC2DataCollectionFormV2.create();
+        case "jcc2v3":
+          programmaticTemplate = JCC2DataCollectionFormV3.create();
           break;
         default:
           throw new Error("Unknown example template");
@@ -218,9 +221,14 @@ export const ProgrammaticImportModal: React.FC<
   const handleShareImport = async () => {
     try {
       const decodedData = await decodeFromSharing(shareInput.trim());
-      
+
       // Check if the decoded data is a FormTemplate (can be imported directly)
-      if (decodedData && typeof decodedData === 'object' && 'sections' in decodedData && 'createdAt' in decodedData) {
+      if (
+        decodedData &&
+        typeof decodedData === "object" &&
+        "sections" in decodedData &&
+        "createdAt" in decodedData
+      ) {
         // This is already a FormTemplate, use it directly
         setConversionResult({
           success: true,
@@ -228,7 +236,9 @@ export const ProgrammaticImportModal: React.FC<
         });
       } else {
         // This might be a ProgrammaticTemplate, try to convert it
-        const result = convertProgrammaticTemplate(decodedData as ProgrammaticTemplate);
+        const result = convertProgrammaticTemplate(
+          decodedData as ProgrammaticTemplate
+        );
         setConversionResult(result);
       }
     } catch (error) {
@@ -515,7 +525,10 @@ export const ProgrammaticImportModal: React.FC<
   const handleImport = () => {
     if (conversionResult?.success && conversionResult.template) {
       onImport(conversionResult.template);
-      showSuccess("Template imported successfully!", "Template has been added to your dashboard");
+      showSuccess(
+        "Template imported successfully!",
+        "Template has been added to your dashboard"
+      );
       onClose();
       // Reset state
       setConversionResult(null);
@@ -619,10 +632,11 @@ export const ProgrammaticImportModal: React.FC<
                       JCC2 Data Collection Form v2
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Enhanced JCC2 form with text fields for better instructions and formatting.
+                      Enhanced JCC2 form with text fields for better
+                      instructions and formatting.
                     </p>
                     <button
-                      onClick={() => handleExampleImport("jcc2v2")}
+                      onClick={() => handleExampleImport("jcc2v3")}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
                       Import Template
@@ -710,8 +724,8 @@ export const ProgrammaticImportModal: React.FC<
                       Text Fields Example
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">
-                      Template demonstrating text fields for instructions
-                      and informational text within forms
+                      Template demonstrating text fields for instructions and
+                      informational text within forms
                     </p>
                     <button
                       onClick={() => handleExampleImport("textFields")}
@@ -878,12 +892,14 @@ export const ProgrammaticImportModal: React.FC<
                   <div className="text-sm text-gray-600 mb-2">
                     <p className="mb-2">Share strings contain:</p>
                     <ul className="list-disc list-inside space-y-1">
-                      <li>Complete form templates with all sections and fields</li>
+                      <li>
+                        Complete form templates with all sections and fields
+                      </li>
                       <li>Form instances with filled data</li>
                       <li>Compressed and encoded data for easy sharing</li>
                     </ul>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Share String:
