@@ -72,11 +72,11 @@ function toId(str: string) {
  */
 function addStandardTaskQuestions(builder: TemplateBuilder, sectionId: string) {
   // Add a divider for visual separation
-  builder
-    .field("text", "")
-    .id(`${sectionId}_task_questions_divider`)
-    .withContent("---")
-    .end();
+  // builder
+  //   .field("text", "")
+  //   .id(`${sectionId}_task_questions_divider`)
+  //   .withContent("---")
+  //   .end();
 
   standardTaskQuestions.forEach((question) => {
     builder

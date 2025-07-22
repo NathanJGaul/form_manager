@@ -65,17 +65,27 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
 }) => {
   // Initialize value if not provided
   const [tableValue, setTableValue] = useState<DataTableValue>(() => {
-    if (value && value.columns && value.rows) {
-      return value;
+    // Always use field.columns as the source of truth for column definitions
+    const columns = field.columns || [];
+    
+    if (value && value.rows) {
+      // If value exists, use its rows but ensure columns come from field definition
+      return {
+        columns,
+        rows: value.rows
+      };
     }
     
     // Use default value if provided
-    if (field.defaultValue && typeof field.defaultValue === 'object' && 'columns' in field.defaultValue) {
-      return field.defaultValue as DataTableValue;
+    if (field.defaultValue && typeof field.defaultValue === 'object' && 'rows' in field.defaultValue) {
+      const defaultVal = field.defaultValue as DataTableValue;
+      return {
+        columns,
+        rows: defaultVal.rows || [createEmptyRow(columns)]
+      };
     }
     
-    // Initialize with column definitions and one empty row
-    const columns = field.columns || [];
+    // Initialize with one empty row
     return {
       columns,
       rows: [createEmptyRow(columns)]
@@ -86,8 +96,11 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
 
   // Update parent when table value changes
   useEffect(() => {
-    onChange(tableValue);
-  }, [tableValue, onChange]);
+    // Only update if the value actually changed
+    if (JSON.stringify(value) !== JSON.stringify(tableValue)) {
+      onChange(tableValue);
+    }
+  }, [tableValue]); // Remove onChange from dependencies to prevent loops
 
   // Handle cell value change
   const handleCellChange = (rowIndex: number, columnId: string, newValue: string | number | boolean | string[]) => {
