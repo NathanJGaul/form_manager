@@ -349,9 +349,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       setHasUnsavedChanges(false);
 
       setTimeout(() => setSaveStatus("idle"), 2000);
-    } catch {
+    } catch (error) {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
+      
+      // Check for quota errors
+      if (error instanceof Error && 
+          (error.message.includes('QuotaExceededError') || 
+           error.name === 'QuotaExceededError')) {
+        showError("Storage quota exceeded", "Unable to save form data. Please clear some browser storage and try again.");
+      }
     }
   }, [
     formData,
@@ -400,9 +407,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         setHasUnsavedChanges(false);
 
         setTimeout(() => setSaveStatus("idle"), 2000);
-      } catch {
+      } catch (error) {
         setSaveStatus("error");
         setTimeout(() => setSaveStatus("idle"), 2000);
+        
+        // Check for quota errors
+        if (error instanceof Error && 
+            (error.message.includes('QuotaExceededError') || 
+             error.name === 'QuotaExceededError')) {
+          showError("Storage quota exceeded", "Unable to save form data. Please clear some browser storage and try again.");
+        }
       }
     }, 1000);
 
