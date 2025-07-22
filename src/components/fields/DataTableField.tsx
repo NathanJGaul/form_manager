@@ -155,6 +155,8 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
     const cellValue = tableValue.rows[rowIndex][column.id];
     const errorKey = `${rowIndex}-${column.id}`;
     const cellError = cellErrors[errorKey];
+    const columnHeaderId = `${field.id}-header-${column.id}`;
+    const inputId = `${field.id}-${rowIndex}-${column.id}`;
     
     const baseInputClasses = `w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
       cellError ? 'border-red-500' : 'border-gray-300'
@@ -167,6 +169,8 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       case 'url':
         return (
           <input
+            id={inputId}
+            aria-labelledby={columnHeaderId}
             type={column.type}
             value={cellValue as string || ''}
             onChange={(e) => handleCellChange(rowIndex, column.id, e.target.value)}
@@ -179,6 +183,8 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       case 'number':
         return (
           <input
+            id={inputId}
+            aria-labelledby={columnHeaderId}
             type="number"
             value={cellValue as string || ''}
             onChange={(e) => handleCellChange(rowIndex, column.id, e.target.value)}
@@ -193,6 +199,8 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       case 'textarea':
         return (
           <textarea
+            id={inputId}
+            aria-labelledby={columnHeaderId}
             value={cellValue as string || ''}
             onChange={(e) => handleCellChange(rowIndex, column.id, e.target.value)}
             placeholder={column.placeholder}
@@ -205,6 +213,8 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       case 'select':
         return (
           <select
+            id={inputId}
+            aria-labelledby={columnHeaderId}
             value={cellValue as string || ''}
             onChange={(e) => handleCellChange(rowIndex, column.id, e.target.value)}
             className={baseInputClasses}
@@ -226,13 +236,15 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       case 'checkbox': {
         const checkboxValues = Array.isArray(cellValue) ? cellValue : [];
         return (
-          <div className="space-y-1">
-            {column.options?.map((option) => {
+          <div className="space-y-1" role="group" aria-labelledby={columnHeaderId}>
+            {column.options?.map((option, optIndex) => {
               const optValue = typeof option === 'string' ? option : option.value;
               const optLabel = typeof option === 'string' ? option : option.label;
+              const checkboxId = `${inputId}-opt-${optIndex}`;
               return (
-                <label key={optValue} className="flex items-center space-x-2">
+                <label key={optValue} htmlFor={checkboxId} className="flex items-center space-x-2">
                   <input
+                    id={checkboxId}
                     type="checkbox"
                     checked={checkboxValues.includes(optValue)}
                     onChange={(e) => {
@@ -254,13 +266,15 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
 
       case 'radio':
         return (
-          <div className="space-y-1">
-            {column.options?.map((option) => {
+          <div className="space-y-1" role="group" aria-labelledby={columnHeaderId}>
+            {column.options?.map((option, optIndex) => {
               const optValue = typeof option === 'string' ? option : option.value;
               const optLabel = typeof option === 'string' ? option : option.label;
+              const radioId = `${inputId}-opt-${optIndex}`;
               return (
-                <label key={optValue} className="flex items-center space-x-2">
+                <label key={optValue} htmlFor={radioId} className="flex items-center space-x-2">
                   <input
+                    id={radioId}
                     type="radio"
                     name={`${field.id}-${rowIndex}-${column.id}`}
                     checked={cellValue === optValue}
@@ -278,6 +292,8 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       case 'date':
         return (
           <input
+            id={inputId}
+            aria-labelledby={columnHeaderId}
             type="date"
             value={cellValue as string || ''}
             onChange={(e) => handleCellChange(rowIndex, column.id, e.target.value)}
@@ -289,6 +305,8 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       default:
         return (
           <input
+            id={inputId}
+            aria-labelledby={columnHeaderId}
             type="text"
             value={cellValue as string || ''}
             onChange={(e) => handleCellChange(rowIndex, column.id, e.target.value)}
@@ -326,15 +344,19 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {tableValue.columns.map((column) => (
-                <th
-                  key={column.id}
-                  className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  {column.label}
-                  {column.required && <span className="text-red-500 ml-1">*</span>}
-                </th>
-              ))}
+              {tableValue.columns.map((column) => {
+                const columnHeaderId = `${field.id}-header-${column.id}`;
+                return (
+                  <th
+                    key={column.id}
+                    id={columnHeaderId}
+                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {column.label}
+                    {column.required && <span className="text-red-500 ml-1">*</span>}
+                  </th>
+                );
+              })}
               {canDeleteRows && !disabled && (
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
                   Actions
