@@ -10,7 +10,7 @@ import { ParagraphFieldExample } from "../programmatic/examples/ParagraphFieldEx
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
 import { HorizontalGroupingDemo } from "../../templates/horizontal_grouping_demo";
 import { SectionConditionalsTestTemplate } from "../../templates/section_conditionals_test";
-import { JCC2DataCollectionFormV3 } from "../../templates/jcc2_data_collection_form_v3";
+import { JCC2DataCollectionFormV4 } from "../../templates/jcc2_data_collection_form_v4";
 import { TemplateBuilder } from "../programmatic/builder/TemplateBuilder";
 import * as ProgrammaticModules from "../programmatic";
 import { FormTemplate, FormField } from "../types/form";
@@ -176,7 +176,7 @@ export const ProgrammaticImportModal: React.FC<
           programmaticTemplate = SectionConditionalsTestTemplate.create();
           break;
         case "jcc2v3":
-          programmaticTemplate = JCC2DataCollectionFormV3.create();
+          programmaticTemplate = JCC2DataCollectionFormV4.create();
           break;
         default:
           throw new Error("Unknown example template");
@@ -636,7 +636,7 @@ export const ProgrammaticImportModal: React.FC<
                       instructions and formatting.
                     </p>
                     <button
-                      onClick={() => handleExampleImport("jcc2v3")}
+                      onClick={() => handleExampleImport("jcc2v4")}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
                       Import Template
