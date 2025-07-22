@@ -12,9 +12,15 @@ interface DataTableFieldProps {
 }
 
 // Initialize empty row based on column definitions
-const createEmptyRow = (columns: DataTableColumn[]): DataTableRow => {
+const createEmptyRow = (columns: DataTableColumn[], rowIndex?: number): DataTableRow => {
   const row: DataTableRow = {};
   columns.forEach(col => {
+    // Auto-index columns are handled separately
+    if (col.autoIndex) {
+      row[col.id] = rowIndex !== undefined ? rowIndex + 1 : '';
+      return;
+    }
+    
     switch (col.type) {
       case 'checkbox':
         row[col.id] = [];
@@ -70,9 +76,21 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
     
     if (value && value.rows) {
       // If value exists, use its rows but ensure columns come from field definition
+      // Update auto-index columns
+      const autoIndexColumns = columns.filter(col => col.autoIndex);
+      let rows = value.rows;
+      if (autoIndexColumns.length > 0) {
+        rows = value.rows.map((row, rowIndex) => {
+          const updatedRow = { ...row };
+          autoIndexColumns.forEach(col => {
+            updatedRow[col.id] = rowIndex + 1;
+          });
+          return updatedRow;
+        });
+      }
       return {
         columns,
-        rows: value.rows
+        rows
       };
     }
     
@@ -81,14 +99,14 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
       const defaultVal = field.defaultValue as DataTableValue;
       return {
         columns,
-        rows: defaultVal.rows || [createEmptyRow(columns)]
+        rows: defaultVal.rows || [createEmptyRow(columns, 0)]
       };
     }
     
     // Initialize with one empty row
     return {
       columns,
-      rows: [createEmptyRow(columns)]
+      rows: [createEmptyRow(columns, 0)]
     };
   });
 
@@ -104,6 +122,14 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
 
   // Handle cell value change
   const handleCellChange = (rowIndex: number, columnId: string, newValue: string | number | boolean | string[]) => {
+    // Find the column
+    const column = tableValue.columns.find(col => col.id === columnId);
+    
+    // Prevent changes to auto-index columns
+    if (column?.autoIndex) {
+      return;
+    }
+    
     const newRows = [...tableValue.rows];
     newRows[rowIndex] = {
       ...newRows[rowIndex],
@@ -116,7 +142,6 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
     });
 
     // Validate the cell
-    const column = tableValue.columns.find(col => col.id === columnId);
     if (column) {
       const error = validateCellValue(newValue, column);
       const errorKey = `${rowIndex}-${columnId}`;
@@ -135,9 +160,10 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
   const addRow = () => {
     const maxRows = field.maxRows || field.validation?.maxRows;
     if (!maxRows || tableValue.rows.length < maxRows) {
+      const newRowIndex = tableValue.rows.length;
       setTableValue({
         ...tableValue,
-        rows: [...tableValue.rows, createEmptyRow(tableValue.columns)]
+        rows: [...tableValue.rows, createEmptyRow(tableValue.columns, newRowIndex)]
       });
     }
   };
@@ -146,7 +172,20 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
   const removeRow = (index: number) => {
     const minRows = field.minRows || field.validation?.minRows || 1;
     if (tableValue.rows.length > minRows) {
-      const newRows = tableValue.rows.filter((_, i) => i !== index);
+      let newRows = tableValue.rows.filter((_, i) => i !== index);
+      
+      // Re-index auto-index columns
+      const autoIndexColumns = tableValue.columns.filter(col => col.autoIndex);
+      if (autoIndexColumns.length > 0) {
+        newRows = newRows.map((row, rowIndex) => {
+          const updatedRow = { ...row };
+          autoIndexColumns.forEach(col => {
+            updatedRow[col.id] = rowIndex + 1;
+          });
+          return updatedRow;
+        });
+      }
+      
       setTableValue({
         ...tableValue,
         rows: newRows
@@ -170,6 +209,22 @@ const DataTableField: React.FC<DataTableFieldProps> = ({
     const cellError = cellErrors[errorKey];
     const columnHeaderId = `${field.id}-header-${column.id}`;
     const inputId = `${field.id}-${rowIndex}-${column.id}`;
+    
+    // Handle auto-index columns
+    if (column.autoIndex) {
+      const autoIndexValue = rowIndex + 1;
+      return (
+        <input
+          id={inputId}
+          aria-labelledby={columnHeaderId}
+          type="number"
+          value={autoIndexValue}
+          readOnly
+          className="w-full px-2 py-1 border rounded bg-gray-50 border-gray-300 cursor-not-allowed"
+          disabled={true}
+        />
+      );
+    }
     
     const baseInputClasses = `w-full px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
       cellError ? 'border-red-500' : 'border-gray-300'

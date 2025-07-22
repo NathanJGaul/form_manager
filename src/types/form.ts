@@ -15,6 +15,7 @@ export interface DataTableColumn {
     maxLength?: number;
     pattern?: string;
   };
+  autoIndex?: boolean; // If true, this column will be automatically populated with row index (1-based)
 }
 
 export interface DataTableRow {
