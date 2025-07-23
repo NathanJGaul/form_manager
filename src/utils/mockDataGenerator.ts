@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import type { FormField, FormFieldValue, FormTemplate } from '../types/form';
 import { evaluateCondition } from './formLogic';
+import { getFieldValue, setFieldValue } from './field-keys';
 
 export interface MockDataConfig {
   fillPercentage?: number;
@@ -35,11 +36,12 @@ export class MockDataGenerator {
 
       section.fields.forEach(field => {
         if (this.config.fieldOverrides?.[field.id] !== undefined) {
-          mockData[field.id] = this.config.fieldOverrides[field.id];
+          Object.assign(mockData, setFieldValue(mockData, field.id, this.config.fieldOverrides[field.id], section.id));
           return;
         }
 
-        if (mockData[field.id] !== undefined && mockData[field.id] !== null && mockData[field.id] !== '') {
+        const existingValue = getFieldValue(mockData, field.id, section.id);
+        if (existingValue !== undefined && existingValue !== null && existingValue !== '') {
           return;
         }
 
@@ -57,7 +59,7 @@ export class MockDataGenerator {
 
         const value = this.generateFieldValue(field);
         if (value !== null) {
-          mockData[field.id] = value;
+          Object.assign(mockData, setFieldValue(mockData, field.id, value, section.id));
         }
       });
     });

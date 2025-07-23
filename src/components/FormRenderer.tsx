@@ -34,6 +34,7 @@ import { CSVIntegrityResults } from "./dev-tools/CSVIntegrityResults";
 import { CSVIntegrityResult } from "../utils/csvIntegrityChecker";
 import HamburgerDropdown from "./HamburgerDropdown";
 import { useFormHistory } from "../hooks/useFormHistory";
+import { getFieldValue, setFieldValue } from "../utils/field-keys";
 
 // Type definitions for form values
 type FormValue = string | number | boolean | string[] | File | null | undefined;
@@ -633,7 +634,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     const completedRequiredFields = requiredVisibleFields.filter((field) => {
-      const value = formData[field.id];
+      const value = getFieldValue(formData, field.id, section.id);
       const defaultValue = field.defaultValue;
 
       // Check if field has a value (either from user input or default value)
@@ -683,10 +684,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     sectionId?: string
   ) => {
     setFormData((prev) => {
-      const updated = {
-        ...prev,
-        [fieldId]: value,
-      };
+      const updated = setFieldValue(prev, fieldId, value, sectionId);
       // Apply conditional field nullification when form data changes
       return updateConditionalFieldsAsNull(template.sections, updated);
     });
@@ -752,15 +750,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               );
               if (naOption) {
                 // Set to "Not Applicable" if it's an option
-                updated[field.id] =
-                  typeof naOption === "string" ? naOption : naOption.value;
+                const naValue = typeof naOption === "string" ? naOption : naOption.value;
+                Object.assign(updated, setFieldValue(updated, field.id, naValue, sectionId));
               } else {
                 // Otherwise set to "N/A"
-                updated[field.id] = "N/A";
+                Object.assign(updated, setFieldValue(updated, field.id, "N/A", sectionId));
               }
             } else {
               // For non-select/radio/checkbox fields, set to "N/A"
-              updated[field.id] = "N/A";
+              Object.assign(updated, setFieldValue(updated, field.id, "N/A", sectionId));
             }
           });
           return updated;
@@ -837,7 +835,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       const visibleFields = getVisibleFields(section.fields, formData);
       visibleFields.forEach((field) => {
-        const error = validateField(field, formData[field.id]);
+        const error = validateField(field, getFieldValue(formData, field.id, section.id));
         if (error) {
           newErrors[field.id] = error;
         }
@@ -1057,8 +1055,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               <tbody className="divide-y divide-gray-100">
                 {fields.map((field) => {
                   const value =
-                    formData[field.id] !== undefined
-                      ? formData[field.id]
+                    getFieldValue(formData, field.id, sectionId) !== undefined
+                      ? getFieldValue(formData, field.id, sectionId)
                       : field.defaultValue;
                   const error = errors[field.id];
 
@@ -1163,8 +1161,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {fields.map((field) => {
               const value =
-                formData[field.id] !== undefined
-                  ? formData[field.id]
+                getFieldValue(formData, field.id, sectionId) !== undefined
+                  ? getFieldValue(formData, field.id, sectionId)
                   : field.defaultValue;
               const error = errors[field.id];
               const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -1236,8 +1234,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     sectionId?: string
   ) => {
     const value =
-      formData[field.id] !== undefined
-        ? formData[field.id]
+      getFieldValue(formData, field.id, sectionId) !== undefined
+        ? getFieldValue(formData, field.id, sectionId)
         : field.defaultValue;
     const error = errors[field.id];
     const tooltipContent = sectionId
