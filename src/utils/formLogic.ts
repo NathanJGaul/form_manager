@@ -76,7 +76,7 @@ export const calculateProgress = (
     
     visibleFields.forEach(field => {
       if (field.required) {
-        const value = formData[field.id];
+        const value = getFieldValue(formData, field.id, section.id);
         
         // Check if field has a value, default value, or is considered complete
         const hasValue = value !== undefined && value !== null && value !== '';

@@ -504,6 +504,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [currentSectionIndex, viewMode, filteredSections, replaceUrlParams]);
 
+  // Mark initial section as visited when form loads in section view
+  useEffect(() => {
+    if (viewMode === "section" && filteredSections.length > 0 && visitedSections.size === 0) {
+      const firstSection = filteredSections[0];
+      if (firstSection) {
+        setVisitedSections(new Set([firstSection.id]));
+      }
+    }
+  }, [viewMode, filteredSections, visitedSections.size]);
+
   // Save visited sections to form instance when they change (debounced)
   useEffect(() => {
     if (visitedSections.size === 0) return;
