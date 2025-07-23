@@ -702,8 +702,12 @@ function createDefaultRow(columns: DataTableColumn[]): Record<string, any> {
 }
 
 // Helper function to create standard task questions
-function addStandardTaskQuestions(builder: TemplateBuilder, sectionId: string) {
-  standardTaskQuestions.forEach((question) => {
+function addTaskQuestions(
+  builder: TemplateBuilder,
+  sectionId: string,
+  questions: TaskQuestion[]
+) {
+  questions.forEach((question) => {
     builder
       .field("radio", question.label)
       .id(`${question.id}`)
@@ -712,15 +716,15 @@ function addStandardTaskQuestions(builder: TemplateBuilder, sectionId: string) {
       .required()
       .end();
 
-    // Add conditional follow-up for "No" answers
-    if (question.options.includes("No")) {
-      builder
-        .field("textarea", question.followUpPrompt)
-        .id(`${question.id}_details`)
-        .required()
-        .conditional(`${question.id}`, "equals", [question.followUpOption])
-        .end();
-    }
+    // Add conditional follow-up
+    builder
+      .field("textarea", question.followUpPrompt)
+      .id(`${question.id}_details`)
+      .required()
+      .conditional(`${sectionId}.${question.id}`, "equals", [
+        question.followUpOption,
+      ])
+      .end();
   });
 
   // Add additional observations field
@@ -802,7 +806,7 @@ function createScenarioSection(
 ) {
   const sectionIdSafe = `${toId(scenarioSection.id)}`;
   const appConditions = scenarioSection.apps.map((app: string) => ({
-    dependsOn: appExpId(app),
+    dependsOn: `applications_used.${appExpId(app)}`,
     operator: "equals",
     values: ["Yes"],
   }));
@@ -833,8 +837,9 @@ function createScenarioSection(
 
   // Add standard task questions
   if (scenarioSection.questions !== undefined) {
+    addTaskQuestions(builder, sectionIdSafe, scenarioSection.questions);
   } else {
-    addStandardTaskQuestions(builder, sectionIdSafe);
+    addTaskQuestions(builder, sectionIdSafe, standardTaskQuestions);
   }
 }
 

@@ -14,12 +14,24 @@ import {
 
 /**
  * Evaluates a single condition
+ * Supports both simple field IDs (e.g., "field1") and section.field format (e.g., "section1.field1")
  */
 export const evaluateSingleCondition = (
   condition: SingleCondition,
   formData: Record<string, FormFieldValue>
 ): boolean => {
-  const dependentValue = formData[condition.dependsOn];
+  let dependentValue = formData[condition.dependsOn];
+  
+  // If not found and contains a dot, try parsing as section.field format
+  if (dependentValue === undefined && condition.dependsOn.includes('.')) {
+    const parts = condition.dependsOn.split('.');
+    if (parts.length === 2) {
+      // For section.field format, try the field ID directly
+      // This maintains backward compatibility while supporting the new format
+      const [sectionId, fieldId] = parts;
+      dependentValue = formData[fieldId];
+    }
+  }
   
   if (dependentValue === undefined || dependentValue === null) {
     return false;
