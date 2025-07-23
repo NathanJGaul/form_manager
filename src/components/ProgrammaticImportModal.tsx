@@ -7,6 +7,7 @@ import { useToast } from "../contexts/ToastContext";
 import { WorkingComprehensiveTemplate } from "../programmatic/examples/WorkingComprehensiveTemplate";
 import { DefaultValueExample } from "../programmatic/examples/DefaultValueExample";
 import { ParagraphFieldExample } from "../programmatic/examples/ParagraphFieldExample";
+import { DataTableExample } from "../programmatic/examples/DataTableExample";
 import { CommonTemplates } from "../programmatic/library/CommonTemplates";
 import { HorizontalGroupingDemo } from "../../templates/horizontal_grouping_demo";
 import { SectionConditionalsTestTemplate } from "../../templates/section_conditionals_test";
@@ -168,6 +169,9 @@ export const ProgrammaticImportModal: React.FC<
           break;
         case "textFields":
           programmaticTemplate = ParagraphFieldExample.create();
+          break;
+        case "dataTable":
+          programmaticTemplate = DataTableExample.create();
           break;
         case "horizontalGrouping":
           programmaticTemplate = HorizontalGroupingDemo.create();
@@ -730,6 +734,23 @@ export const ProgrammaticImportModal: React.FC<
                     <button
                       onClick={() => handleExampleImport("textFields")}
                       className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                    >
+                      Import Template
+                    </button>
+                  </div>
+
+                  <div className="border rounded-lg p-4 hover:border-amber-300 transition-colors">
+                    <h3 className="font-medium text-gray-900 mb-2">
+                      DataTable Example
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Demonstrates DataTable fields with columns, rows, and
+                      default values. Shows team members and contact lists with
+                      mock data generation.
+                    </p>
+                    <button
+                      onClick={() => handleExampleImport("dataTable")}
+                      className="w-full px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
                     >
                       Import Template
                     </button>

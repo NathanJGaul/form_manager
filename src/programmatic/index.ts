@@ -12,6 +12,7 @@ export { JCC2UserQuestionnaire } from './examples/JCC2UserQuestionnaire';
 export { WorkingComprehensiveTemplate } from './examples/WorkingComprehensiveTemplate';
 export { DefaultValueExample } from './examples/DefaultValueExample';
 export { ParagraphFieldExample } from './examples/ParagraphFieldExample';
+export { DataTableExample } from './examples/DataTableExample';
 export { CommonTemplates } from './library/CommonTemplates';
 
 // Export control flow
