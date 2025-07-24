@@ -11,15 +11,32 @@ import {
   isCompoundCondition, 
   isSingleCondition 
 } from '../types/conditional';
+import { getFieldValue } from './field-keys';
 
 /**
  * Evaluates a single condition
+ * Supports both simple field IDs (e.g., "field1") and section.field format (e.g., "section1.field1")
  */
 export const evaluateSingleCondition = (
   condition: SingleCondition,
   formData: Record<string, FormFieldValue>
 ): boolean => {
-  const dependentValue = formData[condition.dependsOn];
+  let dependentValue: FormFieldValue;
+  
+  // Check if dependsOn is in section.field format
+  if (condition.dependsOn.includes('.')) {
+    const parts = condition.dependsOn.split('.');
+    if (parts.length === 2) {
+      const [sectionId, fieldId] = parts;
+      // Try section-scoped key first, then fall back to field ID only
+      dependentValue = getFieldValue(formData, fieldId, sectionId);
+    } else {
+      dependentValue = formData[condition.dependsOn];
+    }
+  } else {
+    // Simple field ID - check both scoped and unscoped keys
+    dependentValue = getFieldValue(formData, condition.dependsOn);
+  }
   
   if (dependentValue === undefined || dependentValue === null) {
     return false;

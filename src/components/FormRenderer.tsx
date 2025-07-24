@@ -34,6 +34,7 @@ import { CSVIntegrityResults } from "./dev-tools/CSVIntegrityResults";
 import { CSVIntegrityResult } from "../utils/csvIntegrityChecker";
 import HamburgerDropdown from "./HamburgerDropdown";
 import { useFormHistory } from "../hooks/useFormHistory";
+import { getFieldValue, setFieldValue } from "../utils/field-keys";
 
 // Type definitions for form values
 type FormValue = string | number | boolean | string[] | File | null | undefined;
@@ -232,6 +233,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   // Initialize form data with default values if no instance data exists
   const initializeFormData = () => {
     console.log("🔍 FormRenderer Init Debug - Instance prop:", instance);
+    console.log("🔍 FormRenderer Init Debug - Instance completed status:", instance?.completed);
     console.log("🔍 FormRenderer Init Debug - Instance data:", instance?.data);
     console.log("🔍 FormRenderer Init Debug - Instance data keys:", Object.keys(instance?.data || {}));
     console.log("🔍 FormRenderer Init Debug - Template:", {
@@ -292,12 +294,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   );
 
   // Memoize currentInstance to prevent recreation on every render
-  const currentInstance = useMemo(
-    () =>
-      instance ||
-      storageManager.getOrCreateInstance(template.id, template.name),
-    [instance, template.id, template.name]
-  );
+  const currentInstance = useMemo(() => {
+    const result = instance || storageManager.getOrCreateInstance(template.id, template.name);
+    console.log("📋 CURRENT INSTANCE: Setting up instance", {
+      instanceId: result.id,
+      completed: result.completed,
+      progress: result.progress,
+      hasInstanceProp: !!instance,
+      fromStorage: !instance
+    });
+    return result;
+  }, [instance, template.id, template.name]);
 
   const [visitedSections, setVisitedSections] = useState<Set<string>>(() => {
     // Load visited sections from form instance
@@ -341,7 +348,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         visitedSections: Array.from(visitedSections),
         naSections: Array.from(naSections),
         updatedAt: new Date(),
+        completed: currentInstance.completed || false,
       };
+
+      console.log("💾 MANUAL SAVE: Preserving completed status", {
+        instanceId: updatedInstance.id,
+        wasCompleted: currentInstance.completed,
+        nowCompleted: updatedInstance.completed,
+        progress: updatedInstance.progress
+      });
 
       storageManager.saveInstance(updatedInstance);
       onSave?.(updatedInstance);
@@ -398,8 +413,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           data: nullifiedFormData,
           progress,
           visitedSections: Array.from(visitedSections),
+          naSections: Array.from(naSections),
           updatedAt: new Date(),
+          completed: currentInstance.completed || false,
         };
+
+        console.log("🔄 AUTO-SAVE: Preserving completed status", {
+          instanceId: updatedInstance.id,
+          wasCompleted: currentInstance.completed,
+          nowCompleted: updatedInstance.completed,
+          progress: updatedInstance.progress
+        });
 
         storageManager.saveInstance(updatedInstance);
         onSave?.(updatedInstance);
@@ -503,6 +527,16 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
   }, [currentSectionIndex, viewMode, filteredSections, replaceUrlParams]);
 
+  // Mark initial section as visited when form loads in section view
+  useEffect(() => {
+    if (viewMode === "section" && filteredSections.length > 0 && visitedSections.size === 0) {
+      const firstSection = filteredSections[0];
+      if (firstSection) {
+        setVisitedSections(new Set([firstSection.id]));
+      }
+    }
+  }, [viewMode, filteredSections, visitedSections.size]);
+
   // Save visited sections to form instance when they change (debounced)
   useEffect(() => {
     if (visitedSections.size === 0) return;
@@ -512,6 +546,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         ...currentInstance,
         visitedSections: Array.from(visitedSections),
         updatedAt: new Date(),
+        completed: currentInstance.completed || false,
       };
 
       storageManager.saveInstance(updatedInstance);
@@ -633,7 +668,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     }
 
     const completedRequiredFields = requiredVisibleFields.filter((field) => {
-      const value = formData[field.id];
+      const value = getFieldValue(formData, field.id, section.id);
       const defaultValue = field.defaultValue;
 
       // Check if field has a value (either from user input or default value)
@@ -683,10 +718,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     sectionId?: string
   ) => {
     setFormData((prev) => {
-      const updated = {
-        ...prev,
-        [fieldId]: value,
-      };
+      const updated = setFieldValue(prev, fieldId, value, sectionId);
       // Apply conditional field nullification when form data changes
       return updateConditionalFieldsAsNull(template.sections, updated);
     });
@@ -752,15 +784,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               );
               if (naOption) {
                 // Set to "Not Applicable" if it's an option
-                updated[field.id] =
-                  typeof naOption === "string" ? naOption : naOption.value;
+                const naValue = typeof naOption === "string" ? naOption : naOption.value;
+                Object.assign(updated, setFieldValue(updated, field.id, naValue, sectionId));
               } else {
                 // Otherwise set to "N/A"
-                updated[field.id] = "N/A";
+                Object.assign(updated, setFieldValue(updated, field.id, "N/A", sectionId));
               }
             } else {
               // For non-select/radio/checkbox fields, set to "N/A"
-              updated[field.id] = "N/A";
+              Object.assign(updated, setFieldValue(updated, field.id, "N/A", sectionId));
             }
           });
           return updated;
@@ -780,8 +812,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     setFormData(mockData);
     setHasUnsavedChanges(true);
 
-    // Mark all visible sections as visited
-    const visibleSectionIds = visibleSections.map((s) => s.id);
+    // Recalculate visible sections based on the NEW mock data
+    const newVisibleSections = getVisibleSections(template.sections, mockData);
+    const visibleSectionIds = newVisibleSections.map((s) => s.id);
     setVisitedSections(new Set(visibleSectionIds));
 
     // Save the instance
@@ -791,6 +824,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       visitedSections: visibleSectionIds,
       lastSaved: new Date(),
       updatedAt: new Date(),
+      completed: currentInstance.completed || false,
     };
 
     storageManager.saveInstance(updatedInstance);
@@ -804,8 +838,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     setFormData(data);
     setHasUnsavedChanges(true);
 
-    // Mark all visible sections as visited
-    const visibleSectionIds = visibleSections.map((s) => s.id);
+    // Recalculate visible sections based on the NEW form data
+    const newVisibleSections = getVisibleSections(template.sections, data);
+    const visibleSectionIds = newVisibleSections.map((s) => s.id);
     setVisitedSections(new Set(visibleSectionIds));
 
     // Save the instance
@@ -815,6 +850,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       visitedSections: visibleSectionIds,
       lastSaved: new Date(),
       updatedAt: new Date(),
+      completed: currentInstance.completed || false,
     };
 
     storageManager.saveInstance(updatedInstance);
@@ -837,7 +873,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       const visibleFields = getVisibleFields(section.fields, formData);
       visibleFields.forEach((field) => {
-        const error = validateField(field, formData[field.id]);
+        const error = validateField(field, getFieldValue(formData, field.id, section.id));
         if (error) {
           newErrors[field.id] = error;
         }
@@ -864,6 +900,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       naSections: Array.from(naSections),
       updatedAt: new Date(),
     };
+
+    console.log("🚀 SUBMIT: Setting completed=true for instance", {
+      instanceId: submissionInstance.id,
+      completed: submissionInstance.completed,
+      progress: submissionInstance.progress
+    });
 
     // Save the completed instance (this overwrites the draft)
     storageManager.saveInstance(submissionInstance);
@@ -930,6 +972,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         visitedSections: Array.from(visitedSections),
         naSections: Array.from(naSections),
         updatedAt: new Date(),
+        completed: currentInstance.completed || false,
       };
       
       // Create an exportable instance that includes the template
@@ -1057,8 +1100,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               <tbody className="divide-y divide-gray-100">
                 {fields.map((field) => {
                   const value =
-                    formData[field.id] !== undefined
-                      ? formData[field.id]
+                    getFieldValue(formData, field.id, sectionId) !== undefined
+                      ? getFieldValue(formData, field.id, sectionId)
                       : field.defaultValue;
                   const error = errors[field.id];
 
@@ -1163,8 +1206,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {fields.map((field) => {
               const value =
-                formData[field.id] !== undefined
-                  ? formData[field.id]
+                getFieldValue(formData, field.id, sectionId) !== undefined
+                  ? getFieldValue(formData, field.id, sectionId)
                   : field.defaultValue;
               const error = errors[field.id];
               const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -1236,8 +1279,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     sectionId?: string
   ) => {
     const value =
-      formData[field.id] !== undefined
-        ? formData[field.id]
+      getFieldValue(formData, field.id, sectionId) !== undefined
+        ? getFieldValue(formData, field.id, sectionId)
         : field.defaultValue;
     const error = errors[field.id];
     const tooltipContent = sectionId

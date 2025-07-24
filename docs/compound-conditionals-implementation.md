@@ -147,6 +147,82 @@ builder
   .naable();
 ```
 
+## Section-Based Field References
+
+### Overview
+
+The conditional system now supports referencing fields using section.field notation. This provides clearer semantics when dealing with complex forms with multiple sections.
+
+### Syntax
+
+```typescript
+// Traditional format (still supported)
+.conditional("field_id", "equals", ["value"])
+
+// New section.field format
+.conditional("section_id.field_id", "equals", ["value"])
+```
+
+### Implementation Details
+
+1. **Backward Compatible**: All existing templates continue to work with simple field IDs
+2. **Automatic Resolution**: If a field isn't found with the full section.field ID, the system automatically tries the field ID alone
+3. **FormData Structure**: FormData remains flat (field IDs as keys), the section prefix is only used for clearer conditional dependencies
+
+### Example Usage
+
+```typescript
+// Helper function using section.field references
+function addStandardTaskQuestions(builder: TemplateBuilder, sectionId: string) {
+  standardTaskQuestions.forEach((question) => {
+    builder
+      .field("radio", question.label)
+      .id(`${question.id}`)
+      .options(question.options)
+      .layout("horizontal")
+      .required()
+      .end();
+
+    // Add conditional follow-up for "No" answers
+    if (question.options.includes("No")) {
+      builder
+        .field("textarea", question.followUpPrompt)
+        .id(`${question.id}_details`)
+        .required()
+        .conditional(`${sectionId}.${question.id}`, "equals", [question.followUpOption])
+        .end();
+    }
+  });
+}
+
+// Usage in template
+builder
+  .section("Experience")
+  .id("experience")
+  .fields((section) => {
+    addStandardTaskQuestions(section, "experience");
+  })
+  .end();
+```
+
+### Benefits
+
+1. **Clearer Intent**: Makes it obvious which section a field belongs to
+2. **Reduced Naming Conflicts**: Fields can have simpler IDs when section context is clear
+3. **Better Organization**: Encourages thinking in terms of section/field hierarchy
+4. **Template Reusability**: Helper functions can generate fields with proper section context
+
+### Combining with Compound Conditionals
+
+Section.field notation works seamlessly with compound conditionals:
+
+```typescript
+.conditionalOr([
+  { dependsOn: "experience.has_clearance", operator: "equals", values: ["No"] },
+  { dependsOn: "eligibility.requires_sponsorship", operator: "equals", values: ["Yes"] }
+])
+```
+
 ## Next Steps
 
 1. Review and approve the design

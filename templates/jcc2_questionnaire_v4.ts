@@ -240,7 +240,7 @@ export class JCC2UserQuestionnaireV4 {
     builder.section("JCC2 Application Usage").id("jcc2_application_usage");
     allJcc2Apps.forEach((app) => {
       const appId = `${toId(app)}`;
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", `${app}`)
         .id(`frequency_${appId}`)
@@ -294,7 +294,7 @@ export class JCC2UserQuestionnaireV4 {
       .id("mop_1_1_1")
       .naable();
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`intelligence_data_provided_${toId(app)}`)
@@ -345,7 +345,7 @@ export class JCC2UserQuestionnaireV4 {
 
     ["MADSS", "Rally", "SigAct", "Threat Hub"].forEach((app) => {
       const appId = `${toId(app)}`;
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`object_tagging_${appId}`)
@@ -446,7 +446,7 @@ export class JCC2UserQuestionnaireV4 {
       .id("reporting_and_data_export")
       .naable();
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`reports_accurate_${toId(app)}`)
@@ -463,7 +463,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`reports_export_${toId(app)}`)
@@ -480,7 +480,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`reports_customizable_${toId(app)}`)
@@ -497,7 +497,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`reports_sortable_${toId(app)}`)
@@ -514,7 +514,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`reports_filtered_${toId(app)}`)
@@ -531,7 +531,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`reports_relevant_${toId(app)}`)
@@ -548,7 +548,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`reports_saves_time_${toId(app)}`)
@@ -583,7 +583,7 @@ export class JCC2UserQuestionnaireV4 {
       .id("mop_1_1_5")
       .naable();
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`info_sharing_${toId(app)}`)
@@ -614,7 +614,7 @@ export class JCC2UserQuestionnaireV4 {
     // MOP 1.2.1: Threat Detection (TASC)
     builder.section("MOP 1.2.1: Threat Detection").id("mop_1_2_1").naable();
     tascApps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`threat_detection_accuracy_${toId(app)}`)
@@ -710,7 +710,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Relevance
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`cop_relevant_${toId(app)}`)
@@ -728,7 +728,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Accuracy
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`cop_accurate_${toId(app)}`)
@@ -746,7 +746,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Completeness
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`cop_complete_${toId(app)}`)
@@ -764,7 +764,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Timeliness
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`cop_timely_${toId(app)}`)
@@ -782,7 +782,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Visual Clarity
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`cop_not_cluttered_${toId(app)}`)
@@ -800,7 +800,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Search/Filter/Sort Capabilities
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`cop_search_capabilities_${toId(app)}`)
@@ -818,7 +818,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // COP Customization
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`cop_customizable_${toId(app)}`)
@@ -915,7 +915,7 @@ export class JCC2UserQuestionnaireV4 {
           .field("radio", `${app}`)
           .id(`${question[1]}_${toId(app)}`)
           .options(effectivenessScale.options)
-          .conditional(`exp_app_${toId(app)}`, "not_equals", ["NA"])
+          .conditional(`operational_jcc2_experience.exp_app_${toId(app)}`, "not_equals", ["NA"])
           .required()
           .layout("horizontal")
           .grouping(true, question[1], question[0])
@@ -942,7 +942,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // Alert Customization
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`alerts_customized_${toId(app)}`)
@@ -961,7 +961,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // Alert Current Event Awareness
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`alerts_current_events_${toId(app)}`)
@@ -980,7 +980,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // Alert Timeliness
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`alerts_timely_${toId(app)}`)
@@ -995,7 +995,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // Alert Configurability
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`alerts_configurable_${toId(app)}`)
@@ -1030,7 +1030,7 @@ export class JCC2UserQuestionnaireV4 {
 
     // Environment usage
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`environment_${toId(app)}`)
@@ -1050,7 +1050,7 @@ export class JCC2UserQuestionnaireV4 {
     // Data flow effectiveness across security levels
     // Doesn't exist within the physical document but may need to be added
     // allJcc2Apps.forEach((app) => {
-    //   const appConditionId = `exp_app_${toId(app)}`;
+    //   const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
     //   builder
     //     .field("radio", app)
     //     .id(`data_flow_security_effectiveness_${toId(app)}`)
@@ -1543,7 +1543,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`training_rating_${toId(app)}`)
@@ -1600,7 +1600,7 @@ export class JCC2UserQuestionnaireV4 {
       // .defaultValue(effectivenessScale.default)
       .end();
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`documentation_rating_${toId(app)}`)
@@ -1622,7 +1622,7 @@ export class JCC2UserQuestionnaireV4 {
       .section("MOP 3.2.3: User rating of JCC2 support (help desk)")
       .id("mop_3_2_3");
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`submit_ticket_${toId(app)}`)
@@ -1635,7 +1635,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`confirm_ticket_${toId(app)}`)
@@ -1652,7 +1652,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`fix_issues_${toId(app)}`)
@@ -1669,7 +1669,7 @@ export class JCC2UserQuestionnaireV4 {
         .end();
     });
     allJcc2Apps.forEach((app) => {
-      const appConditionId = `exp_app_${toId(app)}`;
+      const appConditionId = `operational_jcc2_experience.exp_app_${toId(app)}`;
       builder
         .field("radio", app)
         .id(`responsive_${toId(app)}`)

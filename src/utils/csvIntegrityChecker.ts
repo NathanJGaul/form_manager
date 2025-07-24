@@ -1,4 +1,4 @@
-import { FormTemplate, FormField, FormFieldValue } from '../types/form';
+import { FormTemplate, FormField, FormFieldValue, DataTableValue } from '../types/form';
 
 export interface ValidationError {
   field: string;
@@ -306,6 +306,29 @@ function validateDataType(
         // Single values are acceptable for checkboxes
       }
       break;
+      
+    case 'datatable':
+      // DataTable values should be valid JSON (already unescaped by CSV parser)
+      try {
+        const parsed = JSON.parse(cellValue);
+        if (!parsed.columns || !Array.isArray(parsed.columns) || 
+            !parsed.rows || !Array.isArray(parsed.rows)) {
+          result.accuracy.dataTypeErrors.push({
+            field: fieldName,
+            error: `Invalid DataTable structure`,
+            expected: 'object with columns and rows arrays',
+            actual: cellValue
+          });
+        }
+      } catch (e) {
+        result.accuracy.dataTypeErrors.push({
+          field: fieldName,
+          error: `Expected valid JSON for DataTable, got: ${cellValue}`,
+          expected: 'valid JSON',
+          actual: cellValue
+        });
+      }
+      break;
   }
 }
 
@@ -419,6 +442,11 @@ function validateValueConsistency(
     expectedCsvValue = originalValue.join(',');
   } else if (typeof originalValue === 'boolean') {
     expectedCsvValue = originalValue.toString();
+  } else if (field.type === 'datatable' && typeof originalValue === 'object' && 'columns' in originalValue && 'rows' in originalValue) {
+    // Handle DataTable values - serialize as JSON
+    // The CSV parser already removes quotes and unescapes, so we compare the JSON directly
+    const dataTableValue = originalValue as DataTableValue;
+    expectedCsvValue = JSON.stringify(dataTableValue);
   } else {
     expectedCsvValue = originalValue.toString();
   }

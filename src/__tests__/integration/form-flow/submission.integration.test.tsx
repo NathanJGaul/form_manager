@@ -139,11 +139,11 @@ describe('Form Submission Integration Flow', () => {
           templateId: mockTemplate.id,
           templateName: mockTemplate.name,
           data: expect.objectContaining({
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            department: 'Engineering',
-            comments: 'This is a test submission',
-            subscribe: ['Subscribe to updates'] // Checkbox with options returns array of selected values
+            'section-1.name': 'John Doe',
+            'section-1.email': 'john.doe@example.com',
+            'section-1.department': 'Engineering',
+            'section-2.comments': 'This is a test submission',
+            'section-2.subscribe': ['Subscribe to updates'] // Checkbox with options returns array of selected values
           }),
           submittedAt: expect.any(Date),
         })
@@ -214,8 +214,8 @@ describe('Form Submission Integration Flow', () => {
       
       // Verify the saved instance has the data we entered
       expect(savedInstance.data).toMatchObject({
-        name: 'John Doe',
-        email: 'john@example.com',
+        'section-1.name': 'John Doe',
+        'section-1.email': 'john@example.com',
       });
       
       // Create a properly structured instance with all required fields
@@ -387,8 +387,8 @@ describe('Form Submission Integration Flow', () => {
         expect(storageManager.saveSubmission).toHaveBeenCalledWith(
           expect.objectContaining({
             data: {
-              hasDetails: 'No',
-              details: null, // Conditional field should be nullified
+              'section-1.hasDetails': 'No',
+              'section-1.details': null, // Conditional field should be nullified
             },
           })
         );

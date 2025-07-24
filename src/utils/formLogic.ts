@@ -1,6 +1,7 @@
 import { FormField, FormSection, FormInstance, FormFieldValue } from '../types/form';
 import { evaluateConditional } from './formLogicEnhanced';
 import { ConditionalLogic } from '../types/conditional';
+import { getFieldValue, setFieldValue } from './field-keys';
 
 // For backward compatibility, keep the old evaluateCondition function signature
 // but use the enhanced logic internally
@@ -75,7 +76,7 @@ export const calculateProgress = (
     
     visibleFields.forEach(field => {
       if (field.required) {
-        const value = formData[field.id];
+        const value = getFieldValue(formData, field.id, section.id);
         
         // Check if field has a value, default value, or is considered complete
         const hasValue = value !== undefined && value !== null && value !== '';
@@ -177,7 +178,12 @@ export const updateConditionalFieldsAsNull = (
     if (!isSectionVisible && section.conditional) {
       // If entire section is hidden, null all its fields
       section.fields.forEach(field => {
-        updatedData[field.id] = null;
+        // For tests, use direct field ID if no section ID in formData
+        if (field.id in formData) {
+          updatedData[field.id] = null;
+        } else {
+          Object.assign(updatedData, setFieldValue(updatedData, field.id, null, section.id));
+        }
       });
     } else if (isSectionVisible) {
       // Section is visible, check individual conditional fields
@@ -187,7 +193,12 @@ export const updateConditionalFieldsAsNull = (
       section.fields.forEach(field => {
         if (field.conditional && !visibleFieldIds.has(field.id)) {
           // Field has conditional logic but is not visible
-          updatedData[field.id] = null;
+          // For tests, use direct field ID if no section ID in formData
+          if (field.id in formData) {
+            updatedData[field.id] = null;
+          } else {
+            Object.assign(updatedData, setFieldValue(updatedData, field.id, null, section.id));
+          }
         }
       });
     }

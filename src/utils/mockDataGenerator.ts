@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
-import type { FormField, FormFieldValue, FormTemplate } from '../types/form';
+import type { FormField, FormFieldValue, FormTemplate, DataTableValue, DataTableRow, DataTableColumn } from '../types/form';
 import { evaluateCondition } from './formLogic';
+import { getFieldValue, setFieldValue } from './field-keys';
 
 export interface MockDataConfig {
   fillPercentage?: number;
@@ -8,6 +9,7 @@ export interface MockDataConfig {
   useRealisticData?: boolean;
   seed?: number;
   fieldOverrides?: Record<string, FormFieldValue>;
+  overrideDefaults?: boolean; // When true, generate new values even for fields with default values
 }
 
 export class MockDataGenerator {
@@ -35,12 +37,25 @@ export class MockDataGenerator {
 
       section.fields.forEach(field => {
         if (this.config.fieldOverrides?.[field.id] !== undefined) {
-          mockData[field.id] = this.config.fieldOverrides[field.id];
+          Object.assign(mockData, setFieldValue(mockData, field.id, this.config.fieldOverrides[field.id], section.id));
           return;
         }
 
-        if (mockData[field.id] !== undefined && mockData[field.id] !== null && mockData[field.id] !== '') {
-          return;
+        const existingValue = getFieldValue(mockData, field.id, section.id);
+        
+        // Skip if value exists and we're not overriding defaults
+        if (existingValue !== undefined && existingValue !== null && existingValue !== '') {
+          // Check if this is a default value that should be overridden
+          if (!this.config.overrideDefaults) {
+            return;
+          }
+          
+          // If overrideDefaults is true, only skip if it's not a default value
+          // (i.e., it was already generated or user-provided)
+          const isDefaultValue = JSON.stringify(existingValue) === JSON.stringify(field.defaultValue);
+          if (!isDefaultValue) {
+            return;
+          }
         }
 
         if (field.conditional && !evaluateCondition(field.conditional, mockData)) {
@@ -57,7 +72,7 @@ export class MockDataGenerator {
 
         const value = this.generateFieldValue(field);
         if (value !== null) {
-          mockData[field.id] = value;
+          Object.assign(mockData, setFieldValue(mockData, field.id, value, section.id));
         }
       });
     });
@@ -92,6 +107,8 @@ export class MockDataGenerator {
         return this.generateNumberValue(field);
       case 'file':
         return null;
+      case 'datatable':
+        return this.generateDataTableValue(field);
       default:
         return field.defaultValue || '';
     }
@@ -189,6 +206,101 @@ export class MockDataGenerator {
     const hour = faker.number.int({ min: 0, max: 23 }).toString().padStart(2, '0');
     const minute = faker.number.int({ min: 0, max: 59 }).toString().padStart(2, '0');
     return `${hour}:${minute}`;
+  }
+
+  private generateDataTableValue(field: FormField): DataTableValue {
+    if (!field.columns || field.columns.length === 0) {
+      return { columns: [], rows: [] };
+    }
+
+    const columns = field.columns;
+    const minRows = field.minRows || field.validation?.minRows || 1;
+    const maxRows = field.maxRows || field.validation?.maxRows || 10;
+    const numRows = faker.number.int({ min: minRows, max: Math.min(maxRows, 5) }); // Generate reasonable number of rows
+
+    const rows: DataTableRow[] = [];
+    
+    for (let i = 0; i < numRows; i++) {
+      const row: DataTableRow = {};
+      
+      columns.forEach(column => {
+        // Handle auto-index columns
+        if (column.autoIndex) {
+          row[column.id] = i + 1; // 1-based index
+          return;
+        }
+        
+        // Generate value based on column type
+        row[column.id] = this.generateColumnValue(column);
+      });
+      
+      rows.push(row);
+    }
+
+    return { columns, rows };
+  }
+
+  private generateColumnValue(column: DataTableColumn): string | number | boolean | string[] {
+    switch (column.type) {
+      case 'text':
+        return this.generateColumnTextValue(column);
+      case 'textarea':
+        return faker.lorem.sentence();
+      case 'email':
+        return faker.internet.email();
+      case 'tel':
+        return faker.phone.number();
+      case 'url':
+        return faker.internet.url();
+      case 'number':
+        const min = column.validation?.min ?? 0;
+        const max = column.validation?.max ?? 100;
+        return faker.number.int({ min, max });
+      case 'date':
+        return this.generateDateValue();
+      case 'select':
+      case 'radio':
+        if (column.options && column.options.length > 0) {
+          const options = column.options.map(opt => 
+            typeof opt === 'string' ? opt : opt.value
+          );
+          return faker.helpers.arrayElement(options);
+        }
+        return '';
+      case 'checkbox':
+        if (column.options && column.options.length > 0) {
+          const options = column.options.map(opt => 
+            typeof opt === 'string' ? opt : opt.value
+          );
+          const numSelections = faker.number.int({ min: 0, max: Math.min(2, options.length) });
+          return faker.helpers.arrayElements(options, numSelections);
+        }
+        return [];
+      default:
+        return '';
+    }
+  }
+
+  private generateColumnTextValue(column: DataTableColumn): string {
+    const label = column.label.toLowerCase();
+    const id = column.id.toLowerCase();
+
+    // Use semantic generation based on column name
+    if (label.includes('name') || id.includes('name')) {
+      if (label.includes('first')) return faker.person.firstName();
+      if (label.includes('last')) return faker.person.lastName();
+      return faker.person.fullName();
+    }
+    if (label.includes('email') || id.includes('email')) return faker.internet.email();
+    if (label.includes('phone') || id.includes('phone')) return faker.phone.number();
+    if (label.includes('address')) return faker.location.streetAddress();
+    if (label.includes('city')) return faker.location.city();
+    if (label.includes('role') || label.includes('position')) return faker.person.jobTitle();
+    if (label.includes('department')) return faker.commerce.department();
+    if (label.includes('company')) return faker.company.name();
+    
+    // Default to short text
+    return faker.lorem.words(2);
   }
 
   private applyValidation(value: FormFieldValue, field: FormField): FormFieldValue {

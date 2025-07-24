@@ -3,6 +3,7 @@ import { ProgrammaticTemplate } from "../types";
 import { JCC2UserQuestionnaireV3 } from "../../../templates/jcc2_questionnaire_v3";
 import { JCC2UserQuestionnaireV4 } from "../../../templates/jcc2_questionnaire_v4";
 import { JCC2DataCollectionFormV3 } from "../../../templates/jcc2_data_collection_form_v3";
+import { JCC2DataCollectionFormV4 } from "../../../templates/jcc2_data_collection_form_v4";
 
 /**
  * Library of common template patterns and pre-built templates
@@ -231,10 +232,17 @@ export class CommonTemplates {
   }
 
   /**
-   * Create JCC2 Data Collection and Interview Form template
+   * Create JCC2 Data Collection and Interview Form v3 template
    */
-  static createJCC2DataCollectionForm(): ProgrammaticTemplate {
+  static createJCC2DataCollectionFormV3(): ProgrammaticTemplate {
     return JCC2DataCollectionFormV3.create();
+  }
+
+  /**
+   * Create JCC2 Data Collection and Interview Form v4 template (comprehensive version)
+   */
+  static createJCC2DataCollectionFormV4(): ProgrammaticTemplate {
+    return JCC2DataCollectionFormV4.create();
   }
 
   /**
@@ -248,6 +256,8 @@ export class CommonTemplates {
       "jcc2-questionnaire",
       "jcc2-questionnaire-v4",
       "jcc2-data-collection",
+      "jcc2-data-collection-v3",
+      "jcc2-data-collection-v4",
     ];
   }
 
@@ -274,7 +284,13 @@ export class CommonTemplates {
       case "jcc2-data-collection":
       case "jcc2-data-collection-form":
       case "jcc2-dc":
-        return this.createJCC2DataCollectionForm();
+        return this.createJCC2DataCollectionFormV4(); // Changed to V4 as default
+      case "jcc2-data-collection-v3":
+      case "jcc2-dc-v3":
+        return this.createJCC2DataCollectionFormV3();
+      case "jcc2-data-collection-v4":
+      case "jcc2-dc-v4":
+        return this.createJCC2DataCollectionFormV4();
       default:
         throw new Error(`Template '${name}' not found`);
     }

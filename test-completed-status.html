@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Completed Status</title>
+</head>
+<body>
+    <h1>Form Manager - Completed Status Test</h1>
+    
+    <h2>Test Steps:</h2>
+    <ol>
+        <li>Start the dev server: <code>npm run dev</code></li>
+        <li>Open the application in your browser</li>
+        <li>Create or select a form template</li>
+        <li>Fill out all required fields</li>
+        <li>Click "Submit Form"</li>
+        <li>Note the form instance ID</li>
+        <li>Go back to the dashboard</li>
+        <li>Check that the form shows as "Completed" (green badge)</li>
+        <li>Click the Edit button on the completed form</li>
+        <li>Make a small change to any field</li>
+        <li>Wait for auto-save (watch for "Saved" indicator)</li>
+        <li>Go back to dashboard</li>
+        <li>Verify the form still shows as "Completed"</li>
+    </ol>
+
+    <h2>Expected Results:</h2>
+    <ul>
+        <li>After submission, forms should show "Completed" status in green</li>
+        <li>Editing a completed form should preserve the completed status</li>
+        <li>Auto-save should not reset the completed status</li>
+        <li>The progress should remain at 100%</li>
+    </ul>
+
+    <h2>Fixed Issues:</h2>
+    <ul>
+        <li>✅ Auto-save now preserves completed status</li>
+        <li>✅ Manual save now preserves completed status</li>
+        <li>✅ Form sharing now preserves completed status</li>
+        <li>✅ All instance update operations maintain the completed field</li>
+    </ul>
+
+    <h2>Remaining Issue:</h2>
+    <p>When clicking "Start" on a template that already has a completed form, it creates a new instance instead of reusing the completed one. This is by design in the current implementation, as <code>findDraftInstance</code> only looks for incomplete instances.</p>
+</body>
+</html>

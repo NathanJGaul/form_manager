@@ -17,7 +17,8 @@ export const MockDataConfigModal: React.FC<MockDataConfigModalProps> = ({
     fillPercentage: 100,
     requiredOnly: false,
     useRealisticData: true,
-    seed: undefined
+    seed: undefined,
+    overrideDefaults: false
   });
 
   if (!isOpen) return null;
@@ -97,6 +98,23 @@ export const MockDataConfigModal: React.FC<MockDataConfigModalProps> = ({
             </label>
             <p className="mt-1 ml-6 text-sm text-gray-500">
               Generate context-aware data based on field names (e.g., real names for name fields)
+            </p>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={config.overrideDefaults}
+                onChange={(e) => setConfig({ ...config, overrideDefaults: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Override Default Values
+              </span>
+            </label>
+            <p className="mt-1 ml-6 text-sm text-gray-500">
+              Replace fields with default values with generated mock data
             </p>
           </div>
 
