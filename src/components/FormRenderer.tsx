@@ -233,6 +233,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   // Initialize form data with default values if no instance data exists
   const initializeFormData = () => {
     console.log("🔍 FormRenderer Init Debug - Instance prop:", instance);
+    console.log("🔍 FormRenderer Init Debug - Instance completed status:", instance?.completed);
     console.log("🔍 FormRenderer Init Debug - Instance data:", instance?.data);
     console.log("🔍 FormRenderer Init Debug - Instance data keys:", Object.keys(instance?.data || {}));
     console.log("🔍 FormRenderer Init Debug - Template:", {
@@ -293,12 +294,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   );
 
   // Memoize currentInstance to prevent recreation on every render
-  const currentInstance = useMemo(
-    () =>
-      instance ||
-      storageManager.getOrCreateInstance(template.id, template.name),
-    [instance, template.id, template.name]
-  );
+  const currentInstance = useMemo(() => {
+    const result = instance || storageManager.getOrCreateInstance(template.id, template.name);
+    console.log("📋 CURRENT INSTANCE: Setting up instance", {
+      instanceId: result.id,
+      completed: result.completed,
+      progress: result.progress,
+      hasInstanceProp: !!instance,
+      fromStorage: !instance
+    });
+    return result;
+  }, [instance, template.id, template.name]);
 
   const [visitedSections, setVisitedSections] = useState<Set<string>>(() => {
     // Load visited sections from form instance
@@ -342,7 +348,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         visitedSections: Array.from(visitedSections),
         naSections: Array.from(naSections),
         updatedAt: new Date(),
+        completed: currentInstance.completed || false,
       };
+
+      console.log("💾 MANUAL SAVE: Preserving completed status", {
+        instanceId: updatedInstance.id,
+        wasCompleted: currentInstance.completed,
+        nowCompleted: updatedInstance.completed,
+        progress: updatedInstance.progress
+      });
 
       storageManager.saveInstance(updatedInstance);
       onSave?.(updatedInstance);
@@ -399,8 +413,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           data: nullifiedFormData,
           progress,
           visitedSections: Array.from(visitedSections),
+          naSections: Array.from(naSections),
           updatedAt: new Date(),
+          completed: currentInstance.completed || false,
         };
+
+        console.log("🔄 AUTO-SAVE: Preserving completed status", {
+          instanceId: updatedInstance.id,
+          wasCompleted: currentInstance.completed,
+          nowCompleted: updatedInstance.completed,
+          progress: updatedInstance.progress
+        });
 
         storageManager.saveInstance(updatedInstance);
         onSave?.(updatedInstance);
@@ -523,6 +546,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         ...currentInstance,
         visitedSections: Array.from(visitedSections),
         updatedAt: new Date(),
+        completed: currentInstance.completed || false,
       };
 
       storageManager.saveInstance(updatedInstance);
@@ -788,8 +812,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     setFormData(mockData);
     setHasUnsavedChanges(true);
 
-    // Mark all visible sections as visited
-    const visibleSectionIds = visibleSections.map((s) => s.id);
+    // Recalculate visible sections based on the NEW mock data
+    const newVisibleSections = getVisibleSections(template.sections, mockData);
+    const visibleSectionIds = newVisibleSections.map((s) => s.id);
     setVisitedSections(new Set(visibleSectionIds));
 
     // Save the instance
@@ -799,6 +824,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       visitedSections: visibleSectionIds,
       lastSaved: new Date(),
       updatedAt: new Date(),
+      completed: currentInstance.completed || false,
     };
 
     storageManager.saveInstance(updatedInstance);
@@ -812,8 +838,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     setFormData(data);
     setHasUnsavedChanges(true);
 
-    // Mark all visible sections as visited
-    const visibleSectionIds = visibleSections.map((s) => s.id);
+    // Recalculate visible sections based on the NEW form data
+    const newVisibleSections = getVisibleSections(template.sections, data);
+    const visibleSectionIds = newVisibleSections.map((s) => s.id);
     setVisitedSections(new Set(visibleSectionIds));
 
     // Save the instance
@@ -823,6 +850,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       visitedSections: visibleSectionIds,
       lastSaved: new Date(),
       updatedAt: new Date(),
+      completed: currentInstance.completed || false,
     };
 
     storageManager.saveInstance(updatedInstance);
@@ -872,6 +900,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       naSections: Array.from(naSections),
       updatedAt: new Date(),
     };
+
+    console.log("🚀 SUBMIT: Setting completed=true for instance", {
+      instanceId: submissionInstance.id,
+      completed: submissionInstance.completed,
+      progress: submissionInstance.progress
+    });
 
     // Save the completed instance (this overwrites the draft)
     storageManager.saveInstance(submissionInstance);
@@ -938,6 +972,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         visitedSections: Array.from(visitedSections),
         naSections: Array.from(naSections),
         updatedAt: new Date(),
+        completed: currentInstance.completed || false,
       };
       
       // Create an exportable instance that includes the template

@@ -1,5 +1,5 @@
 // import { LogIn } from "lucide-react";
-import { Task } from "vitest";
+// import { Task } from "vitest";
 import {
   TemplateBuilder,
   ProgrammaticTemplate,
@@ -130,6 +130,8 @@ const scenarioSections: ScenarioSection[] = [
     title: "Tagging objects of interest, enabling correlation of objects",
     task: "Tagging objects of interest, enabling correlation of objects and creating categories.",
     apps: ["SigAct", "Rally", "MADSS", "Threat Hub"],
+    scenario:
+      "**Example Scenario:** Correlating Events Through Tagging\n\n1. **SigAct:** Tag incoming reports with a common tag to group related events or incidents for initial analysis and correlation.\n2. **Threat Hub:** Investigate and tag Indicators of Compromise (IOCs) with a relevant tag to link them to a broader threat or actor for threat intelligence and proactive defense.\n3. **Rally:** Create an incident and tag affected assets or users within the incident to track the impact of an event and manage the response workflow.\n4. **MADSS:** Tag affected mission essential assets to determine Mission Relevant Terrain impact of the event.",
     columns: [
       { id: "tagging_execution", label: "Tagging Execution" },
       {
@@ -138,8 +140,6 @@ const scenarioSections: ScenarioSection[] = [
       },
       { id: "tag_consistency", label: "Tag Consistency" },
     ],
-    scenario:
-      "**Example Scenario:** Correlating Events Through Tagging\n\n1. **SigAct:** Tag incoming reports with a common tag to group related events or incidents for initial analysis and correlation.\n2. **Threat Hub:** Investigate and tag Indicators of Compromise (IOCs) with a relevant tag to link them to a broader threat or actor for threat intelligence and proactive defense.\n3. **Rally:** Create an incident and tag affected assets or users within the incident to track the impact of an event and manage the response workflow.\n4. **MADSS:** Tag affected mission essential assets to determine Mission Relevant Terrain impact of the event.",
     appColumn: true,
     naable: true,
   },
@@ -293,7 +293,7 @@ const scenarioSections: ScenarioSection[] = [
     id: "MOP 1.3.4",
     title: "Create an alert to maintain situational awareness a mission",
     task: "Create an alert to maintain situational awareness a mission.",
-    apps: ["SIGACT", "MADSS", "TASC"],
+    apps: ["MADSS", ...tascApps],
     columns: [
       { id: "alerts_created", label: "Alerts created" },
       { id: "type_of_alert", label: "Type of alert", type: "text" },
@@ -409,6 +409,32 @@ const scenarioSections: ScenarioSection[] = [
     ],
     appColumn: true,
     naable: true,
+    questions: [
+      {
+        id: "sensors",
+        label: "Sensors. Can you see blue force sensor data?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+      {
+        id: "remedy",
+        label: "Remedy. Can you see STRATCOM remedy tickets?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+      {
+        id: "intel",
+        label: "Intel. Can you see cyber threat data?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+    ],
   },
   {
     id: "MOP 2.1.6",
@@ -424,6 +450,24 @@ const scenarioSections: ScenarioSection[] = [
     ],
     appColumn: true,
     naable: true,
+    questions: [
+      {
+        id: "import",
+        label: "Import. Can you import blue force data?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+      {
+        id: "export",
+        label: "Export. Can you export blue force data?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+    ],
   },
   {
     id: "MOP 2.1.7",
@@ -529,7 +573,7 @@ const scenarioSections: ScenarioSection[] = [
     apps: ["JCC2 Readiness", "JCC2 Cyber-Ops"],
     columns: [],
     appColumn: false,
-    naable: false,
+    naable: true,
   },
   {
     id: "MOP 2.3.3",
@@ -559,7 +603,7 @@ const scenarioSections: ScenarioSection[] = [
       { id: "notes", label: "Notes", type: "text" },
     ],
     appColumn: false,
-    naable: false,
+    naable: true,
   },
   {
     id: "MOP 2.4.1",
@@ -586,7 +630,7 @@ const scenarioSections: ScenarioSection[] = [
     id: "MOS 3.1.1",
     title: "Operational Reliability",
     task: "Operational Reliability",
-    apps: ["All Applications"],
+    apps: jcc2Applications.map((app) => app.name),
     columns: [
       { id: "application_system", label: "Application / System", type: "text" },
       { id: "reason_for_outage", label: "Reason for Outage", type: "text" },
@@ -597,7 +641,8 @@ const scenarioSections: ScenarioSection[] = [
       },
     ],
     appColumn: false,
-    naable: false,
+    naable: true,
+    questions: [],
   },
   {
     id: "MOS 3.1.2",
