@@ -44,10 +44,10 @@ const tascApps = [
 
 interface TaskQuestion {
   id: string;
-  label: string;
-  options: string[];
-  followUpOption: string;
-  followUpPrompt: string;
+  label?: string;
+  options?: string[];
+  followUpOption?: string;
+  followUpPrompt?: string;
 }
 
 // Standard task questions
@@ -95,7 +95,7 @@ interface ScenarioSection {
   title: string;
   task: string;
   apps: string[];
-  columns: Array<{
+  columns?: Array<{
     id: string;
     label: string;
     type?: "text" | "radio" | "select";
@@ -349,7 +349,6 @@ const scenarioSections: ScenarioSection[] = [
     title: "Perform cyber force assessments",
     task: "Perform cyber force assessments.",
     apps: ["JCC2 Readiness"],
-    columns: [],
     appColumn: false,
     naable: true,
   },
@@ -571,7 +570,6 @@ const scenarioSections: ScenarioSection[] = [
       "The system adequately enables the user to judge the availability and status of units involved in a mission",
     task: "The system adequately enables the user to judge the availability and status of units involved in a mission.",
     apps: ["JCC2 Readiness", "JCC2 Cyber-Ops"],
-    columns: [],
     appColumn: false,
     naable: true,
   },
@@ -642,13 +640,28 @@ const scenarioSections: ScenarioSection[] = [
     ],
     appColumn: false,
     naable: true,
-    questions: [],
+    questions: [
+      {
+        id: "discovery",
+        followUpPrompt: "How was the outage discovered?",
+      },
+      {
+        id: "impact",
+        followUpPrompt:
+          "What impact did the outage have on your mission / task?",
+      },
+      {
+        id: "updates",
+        followUpPrompt:
+          "Were regular updates provided as the status of the recovery?",
+      },
+    ],
   },
   {
     id: "MOS 3.1.2",
     title: "Operational Availability",
     task: "Operational Availability",
-    apps: ["All Applications"],
+    apps: jcc2Applications.map((app) => app.name),
     columns: [
       { id: "application_system", label: "Application / System", type: "text" },
       { id: "reason_for_outage", label: "Reason for Outage", type: "text" },
@@ -659,31 +672,102 @@ const scenarioSections: ScenarioSection[] = [
       },
     ],
     appColumn: false,
-    naable: false,
+    naable: true,
+    questions: [
+      {
+        id: "discovery",
+        followUpPrompt: "How was the outage discovered?",
+      },
+      {
+        id: "impact",
+        followUpPrompt:
+          "What impact did the outage have on your mission / task?",
+      },
+      {
+        id: "updates",
+        followUpPrompt:
+          "Were regular updates provided as the status of the recovery?",
+      },
+    ],
   },
   {
     id: "MOS 3.2.1",
     title: "User rating of JCC2 training",
     task: "User rating of JCC2 training",
-    apps: ["All Applications"],
-    columns: [],
+    apps: jcc2Applications.map((app) => app.name),
     appColumn: false,
     naable: false,
+    questions: [
+      {
+        id: "initial_training",
+        label:
+          "Initial Training. Did you receive any training before you used JCC2?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+      {
+        id: "additional_training",
+        label:
+          "Additional Training. Did you receive any supplemental training to aid your duties?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+      {
+        id: "request_training",
+        label: "Request Training. Do you want more training?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+    ],
   },
   {
     id: "MOS 3.2.2",
     title: "User rating of JCC2 documentation",
     task: "User rating of JCC2 documentation",
-    apps: ["All Applications"],
-    columns: [],
+    apps: jcc2Applications.map((app) => app.name),
     appColumn: false,
     naable: false,
+    questions: [
+      {
+        id: "training_documentation",
+        label:
+          "Training Documentation. Did you receive any documentation with training?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+      {
+        id: "online_documentation",
+        label:
+          "Online Documentation. Were you directed to online documentation?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+      {
+        id: "documentation_completeness",
+        label:
+          "Completeness of Documentation. Does the provided documentation meet your needs?",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "No",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
+      },
+    ],
   },
   {
     id: "MOP 3.2.3",
     title: "User rating of JCC2 support (help desk)",
     task: "User rating of JCC2 support (help desk)",
-    apps: ["All Applications"],
+    apps: jcc2Applications.map((app) => app.name),
     columns: [
       { id: "application", label: "Application", type: "text" },
       { id: "details_of_problem", label: "Details of Problem", type: "text" },
@@ -695,20 +779,6 @@ const scenarioSections: ScenarioSection[] = [
     naable: false,
   },
 ];
-
-// MOS Section Configuration (placeholder for future implementation)
-// interface MOSSection {
-//   id: string;
-//   title: string;
-//   description: string;
-//   metrics: Array<{
-//     id: string;
-//     label: string;
-//     type: "number" | "percentage" | "time" | "select";
-//     unit?: string;
-//     options?: string[];
-//   }>;
-// }
 
 // Helper function to convert strings to an id
 function toId(str: string) {
@@ -724,6 +794,7 @@ function appExpId(app: string) {
 }
 
 // Helper function to format column labels
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function formatColumnLabel(columnId: string): string {
   return columnId
     .split("_")
@@ -753,23 +824,29 @@ function addTaskQuestions(
   questions: TaskQuestion[]
 ) {
   questions.forEach((question) => {
-    builder
-      .field("radio", question.label)
-      .id(`${question.id}`)
-      .options(question.options)
-      .layout("horizontal")
-      .required()
-      .end();
+    if (question.label !== undefined && question.options !== undefined) {
+      builder
+        .field("radio", question.label)
+        .id(`${question.id}`)
+        .options(question.options)
+        .layout("horizontal")
+        .required()
+        .end();
+    }
 
     // Add conditional follow-up
-    builder
-      .field("textarea", question.followUpPrompt)
-      .id(`${question.id}_details`)
-      .required()
-      .conditional(`${sectionId}.${question.id}`, "equals", [
-        question.followUpOption,
-      ])
-      .end();
+    if (question.followUpPrompt) {
+      const followUp = builder
+        .field("textarea", question.followUpPrompt)
+        .id(`${question.id}_details`)
+        .required();
+
+      if (question.followUpOption !== undefined) {
+        followUp.conditional(`${sectionId}.${question.id}`, "equals", [
+          question.followUpOption,
+        ]);
+      }
+    }
   });
 
   // Add additional observations field
@@ -812,24 +889,29 @@ function createObservationTable(
   }
 
   // Add dynamic columns based on MOP requirements
-  scenarioSection.columns.forEach((col) => {
-    if (col.type === "text") {
-      columns.push({
-        id: col.id,
-        label: col.label,
-        type: "text",
-        required: true,
-      });
-    } else {
-      columns.push({
-        id: col.id,
-        label: col.label,
-        type: "radio",
-        required: true,
-        options: col.options || ["Yes", "No", "NA"],
-      });
-    }
-  });
+  if (
+    scenarioSection.columns !== undefined &&
+    scenarioSection.columns.length > 0
+  ) {
+    scenarioSection.columns.forEach((col) => {
+      if (col.type === "text") {
+        columns.push({
+          id: col.id,
+          label: col.label,
+          type: "text",
+          required: true,
+        });
+      } else {
+        columns.push({
+          id: col.id,
+          label: col.label,
+          type: "radio",
+          required: true,
+          options: col.options || ["Yes", "No", "NA"],
+        });
+      }
+    });
+  }
 
   builder
     .field("datatable", `${scenarioSection.id} Observation Runs`)
@@ -876,7 +958,10 @@ function createScenarioSection(
   }
 
   // Create observation table
-  if (scenarioSection.columns.length > 0) {
+  if (
+    scenarioSection.columns !== undefined &&
+    scenarioSection.columns.length > 0
+  ) {
     createObservationTable(builder, scenarioSection);
   }
 
