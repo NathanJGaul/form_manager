@@ -803,7 +803,9 @@ function formatColumnLabel(columnId: string): string {
 }
 
 // Create default row for datatable
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createDefaultRow(columns: DataTableColumn[]): Record<string, any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const row: Record<string, any> = {};
   columns.forEach((col) => {
     if (col.autoIndex) {
@@ -821,7 +823,8 @@ function createDefaultRow(columns: DataTableColumn[]): Record<string, any> {
 function addTaskQuestions(
   builder: TemplateBuilder,
   sectionId: string,
-  questions: TaskQuestion[]
+  questions: TaskQuestion[],
+  additional_observations?: boolean
 ) {
   questions.forEach((question) => {
     if (question.label !== undefined && question.options !== undefined) {
@@ -846,17 +849,20 @@ function addTaskQuestions(
           question.followUpOption,
         ]);
       }
+      followUp.end();
     }
   });
 
   // Add additional observations field
-  builder
-    .field(
-      "textarea",
-      "Additional observations. Provide any additional observations (positive or negative) regarding performance/completion of the designated task and the task outcome."
-    )
-    .id(`additional_observations`)
-    .end();
+  if (additional_observations) {
+    builder
+      .field(
+        "textarea",
+        "Additional observations. Provide any additional observations (positive or negative) regarding performance/completion of the designated task and the task outcome."
+      )
+      .id(`additional_observations`)
+      .end();
+  }
 }
 
 // Create observation table for MOP sections
@@ -1095,111 +1101,135 @@ export class JCC2DataCollectionFormV4 {
     //   )
     //   .end();
     builder.text(
-      "**Interview Guidelines:** Please answer the following questions based on your experience with the JCC2 system during testing and operational use."
+      "Interview Guidelines: Please answer the following questions based on your experience with the JCC2 system during testing and operational use."
     );
 
     // Interview questions with conditional follow-ups
-    const interviewQuestions = [
+    const interviewQuestions: TaskQuestion[] = [
       {
         id: "interoperability",
-        question:
+        label:
           "Interoperability. Do you experience issues within the application and between external data sources, legacy software packages, and other JCC2 applications?",
-        followUp: "Interoperability - Problems or issues",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "Yes",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
       },
       {
         id: "info_sharing",
-        question:
+        label:
           "Information Sharing. Do you experience issues sharing information up the chain of command or with other teams within the JCC2?",
-        followUp: "Information Sharing - Problems or issues",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "Yes",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
       },
       {
         id: "performance",
-        question:
+        label:
           "Performance. Do you experience slowdowns during information exchange?",
-        followUp: "Performance - Problems or issues",
+        options: ["Yes", "N/A", "No"],
+        followUpOption: "Yes",
+        followUpPrompt:
+          "Please concisely describe any problems or issues and the operational impact:",
       },
       {
         id: "access",
-        question:
+        label:
           "Access. Do you experience permissions issues when access any JCC2 database or App?",
-        followUp: "Access - Problems or issues",
+      },
+      {
+        id: "workarounds",
+        followUpPrompt:
+          "Do you find that workarounds are necessary to complete your job duties while using JCC2 applications?",
+      },
+      {
+        id: "workarounds_used",
+        label: "If workarounds are used, what would be the most likely reason?",
+        options: [
+          "Missing capabilities",
+          "Partial functional capabilities",
+          "External application works better",
+          "Other? (Explain)",
+        ],
+        followUpOption: "Other? (Explain)",
+        followUpPrompt:
+          "Explain any other reason(s) you would use a workaround.",
+      },
+      {
+        id: "improvements",
+        followUpPrompt:
+          "Improvements. Please list any improvements that should be made to the application(s).",
+      },
+      {
+        id: "critical_issues",
+        followUpPrompt:
+          "Critical Issues. Please list any critical issues you feel must be resolved to increate the application(s) effectiveness.",
+      },
+      {
+        id: "shout_outs",
+        followUpPrompt:
+          "Shout Outs. Please list any features you encountered that greatly improved the speed, quality, or effectiveness of your duties.",
+      },
+      {
+        id: "final_thoughts",
+        followUpPrompt:
+          "Final Thoughts. Are there any additional items you would like to address that have not been documented yet?",
       },
     ];
 
     // Generate interview questions using forEach
-    interviewQuestions.forEach((item) => {
-      builder
-        .field("radio", item.question)
-        .id(`interview_${item.id}`)
-        .options(["Yes", "N/A", "No"])
-        .layout("horizontal")
-        .required()
-        .end()
-        .field("textarea", item.followUp)
-        .id(`interview_${item.id}_details`)
-        .required()
-        .conditional(`interview_${item.id}`, "equals", ["Yes"])
-        .end();
-    });
+    addTaskQuestions(builder, "interview_section", interviewQuestions, false);
+    // interviewQuestions.forEach((item) => {
+    //   builder
+    //     .field("radio", item.question)
+    //     .id(`interview_${item.id}`)
+    //     .options(["Yes", "N/A", "No"])
+    //     .layout("horizontal")
+    //     .required()
+    //     .end()
+    //     .field("textarea", item.followUp)
+    //     .id(`interview_${item.id}_details`)
+    //     .required()
+    //     .conditional(`interview_${item.id}`, "equals", ["Yes"])
+    //     .end();
+    // });
 
     // Additional interview questions
-    builder
-      .field(
-        "textarea",
-        "Do you find that workarounds are necessary to complete your job duties while using JCC2 applications?"
-      )
-      .id("interview_workarounds")
-      .end()
-      .field(
-        "checkbox",
-        "If workarounds are used, what would be the most likely reason?"
-      )
-      .id("interview_workaround_reasons")
-      .multiple()
-      .options([
-        "Missing capabilities",
-        "Partially functional capabilities",
-        "External application works better",
-        "Other",
-      ])
-      .end()
-      .field("text", "Other workaround reason (Explain)")
-      .id("interview_workaround_other")
-      .conditional("interview_workaround_reasons", "contains", ["Other"])
-      .end()
-      .field(
-        "textarea",
-        "Improvements. Please list any improvements that should to be made to the App."
-      )
-      .id("interview_improvements")
-      .end()
-      .field(
-        "textarea",
-        "Critical Issues. Please list any critical issues you feel must be resolved to increase the App's effectiveness."
-      )
-      .id("interview_critical_issues")
-      .end()
-      .field(
-        "textarea",
-        "Shout Outs. Please list any features you encountered that greatly improved the speed, quality, or effectiveness of your duties."
-      )
-      .id("interview_shout_outs")
-      .end()
-      .field(
-        "textarea",
-        "Final Thoughts. Are there any additional items you would like to address that have not been documented yet?"
-      )
-      .id("interview_final_thoughts")
-      .end();
+    // builder
+    //   .field(
+    //     "textarea",
+    //     "Improvements. Please list any improvements that should to be made to the App."
+    //   )
+    //   .id("interview_improvements")
+    //   .end()
+    //   .field(
+    //     "textarea",
+    //     "Critical Issues. Please list any critical issues you feel must be resolved to increase the App's effectiveness."
+    //   )
+    //   .id("interview_critical_issues")
+    //   .end()
+    //   .field(
+    //     "textarea",
+    //     "Shout Outs. Please list any features you encountered that greatly improved the speed, quality, or effectiveness of your duties."
+    //   )
+    //   .id("interview_shout_outs")
+    //   .end()
+    //   .field(
+    //     "textarea",
+    //     "Final Thoughts. Are there any additional items you would like to address that have not been documented yet?"
+    //   )
+    //   .id("interview_final_thoughts")
+    //   .end();
 
     // Add closing paragraph
-    builder
-      .field("text", "")
-      .id("closing_statement")
-      .withContent(
-        "**Thank you for participating in the JCC2 system evaluation. Your feedback is essential for improving the system's effectiveness and usability.**"
-      )
-      .end();
+    // builder
+    //   .field("text", "")
+    //   .id("closing_statement")
+    //   .withContent(
+    //     "**Thank you for participating in the JCC2 system evaluation. Your feedback is essential for improving the system's effectiveness and usability.**"
+    //   )
+    //   .end();
 
     // Configure form behavior
     builder
