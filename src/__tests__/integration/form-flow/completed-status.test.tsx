@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { renderWithContext } from '../../test-utils/render';
+import { screen, fireEvent, waitFor, render } from '../../test-utils/render';
 import { storageManager } from '../../../utils/storage';
 import FormRenderer from '../../../components/FormRenderer';
 import { FormTemplate, FormInstance } from '../../../types/form';
@@ -54,6 +53,8 @@ describe('Form Completed Status Persistence', () => {
     data: {},
     progress: completed ? 100 : 0,
     completed,
+    visitedSections: ['section-1'], // Need to mark sections as visited
+    naSections: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSaved: new Date(),
@@ -64,26 +65,41 @@ describe('Form Completed Status Persistence', () => {
     vi.mocked(storageManager.getOrCreateInstance).mockReturnValue(mockInstance);
     
     const onSubmit = vi.fn();
-    renderWithContext(<FormRenderer template={mockTemplate} instance={mockInstance} onSubmit={onSubmit} />);
+    render(<FormRenderer template={mockTemplate} instance={mockInstance} onSubmit={onSubmit} />);
 
     // Fill in required fields
-    const nameInput = screen.getByLabelText(/Name/);
-    const emailInput = screen.getByLabelText(/Email/);
+    const nameInput = screen.getByPlaceholderText('Enter Name');
+    const emailInput = screen.getByPlaceholderText('Enter Email');
     
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
     fireEvent.change(emailInput, { target: { value: 'john@example.com' } });
 
+    // Wait a bit for form state to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Submit the form
     const submitButton = screen.getByText('Submit Form');
+    
+    
     fireEvent.click(submitButton);
 
+    // First check if onSubmit was called
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalled();
+    });
+
+    // Then check if saveInstance was called
     await waitFor(() => {
       expect(storageManager.saveInstance).toHaveBeenCalled();
     });
 
     // Check that the saved instance has completed: true
-    const savedInstanceCall = vi.mocked(storageManager.saveInstance).mock.calls[0];
-    const savedInstance = savedInstanceCall[0];
+    // Get the last call to saveInstance (which should be the submission)
+    const saveInstanceCalls = vi.mocked(storageManager.saveInstance).mock.calls;
+    
+    
+    const lastCallIndex = saveInstanceCalls.length - 1;
+    const savedInstance = saveInstanceCalls[lastCallIndex][0];
     
     expect(savedInstance.completed).toBe(true);
     expect(savedInstance.progress).toBe(100);
@@ -93,20 +109,23 @@ describe('Form Completed Status Persistence', () => {
     // Start with a completed instance
     const completedInstance = createMockInstance(true);
     completedInstance.data = {
-      name: 'John Doe',
-      email: 'john@example.com',
+      'section-1.name': 'John Doe',
+      'section-1.email': 'john@example.com',
     };
     
     vi.mocked(storageManager.getOrCreateInstance).mockReturnValue(completedInstance);
     vi.mocked(storageManager.saveInstance).mockClear();
     
-    renderWithContext(<FormRenderer template={mockTemplate} instance={completedInstance} />);
+    render(<FormRenderer template={mockTemplate} instance={completedInstance} />);
 
     // Make a change to trigger auto-save
-    const nameInput = screen.getByLabelText(/Name/);
+    const nameInput = screen.getByPlaceholderText('Enter Name');
     fireEvent.change(nameInput, { target: { value: 'Jane Doe' } });
 
     // Wait for auto-save to trigger (debounced by 1 second)
+    // Add extra time to ensure the debounce completes
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     await waitFor(() => {
       expect(storageManager.saveInstance).toHaveBeenCalled();
     }, { timeout: 2000 });
@@ -116,14 +135,14 @@ describe('Form Completed Status Persistence', () => {
     const autoSavedInstance = autoSavedInstanceCall[0];
     
     expect(autoSavedInstance.completed).toBe(true);
-    expect(autoSavedInstance.data.name).toBe('Jane Doe');
+    expect(autoSavedInstance.data['section-1.name']).toBe('Jane Doe');
   });
 
   it('should preserve completed status when sharing a completed form', async () => {
     const completedInstance = createMockInstance(true);
     completedInstance.data = {
-      name: 'John Doe',
-      email: 'john@example.com',
+      'section-1.name': 'John Doe',
+      'section-1.email': 'john@example.com',
     };
     
     // Mock clipboard API
@@ -136,7 +155,7 @@ describe('Form Completed Status Persistence', () => {
     
     vi.mocked(storageManager.getOrCreateInstance).mockReturnValue(completedInstance);
     
-    renderWithContext(<FormRenderer template={mockTemplate} instance={completedInstance} />);
+    render(<FormRenderer template={mockTemplate} instance={completedInstance} />);
 
     // Click hamburger menu
     const hamburgerButton = screen.getByTitle('More options');

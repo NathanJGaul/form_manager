@@ -45,7 +45,22 @@ export function getFieldValue(
   }
   
   // Fall back to unscoped key for backward compatibility
-  return formData[fieldId];
+  if (fieldId in formData) {
+    return formData[fieldId];
+  }
+  
+  // If no section ID provided and unscoped key not found,
+  // search for any section-scoped key containing this field ID
+  if (!sectionId) {
+    for (const key in formData) {
+      const parsed = parseFieldKey(key);
+      if (parsed.fieldId === fieldId) {
+        return formData[key];
+      }
+    }
+  }
+  
+  return undefined;
 }
 
 /**

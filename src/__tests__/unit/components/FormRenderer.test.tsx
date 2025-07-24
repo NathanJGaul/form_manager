@@ -348,7 +348,7 @@ describe('FormRenderer', () => {
         expect(storageManager.saveInstance).toHaveBeenCalledWith(
           expect.objectContaining({
             data: expect.objectContaining({
-              'name': 'John Doe',
+              'section-1.name': 'John Doe',
             }),
           })
         );
