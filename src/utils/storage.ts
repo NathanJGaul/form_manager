@@ -564,7 +564,12 @@ class StorageManager {
           const parts = header.split(".");
           if (parts.length === 2) {
             const fieldKey = parts[1]; // Extract field ID from section.field format
-            const value = row[fieldKey as keyof typeof row];
+            // First try the scoped key (section.field)
+            let value = row[header as keyof typeof row];
+            // If not found, try just the field ID for backward compatibility
+            if (value === undefined) {
+              value = row[fieldKey as keyof typeof row];
+            }
             mappedRow[header] = value !== undefined ? value : "";
           } else {
             mappedRow[header] = "";
@@ -715,7 +720,12 @@ class StorageManager {
         const parts = header.split(".");
         if (parts.length === 2) {
           const fieldKey = parts[1]; // Extract field ID from section.field format
-          const value = rowData[fieldKey];
+          // First try the scoped key (section.field)
+          let value = rowData[header];
+          // If not found, try just the field ID for backward compatibility
+          if (value === undefined) {
+            value = rowData[fieldKey];
+          }
           mappedRow[header] = value !== undefined ? value : "";
         } else {
           mappedRow[header] = "";

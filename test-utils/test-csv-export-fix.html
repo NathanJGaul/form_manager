@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test CSV Export Fix</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #555;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .csv-output {
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test CSV Export Fix for Section-Scoped Fields</h1>
+        
+        <div class="section">
+            <h2>Test Setup</h2>
+            <p>This test verifies that CSV export correctly handles both section-scoped fields (e.g., "section1.field1") and legacy flat fields.</p>
+            <button onclick="runTest()">Run Test</button>
+            <button onclick="clearStorage()">Clear Storage</button>
+        </div>
+
+        <div id="results" class="section" style="display: none;">
+            <h2>Test Results</h2>
+            <div id="test-output"></div>
+        </div>
+
+        <div id="csv-section" class="section" style="display: none;">
+            <h2>CSV Output</h2>
+            <div class="csv-output">
+                <pre id="csv-output"></pre>
+            </div>
+            <div id="csv-table"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { storageManager } from '../src/utils/storage.js';
+        
+        window.runTest = async function() {
+            const resultsDiv = document.getElementById('results');
+            const outputDiv = document.getElementById('test-output');
+            const csvSection = document.getElementById('csv-section');
+            const csvOutput = document.getElementById('csv-output');
+            const csvTable = document.getElementById('csv-table');
+            
+            resultsDiv.style.display = 'block';
+            csvSection.style.display = 'block';
+            outputDiv.innerHTML = '';
+            
+            try {
+                // Create test data
+                const testInstance = {
+                    id: 'test-instance-' + Date.now(),
+                    templateId: 'test-template-1',
+                    templateName: 'Test Form',
+                    templateVersion: '1.0.0',
+                    data: {
+                        // Section-scoped fields (new format)
+                        'section1.field1': 'Value 1 - Section Scoped',
+                        'section1.field2': 'Value 2 - Section Scoped',
+                        'section2.field3': 'Value 3 - Section Scoped',
+                        // Legacy flat fields (backward compatibility)
+                        'field4': 'Value 4 - Legacy Flat',
+                        'field5': 'Value 5 - Legacy Flat',
+                        // DataTable field
+                        'section2.datatable1': {
+                            columns: [
+                                { id: 'col1', label: 'Column 1', type: 'text' },
+                                { id: 'col2', label: 'Column 2', type: 'number' }
+                            ],
+                            rows: [
+                                { col1: 'Row 1 Col 1', col2: 10 },
+                                { col1: 'Row 2 Col 1', col2: 20 }
+                            ]
+                        }
+                    },
+                    progress: 100,
+                    completed: true,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    lastSaved: new Date()
+                };
+
+                const testTemplate = {
+                    id: 'test-template-1',
+                    name: 'Test Form',
+                    description: 'Test form for CSV export',
+                    version: '1.0.0',
+                    sections: [
+                        {
+                            id: 'section1',
+                            title: 'Section 1',
+                            fields: [
+                                { id: 'field1', type: 'text', label: 'Field 1', required: true },
+                                { id: 'field2', type: 'text', label: 'Field 2', required: false }
+                            ]
+                        },
+                        {
+                            id: 'section2',
+                            title: 'Section 2',
+                            fields: [
+                                { id: 'field3', type: 'text', label: 'Field 3', required: true },
+                                { 
+                                    id: 'datatable1', 
+                                    type: 'datatable', 
+                                    label: 'Data Table 1',
+                                    columns: [
+                                        { id: 'col1', label: 'Column 1', type: 'text' },
+                                        { id: 'col2', label: 'Column 2', type: 'number' }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id: 'section3',
+                            title: 'Section 3',
+                            fields: [
+                                { id: 'field4', type: 'text', label: 'Field 4', required: false },
+                                { id: 'field5', type: 'text', label: 'Field 5', required: false }
+                            ]
+                        }
+                    ],
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+
+                // Save test data
+                const instances = storageManager.getInstances();
+                instances.push(testInstance);
+                localStorage.setItem('form_instances', JSON.stringify(instances));
+                
+                const templates = storageManager.getTemplates();
+                const existingIndex = templates.findIndex(t => t.id === testTemplate.id);
+                if (existingIndex >= 0) {
+                    templates[existingIndex] = testTemplate;
+                } else {
+                    templates.push(testTemplate);
+                }
+                localStorage.setItem('form_templates', JSON.stringify(templates));
+
+                outputDiv.innerHTML += '<div class="result info">✓ Test data created and saved</div>';
+
+                // Test CSV export
+                const csvData = storageManager.exportInstanceToCSV(testInstance.id);
+                
+                if (!csvData) {
+                    outputDiv.innerHTML += '<div class="result error">✗ CSV export returned empty</div>';
+                    return;
+                }
+                
+                outputDiv.innerHTML += '<div class="result success">✓ CSV export successful</div>';
+                csvOutput.textContent = csvData;
+
+                // Parse and verify CSV
+                const lines = csvData.split('\n');
+                const headers = lines[0].split(',');
+                const schemaRow = lines[1].split(',');
+                const dataRow = lines[2].split(',');
+
+                // Create table display
+                let tableHtml = '<table><thead><tr>';
+                tableHtml += '<th>Header</th><th>Schema</th><th>Value</th><th>Expected</th><th>Status</th>';
+                tableHtml += '</tr></thead><tbody>';
+
+                // Verify expected values
+                const expectedMappings = [
+                    { header: 'section1.field1', expected: 'Value 1 - Section Scoped' },
+                    { header: 'section1.field2', expected: 'Value 2 - Section Scoped' },
+                    { header: 'section2.field3', expected: 'Value 3 - Section Scoped' },
+                    { header: 'section3.field4', expected: 'Value 4 - Legacy Flat' },
+                    { header: 'section3.field5', expected: 'Value 5 - Legacy Flat' }
+                ];
+
+                let allPassed = true;
+                expectedMappings.forEach(({ header, expected }) => {
+                    const headerIndex = headers.indexOf(header);
+                    if (headerIndex === -1) {
+                        outputDiv.innerHTML += `<div class="result error">✗ Header '${header}' not found in CSV</div>`;
+                        allPassed = false;
+                    } else {
+                        const actual = dataRow[headerIndex];
+                        const schema = schemaRow[headerIndex];
+                        const passed = actual === expected;
+                        
+                        tableHtml += '<tr>';
+                        tableHtml += `<td>${header}</td>`;
+                        tableHtml += `<td>${schema}</td>`;
+                        tableHtml += `<td>${actual}</td>`;
+                        tableHtml += `<td>${expected}</td>`;
+                        tableHtml += `<td>${passed ? '✅' : '❌'}</td>`;
+                        tableHtml += '</tr>';
+                        
+                        if (passed) {
+                            outputDiv.innerHTML += `<div class="result success">✓ ${header}: "${actual}"</div>`;
+                        } else {
+                            outputDiv.innerHTML += `<div class="result error">✗ ${header}: Expected "${expected}", got "${actual}"</div>`;
+                            allPassed = false;
+                        }
+                    }
+                });
+                
+                tableHtml += '</tbody></table>';
+                csvTable.innerHTML = tableHtml;
+
+                if (allPassed) {
+                    outputDiv.innerHTML += '<div class="result success"><strong>✓ All tests passed!</strong></div>';
+                } else {
+                    outputDiv.innerHTML += '<div class="result error"><strong>✗ Some tests failed</strong></div>';
+                }
+
+            } catch (error) {
+                outputDiv.innerHTML += `<div class="result error">✗ Error: ${error.message}</div>`;
+                console.error(error);
+            }
+        };
+
+        window.clearStorage = function() {
+            localStorage.clear();
+            alert('Storage cleared!');
+            location.reload();
+        };
+    </script>
+</body>
+</html>
