@@ -57,7 +57,7 @@ test.describe('JCC2 Dashboard Form E2E Test - Working Version', () => {
     
     // Fill text inputs - ensure we capture ALL inputs including conditional ones
     await page.waitForTimeout(2000); // Wait for conditional fields to potentially appear
-    let textInputs = await page.locator('input[type="text"], input[type="email"], input[type="tel"], input[type="date"]').all();
+    const textInputs = await page.locator('input[type="text"], input[type="email"], input[type="tel"], input[type="date"]').all();
     console.log(`Found ${textInputs.length} text-based input fields`);
     
     for (let i = 0; i < textInputs.length; i++) {

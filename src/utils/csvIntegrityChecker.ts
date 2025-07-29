@@ -237,8 +237,8 @@ function validateAccuracy(
       return;
     }
 
-    // Get original field value
-    const originalValue = originalData[field.id];
+    // Get original field value - use the header which includes section ID
+    const originalValue = originalData[header];
     
     // Validate data type consistency
     validateDataType(field, cellValue, header, result);

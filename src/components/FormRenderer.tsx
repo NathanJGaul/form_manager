@@ -72,15 +72,21 @@ interface FormRendererProps {
   onSubmit?: (instance: FormInstance) => void;
   onExit?: () => void;
   initialSectionIndex?: number;
-  initialViewMode?: 'continuous' | 'section';
+  initialViewMode?: "continuous" | "section";
 }
 
 // Utility function to generate unique field IDs for label-input associations
-const generateFieldId = (fieldId: string, sectionId?: string, suffix?: string): string => {
+const generateFieldId = (
+  fieldId: string,
+  sectionId?: string,
+  suffix?: string
+): string => {
   // Sanitize the fieldId to ensure it's a valid HTML ID (no spaces, special chars)
-  const sanitizedFieldId = fieldId.replace(/[^a-zA-Z0-9-_]/g, '-').replace(/--+/g, '-');
-  const parts = ['field', sectionId, sanitizedFieldId, suffix].filter(Boolean);
-  return parts.join('-');
+  const sanitizedFieldId = fieldId
+    .replace(/[^a-zA-Z0-9-_]/g, "-")
+    .replace(/--+/g, "-");
+  const parts = ["field", sectionId, sanitizedFieldId, suffix].filter(Boolean);
+  return parts.join("-");
 };
 
 // Utility function to render individual checkbox/radio fields as table when horizontal layout
@@ -160,7 +166,11 @@ const renderFieldAsTable = (
 
                 {/* Option columns with input controls */}
                 {field.options.map((option: string, index: number) => {
-                  const optionId = generateFieldId(field.id, sectionId, `table-option-${index}`);
+                  const optionId = generateFieldId(
+                    field.id,
+                    sectionId,
+                    `table-option-${index}`
+                  );
                   return (
                     <td
                       key={option}
@@ -229,46 +239,50 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 }) => {
   const { showSuccess, showError, showWarning } = useToast();
   const { replaceUrlParams } = useFormHistory();
-  
-  // Initialize form data with default values if no instance data exists
+
+  // Initialize form data - only use existing instance data, never store defaults
   const initializeFormData = () => {
     console.log("🔍 FormRenderer Init Debug - Instance prop:", instance);
-    console.log("🔍 FormRenderer Init Debug - Instance completed status:", instance?.completed);
+    console.log(
+      "🔍 FormRenderer Init Debug - Instance completed status:",
+      instance?.completed
+    );
     console.log("🔍 FormRenderer Init Debug - Instance data:", instance?.data);
-    console.log("🔍 FormRenderer Init Debug - Instance data keys:", Object.keys(instance?.data || {}));
+    console.log(
+      "🔍 FormRenderer Init Debug - Instance data keys:",
+      Object.keys(instance?.data || {})
+    );
     console.log("🔍 FormRenderer Init Debug - Template:", {
       templateId: template.id,
       templateName: template.name,
       templateVersion: template.version,
-      sectionsCount: template.sections.length
+      sectionsCount: template.sections.length,
     });
-    
+
     // Check for datatable fields in template
-    const datatableFields = template.sections.flatMap(s => 
-      s.fields.filter(f => f.type === 'datatable')
+    const datatableFields = template.sections.flatMap((s) =>
+      s.fields.filter((f) => f.type === "datatable")
     );
-    console.log("🔍 FormRenderer Init Debug - DataTable fields in template:", datatableFields.map(f => ({
-      id: f.id,
-      label: f.label,
-      type: f.type
-    })));
-    
+    console.log(
+      "🔍 FormRenderer Init Debug - DataTable fields in template:",
+      datatableFields.map((f) => ({
+        id: f.id,
+        label: f.label,
+        type: f.type,
+      }))
+    );
+
     if (instance?.data && Object.keys(instance.data).length > 0) {
       console.log("🔍 FormRenderer Init Debug - Using instance data");
       return instance.data;
     }
 
-    console.log("🔍 FormRenderer Init Debug - No instance data, using defaults");
-    const defaultData: FormData = {};
-    template.sections.forEach((section) => {
-      section.fields.forEach((field) => {
-        if (field.defaultValue !== undefined) {
-          defaultData[field.id] = field.defaultValue;
-        }
-      });
-    });
-
-    return defaultData;
+    console.log(
+      "🔍 FormRenderer Init Debug - No instance data, returning empty object"
+    );
+    // Return empty object - default values will be handled during rendering
+    // This ensures only user-entered values are stored in formData
+    return {};
   };
 
   const [formData, setFormData] = useState<FormData>(initializeFormData());
@@ -278,10 +292,12 @@ const FormRenderer: React.FC<FormRendererProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isHeaderSticky, setIsHeaderSticky] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [viewMode, setViewMode] = useState<"continuous" | "section">(() =>
-    initialViewMode || storageManager.getViewMode()
+  const [viewMode, setViewMode] = useState<"continuous" | "section">(
+    () => initialViewMode || storageManager.getViewMode()
   );
-  const [currentSectionIndex, setCurrentSectionIndex] = useState(initialSectionIndex || 0);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(
+    initialSectionIndex || 0
+  );
   const [showMockDataModal, setShowMockDataModal] = useState(false);
   const [showFormDevTool, setShowFormDevTool] = useState(false);
   const [csvIntegrityResults, setCsvIntegrityResults] =
@@ -295,13 +311,15 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
   // Memoize currentInstance to prevent recreation on every render
   const currentInstance = useMemo(() => {
-    const result = instance || storageManager.getOrCreateInstance(template.id, template.name);
+    const result =
+      instance ||
+      storageManager.getOrCreateInstance(template.id, template.name);
     console.log("📋 CURRENT INSTANCE: Setting up instance", {
       instanceId: result.id,
       completed: result.completed,
       progress: result.progress,
       hasInstanceProp: !!instance,
-      fromStorage: !instance
+      fromStorage: !instance,
     });
     return result;
   }, [instance, template.id, template.name]);
@@ -355,7 +373,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         instanceId: updatedInstance.id,
         wasCompleted: currentInstance.completed,
         nowCompleted: updatedInstance.completed,
-        progress: updatedInstance.progress
+        progress: updatedInstance.progress,
       });
 
       storageManager.saveInstance(updatedInstance);
@@ -367,12 +385,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     } catch (error) {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
-      
+
       // Check for quota errors
-      if (error instanceof Error && 
-          (error.message.includes('QuotaExceededError') || 
-           error.name === 'QuotaExceededError')) {
-        showError("Storage quota exceeded", "Unable to save form data. Please clear some browser storage and try again.");
+      if (
+        error instanceof Error &&
+        (error.message.includes("QuotaExceededError") ||
+          error.name === "QuotaExceededError")
+      ) {
+        showError(
+          "Storage quota exceeded",
+          "Unable to save form data. Please clear some browser storage and try again."
+        );
       }
     }
   }, [
@@ -422,7 +445,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           instanceId: updatedInstance.id,
           wasCompleted: currentInstance.completed,
           nowCompleted: updatedInstance.completed,
-          progress: updatedInstance.progress
+          progress: updatedInstance.progress,
         });
 
         storageManager.saveInstance(updatedInstance);
@@ -434,12 +457,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
       } catch (error) {
         setSaveStatus("error");
         setTimeout(() => setSaveStatus("idle"), 2000);
-        
+
         // Check for quota errors
-        if (error instanceof Error && 
-            (error.message.includes('QuotaExceededError') || 
-             error.name === 'QuotaExceededError')) {
-          showError("Storage quota exceeded", "Unable to save form data. Please clear some browser storage and try again.");
+        if (
+          error instanceof Error &&
+          (error.message.includes("QuotaExceededError") ||
+            error.name === "QuotaExceededError")
+        ) {
+          showError(
+            "Storage quota exceeded",
+            "Unable to save form data. Please clear some browser storage and try again."
+          );
         }
       }
     }, 1000);
@@ -456,15 +484,26 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
   // Re-initialize form data when instance prop changes (for imported forms)
   useEffect(() => {
-    console.log("🔍 FormRenderer Instance Change Debug - Instance prop changed:", instance);
-    console.log("🔍 FormRenderer Instance Change Debug - Instance data:", instance?.data);
-    console.log("🔍 FormRenderer Instance Change Debug - Current formData:", formData);
-    
+    console.log(
+      "🔍 FormRenderer Instance Change Debug - Instance prop changed:",
+      instance
+    );
+    console.log(
+      "🔍 FormRenderer Instance Change Debug - Instance data:",
+      instance?.data
+    );
+    console.log(
+      "🔍 FormRenderer Instance Change Debug - Current formData:",
+      formData
+    );
+
     if (instance?.data && Object.keys(instance.data).length > 0) {
-      console.log("🔍 FormRenderer Instance Change Debug - Reinitializing form data with instance data");
+      console.log(
+        "🔍 FormRenderer Instance Change Debug - Reinitializing form data with instance data"
+      );
       setFormData(instance.data);
       setHasUnsavedChanges(false); // Reset unsaved changes flag
-      
+
       // Also reinitialize visited sections and naSections from instance
       if (instance.visitedSections) {
         setVisitedSections(new Set(instance.visitedSections));
@@ -529,7 +568,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
   // Mark initial section as visited when form loads in section view
   useEffect(() => {
-    if (viewMode === "section" && filteredSections.length > 0 && visitedSections.size === 0) {
+    if (
+      viewMode === "section" &&
+      filteredSections.length > 0 &&
+      visitedSections.size === 0
+    ) {
       const firstSection = filteredSections[0];
       if (firstSection) {
         setVisitedSections(new Set([firstSection.id]));
@@ -784,15 +827,25 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               );
               if (naOption) {
                 // Set to "Not Applicable" if it's an option
-                const naValue = typeof naOption === "string" ? naOption : naOption.value;
-                Object.assign(updated, setFieldValue(updated, field.id, naValue, sectionId));
+                const naValue =
+                  typeof naOption === "string" ? naOption : naOption.value;
+                Object.assign(
+                  updated,
+                  setFieldValue(updated, field.id, naValue, sectionId)
+                );
               } else {
                 // Otherwise set to "N/A"
-                Object.assign(updated, setFieldValue(updated, field.id, "N/A", sectionId));
+                Object.assign(
+                  updated,
+                  setFieldValue(updated, field.id, "N/A", sectionId)
+                );
               }
             } else {
               // For non-select/radio/checkbox fields, set to "N/A"
-              Object.assign(updated, setFieldValue(updated, field.id, "N/A", sectionId));
+              Object.assign(
+                updated,
+                setFieldValue(updated, field.id, "N/A", sectionId)
+              );
             }
           });
           return updated;
@@ -873,7 +926,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       const visibleFields = getVisibleFields(section.fields, formData);
       visibleFields.forEach((field) => {
-        const error = validateField(field, getFieldValue(formData, field.id, section.id));
+        const error = validateField(
+          field,
+          getFieldValue(formData, field.id, section.id)
+        );
         if (error) {
           newErrors[field.id] = error;
         }
@@ -904,7 +960,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     console.log("🚀 SUBMIT: Setting completed=true for instance", {
       instanceId: submissionInstance.id,
       completed: submissionInstance.completed,
-      progress: submissionInstance.progress
+      progress: submissionInstance.progress,
     });
 
     // Save the completed instance (this overwrites the draft)
@@ -957,7 +1013,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${template.name}_${currentInstance.completed ? 'completed' : 'draft'}_export.csv`;
+    a.download = `${template.name}_${
+      currentInstance.completed ? "completed" : "draft"
+    }_export.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -974,25 +1032,37 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         updatedAt: new Date(),
         completed: currentInstance.completed || false,
       };
-      
+
       // Create an exportable instance that includes the template
       const exportableInstance: ExportableFormInstance = {
         ...updatedInstance,
         embeddedTemplate: template,
       };
-      
+
       // Debug logging to understand what's being shared
       console.log("🔍 Form Share Debug - Current form data:", formData);
-      console.log("🔍 Form Share Debug - Current instance data:", currentInstance.data);
-      console.log("🔍 Form Share Debug - Updated instance data:", updatedInstance.data);
+      console.log(
+        "🔍 Form Share Debug - Current instance data:",
+        currentInstance.data
+      );
+      console.log(
+        "🔍 Form Share Debug - Updated instance data:",
+        updatedInstance.data
+      );
       console.log("🔍 Form Share Debug - Embedded template:", template);
-      
+
       const shareString = await encodeForSharing(exportableInstance);
       await navigator.clipboard.writeText(shareString);
-      showSuccess("Form shared successfully!", "Share string copied to clipboard");
+      showSuccess(
+        "Form shared successfully!",
+        "Share string copied to clipboard"
+      );
     } catch (error) {
       console.error("Failed to share form:", error);
-      showError("Failed to share form", "Please try again or check console for details");
+      showError(
+        "Failed to share form",
+        "Please try again or check console for details"
+      );
     }
   };
 
@@ -1306,14 +1376,21 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     } ${isNaSection ? "bg-gray-100 cursor-not-allowed" : ""}`;
 
     // Debug logging for field type issues
-    if (field.id === "mop_1_1_3_runs" || (field.label && field.label.includes("MOP 1.1.3 Observation Runs"))) {
+    if (
+      field.id === "mop_1_1_3_runs" ||
+      (field.label && field.label.includes("MOP 1.1.3 Observation Runs"))
+    ) {
       console.warn("🔍 DEBUG - MOP 1.1.3 field rendering:", {
         fieldId: field.id,
         fieldType: field.type,
         fieldLabel: field.label,
         value: value,
         valueType: typeof value,
-        isDataTableValue: value && typeof value === 'object' && 'columns' in value && 'rows' in value
+        isDataTableValue:
+          value &&
+          typeof value === "object" &&
+          "columns" in value &&
+          "rows" in value,
       });
     }
 
@@ -1322,14 +1399,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         // Check if this is a static content field (no label, has content)
         if (field.content && !field.label) {
           return (
-            <div key={field.id} className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+            <div
+              key={field.id}
+              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+            >
               {field.content}
             </div>
           );
         }
-        
+
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1356,25 +1436,40 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   type="text"
                   name={field.id}
                   value={
-                    isNaSection 
-                      ? naDisplayValue 
-                      : (value && typeof value === 'object' && 'columns' in value && 'rows' in value)
-                        ? '[DataTable - Please use correct template version]'
-                        : value || ""
+                    isNaSection
+                      ? naDisplayValue
+                      : value &&
+                        typeof value === "object" &&
+                        "columns" in value &&
+                        "rows" in value
+                      ? "[DataTable - Please use correct template version]"
+                      : value || ""
                   }
                   onChange={(e) =>
                     handleFieldChange(field.id, e.target.value, sectionId)
                   }
                   placeholder={field.placeholder || `Enter ${field.label}`}
                   className={baseInputClasses}
-                  disabled={isNaSection || (value && typeof value === 'object' && 'columns' in value && 'rows' in value)}
+                  disabled={
+                    isNaSection ||
+                    (value &&
+                      typeof value === "object" &&
+                      "columns" in value &&
+                      "rows" in value)
+                  }
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-                {value && typeof value === 'object' && 'columns' in value && 'rows' in value && (
-                  <p className="text-amber-600 text-sm mt-1">
-                    ⚠️ This field contains table data but is displayed as text. This form may have been created with a different template version. Please use JCC2 Data Collection Form v3 for proper table display.
-                  </p>
-                )}
+                {value &&
+                  typeof value === "object" &&
+                  "columns" in value &&
+                  "rows" in value && (
+                    <p className="text-amber-600 text-sm mt-1">
+                      ⚠️ This field contains table data but is displayed as
+                      text. This form may have been created with a different
+                      template version. Please use JCC2 Data Collection Form v3
+                      for proper table display.
+                    </p>
+                  )}
               </div>
             </div>
           </Tooltip>
@@ -1383,7 +1478,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "email": {
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1425,7 +1520,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "tel": {
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1467,11 +1562,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "textarea": {
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor={fieldId}
+                className="block text-sm font-medium text-gray-700"
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -1494,11 +1592,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "select": {
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor={fieldId}
+                className="block text-sm font-medium text-gray-700"
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -1546,7 +1647,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               </div>
               <div className="space-y-2">
                 {field.options?.map((option: string, index: number) => {
-                  const optionId = generateFieldId(field.id, sectionId, `option-${index}`);
+                  const optionId = generateFieldId(
+                    field.id,
+                    sectionId,
+                    `option-${index}`
+                  );
                   return (
                     <label
                       key={option}
@@ -1589,7 +1694,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
         // Use vertical layout (original implementation)
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         // If no options, render a single checkbox
         if (!field.options || field.options.length === 0) {
           return (
@@ -1611,7 +1716,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   />
                   <span className="text-sm text-gray-700">
                     {field.label}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                    {field.required && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
                   </span>
                 </label>
                 {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -1619,7 +1726,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             </Tooltip>
           );
         }
-        
+
         // Multiple options - render checkbox group
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
@@ -1630,7 +1737,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               </div>
               <div className="space-y-2">
                 {field.options.map((option: string, index: number) => {
-                  const optionId = generateFieldId(field.id, sectionId, `option-${index}`);
+                  const optionId = generateFieldId(
+                    field.id,
+                    sectionId,
+                    `option-${index}`
+                  );
                   return (
                     <label
                       key={option}
@@ -1644,7 +1755,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                         value={option}
                         checked={Array.isArray(value) && value.includes(option)}
                         onChange={(e) => {
-                          const currentValues = Array.isArray(value) ? value : [];
+                          const currentValues = Array.isArray(value)
+                            ? value
+                            : [];
                           if (e.target.checked) {
                             handleFieldChange(
                               field.id,
@@ -1674,7 +1787,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "number": {
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1721,7 +1834,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "date": {
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div
@@ -1762,11 +1875,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case "file": {
         const fieldId = generateFieldId(field.id, sectionId);
-        
+
         return (
           <Tooltip key={field.id} content={tooltipContent} delay={500}>
             <div className="space-y-2">
-              <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor={fieldId}
+                className="block text-sm font-medium text-gray-700"
+              >
                 {field.label}
                 {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
@@ -1812,7 +1928,9 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             key={field.id}
             field={field}
             value={value as DataTableValue}
-            onChange={(newValue) => handleFieldChange(field.id, newValue, sectionId)}
+            onChange={(newValue) =>
+              handleFieldChange(field.id, newValue, sectionId)
+            }
             error={error}
             disabled={isNaSection}
           />
@@ -1834,13 +1952,17 @@ const FormRenderer: React.FC<FormRendererProps> = ({
           }`}
         >
           <div className="flex items-center space-x-3">
-            <h1 className="text-2xl font-bold text-gray-900">{template.name}</h1>
-            {instance?.templateVersion && template.version && instance.templateVersion !== template.version && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                <Icons.AlertTriangle className="w-3 h-3 mr-1" />
-                Version mismatch
-              </span>
-            )}
+            <h1 className="text-2xl font-bold text-gray-900">
+              {template.name}
+            </h1>
+            {instance?.templateVersion &&
+              template.version &&
+              instance.templateVersion !== template.version && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                  <Icons.AlertTriangle className="w-3 h-3 mr-1" />
+                  Version mismatch
+                </span>
+              )}
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -1975,15 +2097,23 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                         <div className="mt-4 space-y-2">
                           {section.content.map((contentItem, index) => {
                             // Debug logging to identify the issue
-                            if (typeof contentItem !== 'string') {
-                              console.warn('Non-string content found in section:', section.title, 'at index:', index, 'content:', contentItem);
+                            if (typeof contentItem !== "string") {
+                              console.warn(
+                                "Non-string content found in section:",
+                                section.title,
+                                "at index:",
+                                index,
+                                "content:",
+                                contentItem
+                              );
                             }
-                            
+
                             // Handle objects in content array - convert to string
-                            const displayContent = typeof contentItem === 'string' 
-                              ? contentItem 
-                              : JSON.stringify(contentItem, null, 2);
-                            
+                            const displayContent =
+                              typeof contentItem === "string"
+                                ? contentItem
+                                : JSON.stringify(contentItem, null, 2);
+
                             return (
                               <div
                                 key={index}
@@ -2088,18 +2218,21 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                         </h2>
                       </Tooltip>
                       {/* Render section content */}
-                      {currentSection.content && currentSection.content.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          {currentSection.content.map((contentItem, index) => (
-                            <div
-                              key={index}
-                              className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
-                            >
-                              {contentItem}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {currentSection.content &&
+                        currentSection.content.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            {currentSection.content.map(
+                              (contentItem, index) => (
+                                <div
+                                  key={index}
+                                  className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap"
+                                >
+                                  {contentItem}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
                     </div>
                     <div className="space-y-6">
                       {allElements.map((element) => {

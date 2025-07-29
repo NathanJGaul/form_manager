@@ -64,33 +64,31 @@ export const FormDevTool: React.FC<FormDevToolProps> = ({
 
     setIsProcessing(true);
     try {
-      // Create a temporary submission to test CSV export
-      const tempSubmission = {
+      // Create a temporary instance to test CSV export
+      const tempInstance: FormInstance = {
         id: `temp-${Date.now()}`,
-        formInstanceId: `temp-instance-${Date.now()}`,
         templateId: template.id,
         templateName: template.name,
         data: lastGeneratedData,
-        submittedAt: new Date().toISOString(),
+        progress: 100,
+        completed: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastSaved: new Date(),
+        visitedSections: template.sections.map(s => s.id),
+        naSections: [],
       };
 
-      // Store temporary submission
-      const existingSubmissions = storageManager.getSubmissions();
-      localStorage.setItem(
-        "form_submissions",
-        JSON.stringify([...existingSubmissions, tempSubmission])
-      );
+      // Store temporary instance
+      const existingInstances = storageManager.getInstances();
+      storageManager.saveInstance(tempInstance);
 
-      // Export to CSV with preserveOriginalData flag to maintain data integrity for validation
-      // This prevents updateConditionalFieldsAsNull from overwriting "Not Applicable" values
-      // with null for sections that were marked as N/A by the user
-      const csvData = storageManager.exportToCSV(template.id, true);
+      // Export to CSV using exportInstanceToCSV with preserveOriginalData flag
+      // This matches how the hamburger menu exports and prevents conditional field nullification
+      const csvData = storageManager.exportInstanceToCSV(tempInstance.id, true);
 
-      // Remove temporary submission
-      localStorage.setItem(
-        "form_submissions",
-        JSON.stringify(existingSubmissions)
-      );
+      // Remove temporary instance
+      storageManager.deleteInstance(tempInstance.id);
 
       if (!csvData) {
         throw new Error("CSV export failed - no data generated");

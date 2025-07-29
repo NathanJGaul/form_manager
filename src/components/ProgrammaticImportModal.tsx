@@ -342,7 +342,7 @@ export const ProgrammaticImportModal: React.FC<
 
   const removeTypeScriptAnnotations = (code: string): string => {
     // Remove type annotations from function parameters and return types
-    let cleanCode = code
+    const cleanCode = code
       // Remove return type annotations like `: ProgrammaticTemplate`
       .replace(/\)\s*:\s*[A-Za-z_][A-Za-z0-9_<>[\]|&,\s]*\s*\{/g, ") {")
       // Remove parameter type annotations like `(param: Type)`
