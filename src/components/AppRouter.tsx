@@ -20,6 +20,7 @@ import { useFormHistory, FormHistoryState } from '../hooks/useFormHistory';
 const DashboardRoute = lazy(() => import('../routes/DashboardRoute'));
 const BuilderRoute = lazy(() => import('../routes/BuilderRoute'));
 const FormRoute = lazy(() => import('../routes/FormRoute'));
+const CSVManagerRoute = lazy(() => import('../routes/CSVManagerRoute'));
 
 // Loading component for route transitions
 const RouteLoadingSpinner: React.FC = () => (
@@ -34,7 +35,8 @@ const RouteLoadingSpinner: React.FC = () => (
 type Route = 
   | { type: 'dashboard' }
   | { type: 'builder'; template?: FormTemplate }
-  | { type: 'form'; template: FormTemplate; instance?: FormInstance; sectionIndex?: number; viewMode?: 'continuous' | 'section' };
+  | { type: 'form'; template: FormTemplate; instance?: FormInstance; sectionIndex?: number; viewMode?: 'continuous' | 'section' }
+  | { type: 'csv-manager' };
 
 export const AppRouter: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<Route>({ type: 'dashboard' });
@@ -84,6 +86,10 @@ export const AppRouter: React.FC = () => {
         setCurrentRoute({ type: 'dashboard' });
         break;
         
+      case 'csv-manager':
+        setCurrentRoute({ type: 'csv-manager' });
+        break;
+        
       case 'builder':
         if (state.templateId) {
           const template = storageManager.getTemplates().find(t => t.id === state.templateId);
@@ -128,6 +134,11 @@ export const AppRouter: React.FC = () => {
   const navigateToDashboard = () => {
     setCurrentRoute({ type: 'dashboard' });
     updateUrl({ routeType: 'dashboard' });
+  };
+
+  const navigateToCSVManager = () => {
+    setCurrentRoute({ type: 'csv-manager' });
+    updateUrl({ routeType: 'csv-manager' });
   };
 
   const navigateToBuilder = (template?: FormTemplate) => {
@@ -186,6 +197,7 @@ export const AppRouter: React.FC = () => {
           <DashboardRoute
             onNavigateToBuilder={navigateToBuilder}
             onNavigateToForm={navigateToForm}
+            onNavigateToCSVManager={navigateToCSVManager}
           />
         );
 
@@ -211,8 +223,15 @@ export const AppRouter: React.FC = () => {
           />
         );
 
+      case 'csv-manager':
+        return (
+          <CSVManagerRoute
+            onNavigateToDashboard={navigateToDashboard}
+          />
+        );
+
       default:
-        return <DashboardRoute onNavigateToBuilder={navigateToBuilder} onNavigateToForm={navigateToForm} />;
+        return <DashboardRoute onNavigateToBuilder={navigateToBuilder} onNavigateToForm={navigateToForm} onNavigateToCSVManager={navigateToCSVManager} />;
     }
   };
 
