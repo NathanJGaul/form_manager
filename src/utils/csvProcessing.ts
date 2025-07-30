@@ -56,8 +56,8 @@ export function parseCSV(content: string): ParsedCSV {
     return fields;
   };
 
-  const headers = parseRow(lines[0]);
-  const schema = parseRow(lines[1]);
+  const headers = parseRow(lines[0]).map(h => h.trim());
+  const schema = parseRow(lines[1]).map(s => s.trim());
   const data = lines.slice(2).map(line => parseRow(line));
 
   return { headers, schema, data };
@@ -201,15 +201,33 @@ export function combineCSVs(csvContents: string[], fileNames?: string[]): string
       referenceSchema = schema;
     } else {
       // Check structure matches with detailed error information
-      if (headers.join(',') !== referenceHeaders.join(',')) {
+      // First check if headers match when trimmed (more forgiving)
+      const headersTrimmed = headers.map(h => h.trim());
+      const referenceHeadersTrimmed = referenceHeaders.map(h => h.trim());
+      
+      if (headersTrimmed.join(',') === referenceHeadersTrimmed.join(',')) {
+        // Headers match when trimmed - just show a warning and continue
+        console.warn(`Headers in "${fileName}" have extra whitespace but match when trimmed. Continuing with combination.`);
+      } else if (headers.join(',') !== referenceHeaders.join(',')) {
         // Find differences
         const missing = referenceHeaders.filter(h => !headers.includes(h));
         const extra = headers.filter(h => !referenceHeaders.includes(h));
         const wrongOrder = headers.length === referenceHeaders.length && 
           headers.some((h, idx) => h !== referenceHeaders[idx]);
         
+        // Check if trimming would fix the issue
+        const missingTrimmed = referenceHeadersTrimmed.filter(h => !headersTrimmed.includes(h));
+        const extraTrimmed = headersTrimmed.filter(h => !referenceHeadersTrimmed.includes(h));
+        const wouldTrimFix = missingTrimmed.length === 0 && extraTrimmed.length === 0;
+        
         let errorDetails = `Header mismatch in "${fileName}":\n`;
         errorDetails += `Expected ${referenceHeaders.length} headers (from "${referenceFileName}"), found ${headers.length}.\n\n`;
+        
+        if (wouldTrimFix) {
+          errorDetails += `⚠️ NOTE: Headers would match if whitespace were trimmed!\n`;
+          errorDetails += `The CSV files have headers with extra spaces. The system now automatically trims headers during import.\n`;
+          errorDetails += `Please re-upload your CSV files to apply automatic trimming.\n\n`;
+        }
         
         // Check for headers that look similar but have subtle differences
         const similarHeaders: string[] = [];
