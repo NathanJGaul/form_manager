@@ -597,7 +597,13 @@ class StorageManager {
       
       // Handle arrays
       if (Array.isArray(value)) {
-        return value.join('; '); // Use semicolon as array delimiter
+        const joinedValue = value.join('; '); // Use semicolon as array delimiter
+        // Apply CSV escaping to the joined string
+        return joinedValue.includes(",") ||
+          joinedValue.includes('"') ||
+          joinedValue.includes("\n")
+          ? `"${joinedValue.replace(/"/g, '""')}"`
+          : joinedValue;
       }
       
       const stringValue = String(value);
@@ -751,7 +757,13 @@ class StorageManager {
       
       // Handle arrays
       if (Array.isArray(value)) {
-        return value.join('; '); // Use semicolon as array delimiter
+        const joinedValue = value.join('; '); // Use semicolon as array delimiter
+        // Apply CSV escaping to the joined string
+        return joinedValue.includes(",") ||
+          joinedValue.includes('"') ||
+          joinedValue.includes("\n")
+          ? `"${joinedValue.replace(/"/g, '""')}"`
+          : joinedValue;
       }
       
       const stringValue = String(value);
@@ -853,7 +865,13 @@ class StorageManager {
       
       // Handle arrays
       if (Array.isArray(value)) {
-        return value.join('; '); // Use semicolon as array delimiter
+        const joinedValue = value.join('; '); // Use semicolon as array delimiter
+        // Apply CSV escaping to the joined string
+        return joinedValue.includes(",") ||
+          joinedValue.includes('"') ||
+          joinedValue.includes("\n")
+          ? `"${joinedValue.replace(/"/g, '""')}"`
+          : joinedValue;
       }
       
       const stringValue = String(value);
