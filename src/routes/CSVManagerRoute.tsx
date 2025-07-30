@@ -98,7 +98,10 @@ export const CSVManagerRoute: React.FC<CSVManagerRouteProps> = ({ onNavigateToDa
     }
 
     try {
-      const combined = combineCSVs(filesToCombine.map(f => f.content));
+      const combined = combineCSVs(
+        filesToCombine.map(f => f.content),
+        filesToCombine.map(f => f.name)
+      );
       const parsed = parseCSV(combined);
       const validation = validateCSV(combined);
       

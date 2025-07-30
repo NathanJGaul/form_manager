@@ -69,7 +69,7 @@ const Toast: React.FC<ToastProps> = ({ message, onClose }) => {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900">{message.title}</p>
           {message.message && (
-            <p className="text-sm text-gray-600 mt-1">{message.message}</p>
+            <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{message.message}</p>
           )}
         </div>
         <button

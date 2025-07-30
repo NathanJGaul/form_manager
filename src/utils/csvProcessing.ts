@@ -179,7 +179,7 @@ export function validateCSV(content: string): CSVValidationResult {
 /**
  * Combine multiple CSV files with the same structure
  */
-export function combineCSVs(csvContents: string[]): string {
+export function combineCSVs(csvContents: string[], fileNames?: string[]): string {
   if (csvContents.length === 0) {
     throw new Error('No CSV files to combine');
   }
@@ -187,20 +187,67 @@ export function combineCSVs(csvContents: string[]): string {
   let referenceHeaders: string[] | null = null;
   let referenceSchema: string[] | null = null;
   const allData: string[][] = [];
+  const fileInfos: Array<{ headers: string[]; schema: string[]; index: number }> = [];
 
-  for (const content of csvContents) {
-    const { headers, schema, data } = parseCSV(content);
+  for (let i = 0; i < csvContents.length; i++) {
+    const { headers, schema, data } = parseCSV(csvContents[i]);
+    fileInfos.push({ headers, schema, index: i + 1 });
+    
+    const fileName = fileNames?.[i] || `File ${i + 1}`;
+    const referenceFileName = fileNames?.[0] || `File 1`;
     
     if (!referenceHeaders) {
       referenceHeaders = headers;
       referenceSchema = schema;
     } else {
-      // Check structure matches
+      // Check structure matches with detailed error information
       if (headers.join(',') !== referenceHeaders.join(',')) {
-        throw new Error('All CSV files must have identical headers');
+        // Find differences
+        const missing = referenceHeaders.filter(h => !headers.includes(h));
+        const extra = headers.filter(h => !referenceHeaders.includes(h));
+        const wrongOrder = headers.length === referenceHeaders.length && 
+          headers.some((h, idx) => h !== referenceHeaders[idx]);
+        
+        let errorDetails = `Header mismatch in "${fileName}":\n`;
+        errorDetails += `Expected ${referenceHeaders.length} headers (from "${referenceFileName}"), found ${headers.length}.\n\n`;
+        
+        if (missing.length > 0) {
+          errorDetails += `Missing headers: ${missing.join(', ')}\n`;
+        }
+        if (extra.length > 0) {
+          errorDetails += `Extra headers: ${extra.join(', ')}\n`;
+        }
+        if (wrongOrder && missing.length === 0 && extra.length === 0) {
+          errorDetails += `Headers are in wrong order.\n`;
+          errorDetails += `Expected: ${referenceHeaders.slice(0, 5).join(', ')}${referenceHeaders.length > 5 ? '...' : ''}\n`;
+          errorDetails += `Found: ${headers.slice(0, 5).join(', ')}${headers.length > 5 ? '...' : ''}\n`;
+        }
+        
+        errorDetails += `\nFirst file: "${referenceFileName}"`;
+        errorDetails += `\nCurrent file: "${fileName}"`;
+        
+        throw new Error(errorDetails);
       }
+      
       if (schema.join(',') !== referenceSchema!.join(',')) {
-        throw new Error('All CSV files must have identical schemas');
+        const schemaDiffs: string[] = [];
+        for (let j = 0; j < Math.max(schema.length, referenceSchema!.length); j++) {
+          if (schema[j] !== referenceSchema![j]) {
+            const headerName = headers[j] || `Column ${j + 1}`;
+            schemaDiffs.push(`${headerName}: expected '${referenceSchema![j] || 'missing'}', found '${schema[j] || 'missing'}'`);
+          }
+        }
+        
+        let errorDetails = `Schema mismatch in "${fileName}":\n`;
+        errorDetails += schemaDiffs.slice(0, 5).join('\n');
+        if (schemaDiffs.length > 5) {
+          errorDetails += `\n... and ${schemaDiffs.length - 5} more differences`;
+        }
+        
+        errorDetails += `\n\nFirst file: "${referenceFileName}"`;
+        errorDetails += `\nCurrent file: "${fileName}"`;
+        
+        throw new Error(errorDetails);
       }
     }
     
