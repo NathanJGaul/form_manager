@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { FormTemplate, FormInstance } from '../types/form.types';
 
 export interface FormHistoryState {
-  routeType: 'dashboard' | 'builder' | 'form';
+  routeType: 'dashboard' | 'builder' | 'form' | 'csv-manager';
   templateId?: string;
   instanceId?: string;
   sectionIndex?: number;
@@ -49,6 +49,9 @@ export const useFormHistory = () => {
         const queryString = searchParams.toString();
         return queryString ? `${path}?${queryString}` : path;
       
+      case 'csv-manager':
+        return '/csv-manager';
+      
       default:
         return '/';
     }
@@ -72,6 +75,11 @@ export const useFormHistory = () => {
           templateId: matches[1] || undefined
         };
       }
+    }
+    
+    // CSV Manager route
+    if (path === '/csv-manager') {
+      return { routeType: 'csv-manager' };
     }
     
     // Form routes
