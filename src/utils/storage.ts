@@ -772,6 +772,105 @@ class StorageManager {
     return csvContent;
   }
 
+  /**
+   * Export multiple form instances to a single CSV file
+   * @param template - The form template
+   * @param instances - Array of form data objects to export
+   * @returns CSV string with headers, schema row, and multiple data rows
+   */
+  exportMultipleInstancesToCSV(template: FormTemplate, instances: Record<string, FormFieldValue>[]): string | null {
+    if (!template || instances.length === 0) return null;
+
+    // Generate unique mock IDs for each instance
+    const timestamp = new Date().toISOString();
+    const allData = instances.map((data, index) => ({
+      id: `mock-${index + 1}-${Date.now()}`,
+      status: "Mock Data",
+      progress: 100,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      lastSaved: timestamp,
+      ...updateConditionalFieldsAsNull(template.sections, data)
+    }));
+
+    // Generate headers and field mapping
+    const { headers, fieldMap } = this.generateFieldHeaders(template);
+
+    // Generate schema row
+    const schemaRow = this.generateSchemaRow(template, headers);
+
+    // Map data to new header structure
+    const mappedData = allData.map((row) => {
+      const mappedRow: Record<string, FormFieldValue | null> = {};
+      headers.forEach((header) => {
+        // Find the original field key that maps to this header
+        const fieldId = Array.from(fieldMap.entries()).find(
+          ([key, value]) => value === header
+        )?.[0];
+        if (fieldId) {
+          // Found a direct mapping
+          const value = row[fieldId as keyof typeof row];
+          mappedRow[header] = value !== undefined ? value : "";
+        } else {
+          // If no mapping found, try to extract field ID from dot notation
+          const parts = header.split(".");
+          if (parts.length === 2) {
+            const fieldKey = parts[1]; // Extract field ID from section.field format
+            // First try the scoped key (section.field)
+            let value = row[header as keyof typeof row];
+            // If not found, try just the field ID for backward compatibility
+            if (value === undefined) {
+              value = row[fieldKey as keyof typeof row];
+            }
+            mappedRow[header] = value !== undefined ? value : "";
+          } else {
+            mappedRow[header] = "";
+          }
+        }
+      });
+      return mappedRow;
+    });
+
+    // Format CSV content with proper escaping
+    const formatCsvValue = (
+      value: FormFieldValue | null | undefined
+    ): string => {
+      if (value === null) return "null";
+      if (value === undefined) return "";
+      
+      // Handle DataTable values
+      if (typeof value === 'object' && 'columns' in value && 'rows' in value) {
+        const dataTableValue = value as DataTableValue;
+        // Serialize DataTable as JSON for CSV export
+        const jsonString = JSON.stringify(dataTableValue);
+        // Escape quotes for CSV
+        return `"${jsonString.replace(/"/g, '""')}"`;
+      }
+      
+      // Handle arrays
+      if (Array.isArray(value)) {
+        return value.join('; '); // Use semicolon as array delimiter
+      }
+      
+      const stringValue = String(value);
+      return stringValue.includes(",") ||
+        stringValue.includes('"') ||
+        stringValue.includes("\n")
+        ? `"${stringValue.replace(/"/g, '""')}"`
+        : stringValue;
+    };
+
+    const csvContent = [
+      headers.map(formatCsvValue).join(","),
+      schemaRow.map(formatCsvValue).join(","),
+      ...mappedData.map((row) =>
+        headers.map((header) => formatCsvValue(row[header])).join(",")
+      ),
+    ].join("\n");
+
+    return csvContent;
+  }
+
   // View mode methods
   getViewMode(): "continuous" | "section" {
     const stored = localStorage.getItem(this.VIEW_MODE_KEY);

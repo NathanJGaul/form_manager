@@ -28,6 +28,7 @@ import Tooltip from "./Tooltip";
 import { DevDropdownMenu } from "./DevDropdownMenu";
 import DataTableField from "./fields/DataTableField";
 import { MockDataConfigModal } from "./MockDataConfigModal";
+import { BatchMockDataModal } from "./BatchMockDataModal";
 import { MockDataGenerator } from "../utils/mockDataGenerator";
 import { FormDevTool } from "./dev-tools/FormDevTool";
 import { CSVIntegrityResults } from "./dev-tools/CSVIntegrityResults";
@@ -299,6 +300,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     initialSectionIndex || 0
   );
   const [showMockDataModal, setShowMockDataModal] = useState(false);
+  const [showBatchMockDataModal, setShowBatchMockDataModal] = useState(false);
+  const [mockDataInstances, setMockDataInstances] = useState<FormData[]>([]);
   const [showFormDevTool, setShowFormDevTool] = useState(false);
   const [csvIntegrityResults, setCsvIntegrityResults] =
     useState<CSVIntegrityResult | null>(null);
@@ -1064,6 +1067,81 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         "Please try again or check console for details"
       );
     }
+  };
+
+  const handleClearFormData = () => {
+    setFormData({});
+    setErrors({});
+    setHasUnsavedChanges(false);
+    // Reset visited sections to only the first visible section
+    const newVisibleSections = getVisibleSections(template.sections, {});
+    if (newVisibleSections.length > 0) {
+      setVisitedSections(new Set([newVisibleSections[0].id]));
+    } else {
+      setVisitedSections(new Set());
+    }
+    // Reset N/A sections
+    setNaSections(new Set());
+    showSuccess("Form cleared", "All form data has been cleared");
+  };
+
+  const handleBatchGenerate = (
+    numberOfInstances: number,
+    config: import("../utils/mockDataGenerator").MockDataConfig
+  ) => {
+    const newInstances: FormData[] = [];
+    
+    for (let i = 0; i < numberOfInstances; i++) {
+      // Use different seed for each instance if base seed is provided
+      const instanceConfig = config.seed 
+        ? { ...config, seed: config.seed + i }
+        : config;
+      
+      const instanceGenerator = new MockDataGenerator(instanceConfig);
+      const mockData = instanceGenerator.generateMockFormData(template, {});
+      newInstances.push(mockData);
+    }
+    
+    setMockDataInstances(newInstances);
+    showSuccess(
+      "Mock data generated",
+      `Generated ${numberOfInstances} form instances with mock data`
+    );
+  };
+
+  const handleExportMockData = () => {
+    if (mockDataInstances.length === 0) {
+      showError("No mock data", "Please generate mock data instances first");
+      return;
+    }
+
+    // Create CSV data with multiple instances
+    const csvData = storageManager.exportMultipleInstancesToCSV(
+      template,
+      mockDataInstances
+    );
+    
+    if (!csvData) {
+      showError("Export failed", "Failed to export mock data to CSV");
+      return;
+    }
+
+    const blob = new Blob([csvData], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${template.name.replace(/\s+/g, "_")}_mock_data_${
+      mockDataInstances.length
+    }_instances.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    // Clear mock data after export
+    setMockDataInstances([]);
+    showSuccess(
+      "Export successful",
+      `Exported ${mockDataInstances.length} mock instances to CSV`
+    );
   };
 
   const groupFields = (fields: FormField[]) => {
@@ -2001,6 +2079,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                   <DevDropdownMenu
                     onFillMockData={() => setShowMockDataModal(true)}
                     onFormDevTool={handleShowFormDevTool}
+                    onClearFormData={handleClearFormData}
+                    onBatchGenerate={() => setShowBatchMockDataModal(true)}
+                    onExportMockData={handleExportMockData}
+                    mockDataCount={mockDataInstances.length}
                   />
                 ) : undefined
               }
@@ -2488,6 +2570,13 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         isOpen={showMockDataModal}
         onClose={() => setShowMockDataModal(false)}
         onConfirm={handleFillMockData}
+      />
+
+      {/* Batch Mock Data Modal */}
+      <BatchMockDataModal
+        isOpen={showBatchMockDataModal}
+        onClose={() => setShowBatchMockDataModal(false)}
+        onConfirm={handleBatchGenerate}
       />
 
       {/* Form Dev Tool Modal */}
