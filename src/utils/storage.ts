@@ -551,23 +551,22 @@ class StorageManager {
     const mappedData = allData.map((row) => {
       const mappedRow: Record<string, FormFieldValue | null> = {};
       headers.forEach((header) => {
-        // Find the original field key that maps to this header
-        const fieldId = Array.from(fieldMap.entries()).find(
-          ([key, value]) => value === header
-        )?.[0];
-        if (fieldId) {
-          // Found a direct mapping
-          const value = row[fieldId as keyof typeof row];
-          mappedRow[header] = value !== undefined ? value : "";
+        // Check if it's a system field first
+        if (['id', 'status', 'progress', 'created_at', 'updated_at', 'last_saved'].includes(header)) {
+          const systemKey = header === 'created_at' ? 'createdAt' : 
+                           header === 'updated_at' ? 'updatedAt' : 
+                           header === 'last_saved' ? 'lastSaved' : header;
+          mappedRow[header] = row[systemKey as keyof typeof row] !== undefined ? row[systemKey as keyof typeof row] : "";
         } else {
-          // If no mapping found, try to extract field ID from dot notation
+          // For form fields with dot notation headers
           const parts = header.split(".");
           if (parts.length === 2) {
-            const fieldKey = parts[1]; // Extract field ID from section.field format
-            // First try the scoped key (section.field)
+            // The header is in format "section.field"
+            // Try the scoped key first
             let value = row[header as keyof typeof row];
             // If not found, try just the field ID for backward compatibility
             if (value === undefined) {
+              const fieldKey = parts[1];
               value = row[fieldKey as keyof typeof row];
             }
             mappedRow[header] = value !== undefined ? value : "";
@@ -783,15 +782,21 @@ class StorageManager {
 
     // Generate unique mock IDs for each instance
     const timestamp = new Date().toISOString();
-    const allData = instances.map((data, index) => ({
-      id: `mock-${index + 1}-${Date.now()}`,
-      status: "Mock Data",
-      progress: 100,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      lastSaved: timestamp,
-      ...updateConditionalFieldsAsNull(template.sections, data)
-    }));
+    const allData = instances.map((data, index) => {
+      // Apply conditional field nullification
+      const processedData = updateConditionalFieldsAsNull(template.sections, data);
+      
+      // Return object with system fields and processed data
+      return {
+        id: `mock-${index + 1}-${Date.now()}`,
+        status: "Mock Data",
+        progress: 100,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        lastSaved: timestamp,
+        ...processedData
+      };
+    });
 
     // Generate headers and field mapping
     const { headers, fieldMap } = this.generateFieldHeaders(template);
@@ -803,23 +808,22 @@ class StorageManager {
     const mappedData = allData.map((row) => {
       const mappedRow: Record<string, FormFieldValue | null> = {};
       headers.forEach((header) => {
-        // Find the original field key that maps to this header
-        const fieldId = Array.from(fieldMap.entries()).find(
-          ([key, value]) => value === header
-        )?.[0];
-        if (fieldId) {
-          // Found a direct mapping
-          const value = row[fieldId as keyof typeof row];
-          mappedRow[header] = value !== undefined ? value : "";
+        // Check if it's a system field first
+        if (['id', 'status', 'progress', 'created_at', 'updated_at', 'last_saved'].includes(header)) {
+          const systemKey = header === 'created_at' ? 'createdAt' : 
+                           header === 'updated_at' ? 'updatedAt' : 
+                           header === 'last_saved' ? 'lastSaved' : header;
+          mappedRow[header] = row[systemKey as keyof typeof row] !== undefined ? row[systemKey as keyof typeof row] : "";
         } else {
-          // If no mapping found, try to extract field ID from dot notation
+          // For form fields with dot notation headers
           const parts = header.split(".");
           if (parts.length === 2) {
-            const fieldKey = parts[1]; // Extract field ID from section.field format
-            // First try the scoped key (section.field)
+            // The header is in format "section.field"
+            // Try the scoped key first
             let value = row[header as keyof typeof row];
             // If not found, try just the field ID for backward compatibility
             if (value === undefined) {
+              const fieldKey = parts[1];
               value = row[fieldKey as keyof typeof row];
             }
             mappedRow[header] = value !== undefined ? value : "";
