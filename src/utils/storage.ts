@@ -502,6 +502,66 @@ class StorageManager {
   }
 
   // Export methods
+  
+  /**
+   * Format a value for CSV export with proper escaping and security checks
+   * @param value - The value to format
+   * @returns Properly escaped CSV field value
+   */
+  private formatCsvValue(value: FormFieldValue | null | undefined): string {
+    if (value === null) return "null";
+    if (value === undefined) return "";
+    
+    // Handle DataTable values
+    if (typeof value === 'object' && 'columns' in value && 'rows' in value) {
+      const dataTableValue = value as DataTableValue;
+      // Serialize DataTable as JSON for CSV export
+      // This preserves the complete structure and can be parsed back
+      const jsonString = JSON.stringify(dataTableValue);
+      // Escape quotes for CSV
+      return `"${jsonString.replace(/"/g, '""')}"`;
+    }
+    
+    // Handle arrays
+    if (Array.isArray(value)) {
+      const joinedValue = value.join('; '); // Use semicolon as array delimiter
+      // Apply CSV escaping to the joined string
+      const needsQuoting = joinedValue.includes(",") ||
+        joinedValue.includes('"') ||
+        joinedValue.includes("\n") ||
+        joinedValue.includes("\r");
+      
+      // Check for CSV injection in array values
+      const dangerousStarts = ['=', '+', '-', '@', '\t', '\r'];
+      if (dangerousStarts.some(char => joinedValue.startsWith(char))) {
+        return `"'${joinedValue.replace(/"/g, '""')}"`;
+      }
+      
+      return needsQuoting
+        ? `"${joinedValue.replace(/"/g, '""')}"`
+        : joinedValue;
+    }
+    
+    const stringValue = String(value);
+    
+    // CSV injection prevention: prefix potentially dangerous values
+    // that could be interpreted as formulas in spreadsheet applications
+    const dangerousStarts = ['=', '+', '-', '@', '\t', '\r'];
+    if (dangerousStarts.some(char => stringValue.startsWith(char))) {
+      // Prefix with single quote to neutralize formula interpretation
+      return `"'${stringValue.replace(/"/g, '""')}"`;
+    }
+    
+    // Standard CSV escaping for special characters
+    // Including newlines (\n) and carriage returns (\r)
+    return stringValue.includes(",") ||
+      stringValue.includes('"') ||
+      stringValue.includes("\n") ||
+      stringValue.includes("\r")
+      ? `"${stringValue.replace(/"/g, '""')}"`
+      : stringValue;
+  }
+
   /**
    * Export form submissions to CSV format
    * @param templateId - The template ID to export submissions for
@@ -578,47 +638,13 @@ class StorageManager {
       return mappedRow;
     });
 
-    // Format CSV content with proper escaping
-    const formatCsvValue = (
-      value: FormFieldValue | null | undefined
-    ): string => {
-      if (value === null) return "null";
-      if (value === undefined) return "";
-      
-      // Handle DataTable values
-      if (typeof value === 'object' && 'columns' in value && 'rows' in value) {
-        const dataTableValue = value as DataTableValue;
-        // Serialize DataTable as JSON for CSV export
-        // This preserves the complete structure and can be parsed back
-        const jsonString = JSON.stringify(dataTableValue);
-        // Escape quotes for CSV
-        return `"${jsonString.replace(/"/g, '""')}"`;
-      }
-      
-      // Handle arrays
-      if (Array.isArray(value)) {
-        const joinedValue = value.join('; '); // Use semicolon as array delimiter
-        // Apply CSV escaping to the joined string
-        return joinedValue.includes(",") ||
-          joinedValue.includes('"') ||
-          joinedValue.includes("\n")
-          ? `"${joinedValue.replace(/"/g, '""')}"`
-          : joinedValue;
-      }
-      
-      const stringValue = String(value);
-      return stringValue.includes(",") ||
-        stringValue.includes('"') ||
-        stringValue.includes("\n")
-        ? `"${stringValue.replace(/"/g, '""')}"`
-        : stringValue;
-    };
+    // CSV formatting has been moved to a shared private method
 
     const csvContent = [
-      headers.map(formatCsvValue).join(","),
-      schemaRow.map(formatCsvValue).join(","),
+      headers.map(v => this.formatCsvValue(v)).join(","),
+      schemaRow.map(v => this.formatCsvValue(v)).join(","),
       ...mappedData.map((row) =>
-        headers.map((header) => formatCsvValue(row[header])).join(",")
+        headers.map((header) => this.formatCsvValue(row[header])).join(",")
       ),
     ].join("\n");
 
@@ -738,46 +764,12 @@ class StorageManager {
       }
     });
 
-    // Format CSV content with proper escaping
-    const formatCsvValue = (
-      value: FormFieldValue | null | undefined
-    ): string => {
-      if (value === null) return "null";
-      if (value === undefined) return "";
-      
-      // Handle DataTable values
-      if (typeof value === 'object' && 'columns' in value && 'rows' in value) {
-        const dataTableValue = value as DataTableValue;
-        // Serialize DataTable as JSON for CSV export
-        // This preserves the complete structure and can be parsed back
-        const jsonString = JSON.stringify(dataTableValue);
-        // Escape quotes for CSV
-        return `"${jsonString.replace(/"/g, '""')}"`;
-      }
-      
-      // Handle arrays
-      if (Array.isArray(value)) {
-        const joinedValue = value.join('; '); // Use semicolon as array delimiter
-        // Apply CSV escaping to the joined string
-        return joinedValue.includes(",") ||
-          joinedValue.includes('"') ||
-          joinedValue.includes("\n")
-          ? `"${joinedValue.replace(/"/g, '""')}"`
-          : joinedValue;
-      }
-      
-      const stringValue = String(value);
-      return stringValue.includes(",") ||
-        stringValue.includes('"') ||
-        stringValue.includes("\n")
-        ? `"${stringValue.replace(/"/g, '""')}"`
-        : stringValue;
-    };
+    // CSV formatting has been moved to a shared private method
 
     const csvContent = [
-      headers.map(formatCsvValue).join(","),
-      schemaRow.map(formatCsvValue).join(","),
-      headers.map((header) => formatCsvValue(mappedRow[header])).join(",")
+      headers.map(v => this.formatCsvValue(v)).join(","),
+      schemaRow.map(v => this.formatCsvValue(v)).join(","),
+      headers.map((header) => this.formatCsvValue(mappedRow[header])).join(",")
     ].join("\n");
 
     return csvContent;
@@ -883,10 +875,10 @@ class StorageManager {
     };
 
     const csvContent = [
-      headers.map(formatCsvValue).join(","),
-      schemaRow.map(formatCsvValue).join(","),
+      headers.map(v => this.formatCsvValue(v)).join(","),
+      schemaRow.map(v => this.formatCsvValue(v)).join(","),
       ...mappedData.map((row) =>
-        headers.map((header) => formatCsvValue(row[header])).join(",")
+        headers.map((header) => this.formatCsvValue(row[header])).join(",")
       ),
     ].join("\n");
 
