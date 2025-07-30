@@ -4,11 +4,19 @@ import * as Icons from "lucide-react";
 interface DevDropdownMenuProps {
   onFillMockData: () => void;
   onFormDevTool: () => void;
+  onClearFormData: () => void;
+  onBatchGenerate: () => void;
+  onExportMockData: () => void;
+  mockDataCount?: number;
 }
 
 export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({
   onFillMockData,
   onFormDevTool,
+  onClearFormData,
+  onBatchGenerate,
+  onExportMockData,
+  mockDataCount = 0,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -71,15 +79,29 @@ export const DevDropdownMenu: React.FC<DevDropdownMenuProps> = ({
               Data Validation Checker
             </button>
             <button
-              onClick={() =>
-                handleItemClick(() => console.log("Clear form data"))
-              }
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 opacity-50 cursor-not-allowed"
-              disabled
+              onClick={() => handleItemClick(onClearFormData)}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
               <Icons.Trash2 size={16} />
-              Clear Form Data (Coming Soon)
+              Clear Form Data
             </button>
+            <div className="border-t border-gray-200 my-1" />
+            <button
+              onClick={() => handleItemClick(onBatchGenerate)}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+            >
+              <Icons.Layers size={16} />
+              Generate Multiple Instances
+            </button>
+            {mockDataCount > 0 && (
+              <button
+                onClick={() => handleItemClick(onExportMockData)}
+                className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <Icons.Download size={16} />
+                Export Mock Data CSV ({mockDataCount} instances)
+              </button>
+            )}
           </div>
         </div>
       )}

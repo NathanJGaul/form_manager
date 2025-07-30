@@ -23,6 +23,7 @@ const ImportModal = lazy(() => import("../components/ImportModal"));
 interface DashboardRouteProps {
   onNavigateToBuilder?: (template?: FormTemplate) => void;
   onNavigateToForm?: (template: FormTemplate, instance?: FormInstance) => void;
+  onNavigateToCSVManager?: () => void;
 }
 
 // Loading component for lazy-loaded modules
@@ -38,6 +39,7 @@ const LazyLoadingSpinner: React.FC = () => (
 const DashboardRoute: React.FC<DashboardRouteProps> = ({
   onNavigateToBuilder,
   onNavigateToForm,
+  onNavigateToCSVManager,
 }) => {
   console.log("🚀 Dashboard component is rendering!");
   const { showSuccess, showError } = useToast();
@@ -392,6 +394,20 @@ const DashboardRoute: React.FC<DashboardRouteProps> = ({
               >
                 <Icons.Download className="w-4 h-4" />
                 <span>Export All</span>
+              </button>
+              <button
+                onClick={() => {
+                  console.log("CSV Manager button clicked, onNavigateToCSVManager:", onNavigateToCSVManager);
+                  if (onNavigateToCSVManager) {
+                    onNavigateToCSVManager();
+                  } else {
+                    console.error("onNavigateToCSVManager is not defined!");
+                  }
+                }}
+                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              >
+                <Icons.FileText className="w-4 h-4" />
+                <span>CSV Manager</span>
               </button>
               <button
                 onClick={handleCreateTemplate}
