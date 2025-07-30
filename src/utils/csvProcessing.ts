@@ -211,6 +211,62 @@ export function combineCSVs(csvContents: string[], fileNames?: string[]): string
         let errorDetails = `Header mismatch in "${fileName}":\n`;
         errorDetails += `Expected ${referenceHeaders.length} headers (from "${referenceFileName}"), found ${headers.length}.\n\n`;
         
+        // Check for headers that look similar but have subtle differences
+        const similarHeaders: string[] = [];
+        if (missing.length > 0 && extra.length > 0) {
+          missing.forEach(missingHeader => {
+            extra.forEach(extraHeader => {
+              // Check if headers are similar (case-insensitive or with trimmed spaces)
+              if (missingHeader.toLowerCase() === extraHeader.toLowerCase() || 
+                  missingHeader.trim() === extraHeader.trim() ||
+                  missingHeader.replace(/\s+/g, ' ').trim() === extraHeader.replace(/\s+/g, ' ').trim()) {
+                similarHeaders.push(`  - Expected: "${missingHeader}" (length: ${missingHeader.length})`);
+                similarHeaders.push(`    Found:    "${extraHeader}" (length: ${extraHeader.length})`);
+                
+                // Detailed character analysis
+                if (missingHeader.toLowerCase() === extraHeader.toLowerCase() && missingHeader !== extraHeader) {
+                  similarHeaders.push(`    Difference: Case mismatch`);
+                } else if (missingHeader.trim() !== missingHeader || extraHeader.trim() !== extraHeader) {
+                  similarHeaders.push(`    Difference: Extra whitespace (leading/trailing spaces)`);
+                } else if (missingHeader.replace(/\s+/g, ' ') !== missingHeader || extraHeader.replace(/\s+/g, ' ') !== extraHeader) {
+                  similarHeaders.push(`    Difference: Multiple consecutive spaces`);
+                } else {
+                  // Check for invisible or special characters
+                  const missingChars = Array.from(missingHeader);
+                  const extraChars = Array.from(extraHeader);
+                  for (let i = 0; i < Math.max(missingChars.length, extraChars.length); i++) {
+                    if (missingChars[i] !== extraChars[i]) {
+                      const missingCode = missingChars[i] ? missingChars[i].charCodeAt(0) : 'missing';
+                      const extraCode = extraChars[i] ? extraChars[i].charCodeAt(0) : 'missing';
+                      similarHeaders.push(`    Difference at position ${i}: char code ${missingCode} vs ${extraCode}`);
+                      break;
+                    }
+                  }
+                }
+              }
+            });
+          });
+        }
+        
+        // Also check if the issue is just wrong order with same header appearing twice
+        const duplicateCheck = new Set();
+        const duplicates: string[] = [];
+        headers.forEach((h, idx) => {
+          if (duplicateCheck.has(h)) {
+            duplicates.push(`Duplicate header "${h}" at position ${idx}`);
+          }
+          duplicateCheck.add(h);
+        });
+        
+        if (duplicates.length > 0) {
+          errorDetails += `Duplicate headers found:\n${duplicates.join('\n')}\n\n`;
+        }
+        
+        if (similarHeaders.length > 0) {
+          errorDetails += `Headers with subtle differences (check for extra spaces, special characters):\n`;
+          errorDetails += similarHeaders.join('\n') + '\n\n';
+        }
+        
         if (missing.length > 0) {
           errorDetails += `Missing headers: ${missing.join(', ')}\n`;
         }
@@ -221,6 +277,26 @@ export function combineCSVs(csvContents: string[], fileNames?: string[]): string
           errorDetails += `Headers are in wrong order.\n`;
           errorDetails += `Expected: ${referenceHeaders.slice(0, 5).join(', ')}${referenceHeaders.length > 5 ? '...' : ''}\n`;
           errorDetails += `Found: ${headers.slice(0, 5).join(', ')}${headers.length > 5 ? '...' : ''}\n`;
+        }
+        
+        // If same count but different content, find exact position of first difference
+        if (headers.length === referenceHeaders.length && (missing.length > 0 || extra.length > 0)) {
+          for (let i = 0; i < headers.length; i++) {
+            if (headers[i] !== referenceHeaders[i]) {
+              errorDetails += `\nFirst difference at position ${i + 1} (column ${i + 1}):\n`;
+              errorDetails += `  Expected: "${referenceHeaders[i]}"\n`;
+              errorDetails += `  Found:    "${headers[i]}"\n`;
+              
+              // Show surrounding context
+              if (i > 0) {
+                errorDetails += `  Previous header (${i}): "${headers[i-1]}" ✓\n`;
+              }
+              if (i < headers.length - 1) {
+                errorDetails += `  Next header (${i + 2}): "${headers[i+1]}" ${headers[i+1] === referenceHeaders[i+1] ? '✓' : '✗'}\n`;
+              }
+              break;
+            }
+          }
         }
         
         errorDetails += `\nFirst file: "${referenceFileName}"`;
