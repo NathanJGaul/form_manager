@@ -1,4 +1,5 @@
 import { FormTemplate, FormField, FormFieldValue, DataTableValue } from '../types/form';
+import { parseCSV } from './csv-parser';
 
 export interface ValidationError {
   field: string;
@@ -74,9 +75,9 @@ export function validateCSVIntegrity(
   };
 
   try {
-    // Parse CSV data
-    const csvRows = csvData.split('\n').filter(row => row.trim());
-    if (csvRows.length < 2) {
+    // Parse CSV data using Papa Parse
+    const parsedData = parseCSV(csvData);
+    if (parsedData.length < 2) {
       result.isValid = false;
       result.integrity.corruptedRecords.push({
         field: 'csv_structure',
@@ -85,9 +86,9 @@ export function validateCSVIntegrity(
       return result;
     }
 
-    const headers = parseCSVRow(csvRows[0]);
-    const schemaRow = csvRows.length > 1 ? parseCSVRow(csvRows[1]) : [];
-    const dataRows = csvRows.slice(2).map(row => parseCSVRow(row));
+    const headers = parsedData[0];
+    const schemaRow = parsedData.length > 1 ? parsedData[1] : [];
+    const dataRows = parsedData.slice(2);
 
     result.integrity.totalRecords = dataRows.length;
 
@@ -116,39 +117,7 @@ export function validateCSVIntegrity(
   return result;
 }
 
-/**
- * Parses a CSV row handling quoted fields and escaped quotes
- */
-function parseCSVRow(row: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  let i = 0;
-
-  while (i < row.length) {
-    const char = row[i];
-    
-    if (char === '"' && !inQuotes) {
-      inQuotes = true;
-    } else if (char === '"' && inQuotes) {
-      if (i + 1 < row.length && row[i + 1] === '"') {
-        current += '"';
-        i++; // Skip the next quote
-      } else {
-        inQuotes = false;
-      }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
-    i++;
-  }
-  
-  result.push(current);
-  return result;
-}
+// parseCSVRow function removed - now using Papa Parse via csv-parser.ts
 
 /**
  * Validates that all expected fields are present in the CSV
