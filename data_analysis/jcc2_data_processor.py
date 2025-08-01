@@ -520,6 +520,129 @@ class UserQuestionnaireProcessor(BaseJCC2Processor):
             viz_data['frequency_data'] = self.df[frequency_cols].copy()
         
         return viz_data
+    
+    def calculate_nps_score(self, df: Optional[pd.DataFrame] = None) -> Optional[float]:
+        """
+        Calculate Net Promoter Score (NPS) based on recommendation data
+        
+        NPS = % Promoters - % Detractors
+        
+        For JCC2 questionnaire:
+        - Promoters: Users who would recommend (Yes)
+        - Detractors: Users who would not recommend (No)
+        - Neutrals: Users who are unsure (Maybe) or no response
+        
+        Args:
+            df: DataFrame to use (defaults to self.df)
+            
+        Returns:
+            NPS score (-100 to 100) or None if data not available
+        """
+        if df is None:
+            df = self.df
+            
+        if df is None:
+            logger.warning("No data loaded for NPS calculation")
+            return None
+            
+        # Check for recommendation field
+        recommend_field = 'overall_system_suitability_eval.recommend_jcc2'
+        if recommend_field not in df.columns:
+            logger.warning(f"Recommendation field '{recommend_field}' not found in data")
+            return None
+            
+        # Get value counts
+        rec_counts = df[recommend_field].value_counts()
+        total_responses = rec_counts.sum()
+        
+        if total_responses == 0:
+            logger.warning("No valid responses for NPS calculation")
+            return None
+            
+        # Calculate promoters and detractors percentages
+        promoters_count = rec_counts.get('Yes', 0)
+        detractors_count = rec_counts.get('No', 0)
+        
+        promoters_pct = (promoters_count / total_responses) * 100
+        detractors_pct = (detractors_count / total_responses) * 100
+        
+        # Calculate NPS
+        nps_score = promoters_pct - detractors_pct
+        
+        logger.info(f"NPS Score: {nps_score:.1f} (Promoters: {promoters_pct:.1f}%, Detractors: {detractors_pct:.1f}%)")
+        
+        return nps_score
+    
+    def calculate_sus_scores(self, df: Optional[pd.DataFrame] = None) -> Optional[List[float]]:
+        """
+        Calculate System Usability Scale (SUS) scores
+        
+        SUS scoring:
+        - For odd questions (1,3,5,7,9): score = scale position - 1
+        - For even questions (2,4,6,8,10): score = 5 - scale position
+        - Total SUS score = sum of scores * 2.5 (to get 0-100 scale)
+        
+        Args:
+            df: DataFrame to use (defaults to self.df)
+            
+        Returns:
+            List of SUS scores for each valid response or None if data not available
+        """
+        if df is None:
+            df = self.df
+            
+        if df is None:
+            logger.warning("No data loaded for SUS calculation")
+            return None
+            
+        # Find SUS fields
+        sus_fields = [f for f in df.columns if f.startswith('overall_system_usability.sus_')]
+        
+        if len(sus_fields) != 10:
+            logger.warning(f"Expected 10 SUS fields, found {len(sus_fields)}")
+            return None
+            
+        # Sort fields to ensure correct order (sus_1 through sus_10)
+        sus_fields.sort(key=lambda x: int(x.split('sus_')[-1]))
+        
+        sus_scores = []
+        
+        # Calculate SUS score for each row
+        for idx, row in df.iterrows():
+            row_score = 0
+            valid_responses = 0
+            
+            for i, field in enumerate(sus_fields):
+                value = row[field]
+                
+                if pd.notna(value) and isinstance(value, (int, float)):
+                    # Convert to numeric if string
+                    try:
+                        value = float(value)
+                    except:
+                        continue
+                        
+                    # Apply SUS scoring rules
+                    if (i + 1) % 2 == 1:  # Odd questions (1,3,5,7,9)
+                        score = value - 1
+                    else:  # Even questions (2,4,6,8,10)
+                        score = 5 - value
+                        
+                    row_score += score
+                    valid_responses += 1
+            
+            # Only calculate if all 10 questions were answered
+            if valid_responses == 10:
+                sus_score = row_score * 2.5  # Convert to 0-100 scale
+                sus_scores.append(sus_score)
+        
+        if not sus_scores:
+            logger.warning("No complete SUS responses found")
+            return None
+            
+        logger.info(f"Calculated {len(sus_scores)} SUS scores, average: {np.mean(sus_scores):.1f}")
+        
+        return sus_scores
 
 
 class DataCollectionProcessor(BaseJCC2Processor):
