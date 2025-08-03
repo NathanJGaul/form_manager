@@ -11,6 +11,9 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pandas>=2.3.1",
     "pandas-stubs>=2.3.0.250703",
+    "scipy>=1.16.1",
     "seaborn>=0.13.2",
     "selenium>=4.34.2",
+    "textblob>=0.19.0",
+    "wordcloud>=1.9.4",
 ]
