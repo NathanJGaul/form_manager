@@ -27,3 +27,12 @@ dist-ssr
 
 test-results/
 playwright-report/
+
+__pycache__/
+
+# Sensitive Data
+DCDC UQ Combined_2025-07-30_pii_scrubbed.csv
+data_analysis/notebooks/jcc2_application_section_detailed.csv
+data_analysis/notebooks/jcc2_application_section_matrix.csv
+data_analysis/jcc2_application_section_detailed.csv
+data_analysis/jcc2_application_section_matrix.csv
