@@ -431,12 +431,29 @@ class StorageManager {
       }
 
       // Find corresponding field for dot notation headers
-      const field = Array.from(fieldLookup.values()).find((f) => {
+      let field: FormField | undefined;
+      
+      // First try exact match with dot notation
+      field = Array.from(fieldLookup.values()).find((f) => {
         const section = template.sections.find((s) =>
           s.fields.some((sf) => sf.id === f.id)
         );
         return section && header === `${section.id}.${f.id}`;
       });
+      
+      // If not found and header has dot notation, try looking for field with just the field ID part
+      if (!field && header.includes('.')) {
+        const parts = header.split('.');
+        if (parts.length === 2) {
+          const [sectionId, fieldId] = parts;
+          // Find the section
+          const section = template.sections.find(s => s.id === sectionId);
+          if (section) {
+            // Look for field with matching ID (without section prefix)
+            field = section.fields.find(f => f.id === fieldId);
+          }
+        }
+      }
 
       if (!field) {
         schemaRow.push("unknown");
