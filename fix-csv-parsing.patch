@@ -1,0 +1,17 @@
+The issue with CSV parsing is that the current implementation splits the content by newlines first, which breaks multi-line quoted fields.
+
+Current behavior:
+- Line 21: content.trim().split('\n') splits the entire content by newlines
+- This happens BEFORE the parseRow function can handle quotes
+- Multi-line quoted fields get broken into separate lines
+
+Fix needed:
+- Parse character by character instead of splitting by newlines first
+- Track whether we're inside quotes to know when newlines are field content vs row delimiters
+- Only treat newlines as row delimiters when not inside quotes
+
+Test output shows:
+- Expected: 1 row with 3 fields including multi-line text
+- Actual: 3 malformed rows because the quoted field was split
+
+The minimal fix is to replace the line-splitting approach with a proper state machine that respects quoted fields.
